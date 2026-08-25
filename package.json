@@ -1,0 +1,19 @@
+{
+  "name": "lyricsync",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Offline-first desktop audio-text synchronization foundation",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "desktop": "electron .",
+    "test": "node --test"
+  },
+  "main": "desktop/main.cjs",
+  "devDependencies": {
+    "electron": "^37.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
