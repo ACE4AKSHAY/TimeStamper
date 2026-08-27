@@ -8,6 +8,7 @@
 - [`BOUNDARY_DP_EXPERIMENT.md`](./BOUNDARY_DP_EXPERIMENT.md) — Experiment 04, duration/onset dynamic programming.
 - [`PITCH_EXPERIMENT.md`](./PITCH_EXPERIMENT.md) — Experiment 05, autocorrelation pitch/F0 profile.
 - [`MULTI_PROFILE_EXPERIMENT.md`](./MULTI_PROFILE_EXPERIMENT.md) — Experiment 06, energy + spectral flux + pitch combination.
+- [`ABLATION_EXPERIMENT.md`](./ABLATION_EXPERIMENT.md) — Common evidence runner comparing all current non-ML engines.
 
 The checked-in `example.synthetic.json` is only a deterministic smoke fixture; it contains no copyrighted audio. A research dataset is needed to answer whether the algorithm works. It should be kept outside Git unless every audio/lyric item is licensed for redistribution.
 

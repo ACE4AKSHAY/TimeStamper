@@ -260,6 +260,10 @@ The repository uses small, descriptive commits so a beginner can inspect one mil
 
 `src/multi-profile-aligner.js` is a preserved adapter that combines energy, spectral flux, and pitch voicedness before boundary DP. It records component weights and keeps every underlying engine independent. See `benchmarks/MULTI_PROFILE_EXPERIMENT.md` for its isolated fixture, ablation plan, and non-ML limitations.
 
+### 5.19 Common ablation evidence runner
+
+`scripts/run-ablation-study.mjs` compares the preserved energy, profile-fusion, boundary-DP, and multi-profile engines on identical cases. It reports each method's metrics and MAE delta against the energy baseline. This is the evidence gate for later selection; it does not delete or silently replace any algorithm. See `benchmarks/ABLATION_EXPERIMENT.md`.
+
 ## 6. How the complete system links together
 
 ```text

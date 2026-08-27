@@ -16,6 +16,7 @@
     "experiment-boundary-dp": "node scripts/run-boundary-dp-experiment.mjs",
     "experiment-pitch": "node scripts/run-pitch-experiment.mjs",
     "experiment-multi-profile": "node scripts/run-multi-profile-experiment.mjs",
+    "ablation-study": "node scripts/run-ablation-study.mjs",
     "test": "node --test"
   },
   "main": "desktop/main.cjs",

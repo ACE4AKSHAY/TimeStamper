@@ -116,7 +116,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 66 | Performance metrics | 🟡 | Benchmark runner records runtime; RTF and stage timings are next. |
 | 67 | Resource metrics | 🟡 | Benchmark runner records observed Node heap; CPU/GPU/disk measurements are next. |
 | 68 | UX metrics | ⏳ | Track corrections and review time after usable automatic alignment exists. |
-| 69 | Failure analysis | ⏳ | Add failure categories to benchmark reports. |
+| 69 | Failure analysis | 🟡 | Common ablation runner now reports method deltas; failure categories and real-song annotations are next. |
 | 70 | Multilingual support | ✅ | UTF-8/Unicode lyric storage and parsing are tested; performance measurement by language is pending. |
 | 71 | Performance design | 🟡 | Downsampled waveform and asynchronous decoding exist; workers/caching/chunks are next. |
 | 72 | GUI thread | 🟡 | Browser async decoding prevents basic blocking; heavy engines need workers/processes. |
@@ -129,7 +129,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 79 | Modular storage | 🟡 | Node `ProjectStore` now creates project/audio/lyrics/features/alignment/timeline/etc. folders; cache policy is next. |
 | 80 | Logging module | ✅ | `ProjectLogger` is a standalone module. |
 | 81 | Experiment reproducibility | ⏳ | Add dataset/version/machine/config captured runs. |
-| 82 | Results format | 🟡 | Energy benchmark writes JSON and Markdown; CSV is next. |
+| 82 | Results format | 🟡 | Energy, per-experiment and common ablation runners write structured JSON; Markdown/CSV summaries are next. |
 | 83 | Research report | ⏳ | Draft after benchmark evidence exists. |
 | 84 | Existing-system research | ⏳ | Research architectures/licensing/limitations before implementing advanced engines. |
 | 85 | Do not copy existing projects | ✅ | Current implementation is independent and modular. |
@@ -161,7 +161,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 111 | Fifth technical milestone | 🔭 | Robust combined aligner later. |
 | 112 | Sixth technical milestone | 🟡 | Benchmark tooling and private-library manifest exist; rights-cleared dataset expansion follows. |
 | 113 | Success criteria | 🟡 | Local import, editing, LRC, privacy, logs and modularity are met; manual ground truth and automatic accuracy remain. |
-| 114 | Final research question | ⏳ | Answer with measured benchmark results—not assumptions. |
+| 114 | Final research question | 🟡 | Common comparison wiring exists; answer still requires manually verified real recordings. |
 | 115 | Final project aim | 🟡 | Architecture follows the aim; required experimental proof and advanced stages remain. |
 | 116 | Final project identity | ✅ | Project is described as an audio-text synchronization engine and LRC generator, not merely an LRC generator. |
 | 117 | Design principle | ✅ | User workflow is kept separate from internal processing modules. |
