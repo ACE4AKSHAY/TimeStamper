@@ -13,6 +13,7 @@ import { classifyLyricsText, normalizeStem } from "../src/dataset.js";
 import { extractMfcc } from "../src/features.js";
 import { constrainedDtw } from "../src/dtw.js";
 import { alignMfccSequences } from "../src/mfcc-dtw.js";
+import { alignLineTemplates } from "../src/template-aligner.js";
 
 test("LRC timestamps round to centiseconds", () => {
   assert.equal(secondsToLrc(12.426), "[00:12.43]");
@@ -91,4 +92,20 @@ test("constrained DTW returns an ordered path and MFCC adapter metadata", () => 
   assert.equal(result.path[0][0], 0);
   assert.equal(result.path.at(-1)[1], 2);
   assert.equal(alignMfccSequences({ frames: a, frameRate: 10 }, { frames: b, frameRate: 8 }).method, "mfcc_dtw");
+});
+
+test("template alignment creates monotonic line-level segments", () => {
+  const toneA = [[0], [0.1]], toneB = [[1], [1.1]], audio = [...toneA, [0.2], ...toneB, [1.2]];
+  const result = alignLineTemplates(audio, [toneA, toneB], { frameRate: 10, minLength: 2, maxLength: 4, window: 3 });
+  assert.equal(result.segments.length, 2);
+  assert.equal(result.segments[0].startTime, 0);
+  assert.ok(result.segments[0].endTime <= result.segments[1].startTime);
+  assert.equal(result.segments[1].endTime, 0.6);
+});
+
+test("engine exposes template MFCC-DTW line timestamps", () => {
+  const lines = parseLyrics("a\nb").lines; const audio = [[0], [0.1], [0.2], [1], [1.1], [1.2]];
+  const result = synchronize({ lyrics: lines, engine: "template-mfcc-dtw", parameters: { audioFrames: audio, lineTemplates: [[[0], [0.1]], [[1], [1.1]]], frameRate: 10, minLength: 2, maxLength: 4, window: 3 } });
+  assert.equal(result.lines[0].startTime, 0);
+  assert.equal(result.lines[1].alignmentMethod, "template_mfcc_dtw");
 });

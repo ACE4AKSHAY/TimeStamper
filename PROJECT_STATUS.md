@@ -79,9 +79,9 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 29 | Dynamic Time Warping | 🟡 | Constrained DTW and MFCC sequence adapter are implemented and tested; lyric-line mapping still needs acoustic templates/features. |
 | 30 | Dynamic programming | ⏳ | Planned after baseline metrics exist. |
 | 31 | Structure-aware alignment | 🔭 | Later research phase. |
-| 32 | Lyric-aware constraints | ⏳ | Global ordering is preserved; stronger constraints await a real alignment engine. |
-| 33 | Timestamp generation | 🟡 | Manual timestamps and editable energy estimates work. |
-| 34 | Timestamp refinement | ⏳ | Requires a feature similarity/cost function. |
+| 32 | Lyric-aware constraints | 🟡 | Template alignment preserves global lyric order and monotonic segments; template creation/validation is next. |
+| 33 | Timestamp generation | 🟡 | Manual/energy estimates and template-MFCC-DTW line timestamps work when acoustic templates are supplied. |
+| 34 | Timestamp refinement | 🟡 | Template DTW supplies segment costs; confidence/margin refinement is next. |
 | 35 | Confidence | 🟡 | Baseline records low confidence; algorithmic confidence model is pending. |
 | 36 | Human review | ✅ | Playback, waveform, timeline selection and direct timestamp editing work. |
 | 37 | Fast correction | 🟡 | Exact time entry, custom adjustment and insert/duplicate work; undo/redo and tap workflow are next. |
@@ -124,7 +124,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 74 | Cancellation | ⏳ | Add safe job cancellation with worker-based processing. |
 | 75 | Modular vocal separation | ⏳ | Create interface when separator work starts. |
 | 76 | Modular feature extraction | 🟡 | RMS is separate; formal extractor interface and additional extractors are next. |
-| 77 | Modular alignment | 🟡 | Energy aligner is standalone; common contract and alternate engines are next. |
+| 77 | Modular alignment | 🟡 | Energy baseline and template-MFCC-DTW engines are standalone; template acquisition and comparison are next. |
 | 78 | Modular export | 🟡 | LRC exporter is separate; other exporters are future modules. |
 | 79 | Modular storage | 🟡 | Node `ProjectStore` now creates project/audio/lyrics/features/alignment/timeline/etc. folders; cache policy is next. |
 | 80 | Logging module | ✅ | `ProjectLogger` is a standalone module. |
@@ -148,7 +148,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 98 | Development phases | 🟡 | Phases 1–3 foundation/RMS baseline are underway; do not jump to advanced phases prematurely. |
 | 99 | Version 0.1 | ✅ | Audio import, TXT/LRC/paste, waveform, playback, manual timestamping, LRC, project save and logs are present. |
 | 100 | Version 0.2 | 🟡 | RMS, initial automatic timing, metrics and synthetic benchmark are present; rights-cleared dataset validation is next. |
-| 101 | Version 0.3 | 🟡 | MFCC and constrained DTW primitives are present; UI integration and real verified-pair comparison are next. |
+| 101 | Version 0.3 | 🟡 | MFCC, constrained DTW and template-assisted line segmentation are present; UI integration and real verified-pair comparison are next. |
 | 102 | Version 0.4 | ⏳ | Vocal separation and full-vs-vocal measurement planned. |
 | 103 | Version 0.5 | ⏳ | Multiple engines and benchmarking planned. |
 | 104 | Version 1.0 | 🔭 | Target after validated line-level synchronization, review workflow, storage, CLI and benchmarks. |
