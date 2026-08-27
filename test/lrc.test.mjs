@@ -9,7 +9,7 @@ import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { saveProject, loadProject } from "../src/project-store.mjs";
-import { classifyLyricsText, createReviewQueue, normalizeStem } from "../src/dataset.js";
+import { classifyLyricsText, createReviewQueue, normalizeStem, validateReviewQueue } from "../src/dataset.js";
 import { extractMfcc } from "../src/features.js";
 import { constrainedDtw } from "../src/dtw.js";
 import { alignMfccSequences } from "../src/mfcc-dtw.js";
@@ -84,6 +84,12 @@ test("review queue excludes likely instrumentals and requires manual decisions",
   ], 20);
   assert.equal(queue.length, 1);
   assert.equal(queue[0].review.timestampsVerified, null);
+});
+
+test("review validation separates pending, rejected and benchmark-ready items", () => {
+  const base = { audioCandidates: ["a.mp3"], review: { audioMatchesLyrics: true, isVocalRecording: true, timestampsVerified: true }, reference: [1] };
+  const result = validateReviewQueue([base, { ...base, review: { ...base.review, timestampsVerified: null } }, { ...base, review: { ...base.review, isVocalRecording: false } }]);
+  assert.deepEqual(result.summary, { total: 3, approved: 1, benchmarkReady: 1, pending: 1, rejected: 1 });
 });
 
 test("MFCC extraction returns finite feature frames", () => {

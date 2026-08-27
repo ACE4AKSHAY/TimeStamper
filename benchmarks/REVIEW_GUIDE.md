@@ -30,3 +30,14 @@ Only items with all three Boolean checks set to `true` should become benchmark g
 You do not need to check every file. Start with 5–10 clear vocal songs across different languages or recording conditions. The app can still be used normally without any dataset review; this manual process is only for measuring algorithm accuracy.
 
 Do not upload or commit your audio, lyrics, private manifest, or review queue. The review queue is a local preparation tool, not a public dataset.
+
+## Validate reviewed items
+
+After editing the Boolean decisions in the queue, run:
+
+```powershell
+$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
+& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe' scripts/validate-review-queue.mjs
+```
+
+The validator separates `approved`, `pending`, and `rejected` items. An approved item is marked `benchmarkReady` only when its manually verified `reference` timestamp array has also been added. Approval is never inferred from a downloaded LRC file.

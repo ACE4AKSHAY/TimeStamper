@@ -29,3 +29,16 @@ export function createReviewQueue(items, limit = 20) {
     review: { audioMatchesLyrics: null, isVocalRecording: null, timestampsVerified: null, correctedTimestampCount: 0, notes: "" },
   }));
 }
+
+export function validateReviewQueue(items) {
+  const approved = [], pending = [], rejected = [];
+  for (const item of items) {
+    const review = item.review || {};
+    const decisions = [review.audioMatchesLyrics, review.isVocalRecording, review.timestampsVerified];
+    const hasReject = decisions.some((value) => value === false) || item.audioCandidates?.length !== 1;
+    if (hasReject) rejected.push({ ...item, reviewStatus: "rejected" });
+    else if (decisions.every((value) => value === true)) approved.push({ ...item, reviewStatus: "approved", benchmarkReady: Array.isArray(item.reference) });
+    else pending.push({ ...item, reviewStatus: "pending" });
+  }
+  return { approved, pending, rejected, summary: { total: items.length, approved: approved.length, benchmarkReady: approved.filter((item) => item.benchmarkReady).length, pending: pending.length, rejected: rejected.length } };
+}

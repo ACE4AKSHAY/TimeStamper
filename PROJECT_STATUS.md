@@ -102,7 +102,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 52 | Integration tests | ⏳ | Add audio + lyrics + export fixture tests. |
 | 53 | Benchmark dataset | 🟡 | Private library-audit manifest tool now inventories local pairs without copying media; rights-cleared ground truth is next. |
 | 54 | Dataset categories | 🟡 | Manifest captures language-independent lyric/timestamp/instrumental review flags; genre/recording metadata is next. |
-| 55 | Ground truth | 🟡 | Private review queue and manual checklist now exist; no real pair is considered verified yet. |
+| 55 | Ground truth | 🟡 | Private review queue, validator and manual checklist now exist; no real pair is considered verified yet. |
 | 56 | Experiment 1: energy baseline | 🟡 | Implemented as initial timing; reproducible metrics runner and synthetic smoke fixture now exist; rights-cleared audio evaluation is next. |
 | 57 | Experiment 2: spectral | ⏳ | Planned. |
 | 58 | Experiment 3: MFCC | ⏳ | Planned. |
