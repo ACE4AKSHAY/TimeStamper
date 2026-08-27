@@ -1,0 +1,455 @@
+TIMESTAMPER / LYRIC-SYNC LEARNING ROADMAP
+==========================================
+
+Purpose
+-------
+This is a beginner-first map of the concepts used by the TimeStamper project.
+It is ordered from essential foundations to optional advanced subjects. You do
+not need to reproduce the code while watching. Focus on understanding the
+inputs, outputs, and reason each stage exists.
+
+How the view ranking works
+--------------------------
+View counts below are approximate snapshots checked on 2026-08-27 from current
+YouTube/search results. They change over time. Within a topic, higher-view
+videos are generally listed first when the view count was available. For some
+niche subjects YouTube did not expose a reliable count; those are marked
+"view count not exposed" and were selected for clarity, channel quality, and
+direct relevance instead of pretending a number was known.
+
+Recommended route
+-----------------
+P0 = watch first (the minimum useful foundation)
+P1 = watch after P0 (understand our actual algorithms and architecture)
+P2 = optional (useful depth, not required to follow current development)
+
+Do not try to finish every link before understanding the project. Watch one
+video, then open the mapped project files and explain the input/output in your
+own words.
+
+
+PART 1 - THE PROJECT IN ONE PICTURE (P0)
+----------------------------------------
+
+1. System design from requirements to components
+   Video: System Design for Beginners Course - freeCodeCamp / Gaurav Sen
+   Views: about 1.92M
+   https://www.youtube.com/watch?v=m8Icp_Cid5o
+   Why: Shows requirements, APIs, storage, fault tolerance, testing, and
+   diagrams. Our application is local rather than a distributed service, but
+   the same decomposition method applies.
+   Project mapping: README.md, PROJECT_STATUS.md, MFCC_DTW_DETAILED.md
+
+2. Software architecture as a set of boundaries
+   Video: Google & AWS Veteran: How To Become a Great Software Architect
+   Views: view count not exposed
+   https://www.youtube.com/results?search_query=Google+AWS+Veteran+How+To+Become+a+Great+Software+Architect
+   Why: Helps explain why the UI, audio features, alignment engines, storage,
+   and exporters are separate modules instead of one large file.
+   Project mapping: src/app.js, src/engine.js, src/storage.js, src/project-store.mjs
+
+3. How our data flows
+   Read alongside the videos:
+   User audio + TXT/LRC -> UTF-8 lyric lines -> decoded PCM -> audio profiles
+   -> candidate alignment engine -> editable timeline -> LRC/project export.
+   Project mapping: index.html, src/lyrics.js, src/audio-profiles.js,
+   src/engine.js, src/lrc.js.
+
+
+PART 2 - AUDIO AND DIGITAL SOUND FUNDAMENTALS (P0)
+--------------------------------------------------
+
+4. What a sound wave means
+   Video: Audio Basics: Amplitude, Frequency & Wavelength - Audio University
+   Views: about 30K
+   https://www.youtube.com/watch?v=oswC6HiqHjM
+   Learn: amplitude (strength), frequency (cycles/second), wavelength, and why
+   a waveform is a measurement that changes over time.
+   Project mapping: waveform canvas in src/app.js.
+
+5. How sound becomes numbers
+   Video: Audio Bit Depth and Sample Rate Explained - iZotope
+   Views: about 121K
+   https://www.youtube.com/watch?v=xJKypZXc3B4
+   Learn: sample rate, bit depth, quantization, aliasing, and why a computer
+   can process audio as a sequence of numbers.
+   Project mapping: browser AudioContext decoding and all profile extractors.
+
+6. PCM (the representation our algorithms ultimately need)
+   Video: What is PCM audio
+   Views: view count not exposed
+   https://www.youtube.com/watch?v=ToN-G4e45d8
+   Learn: pulse-code modulation and the difference between a compressed MP3
+   file and decoded sample values.
+   Project mapping: src/audio-profiles.js, src/features.js, future local decoder.
+
+7. Optional visual introduction to waves
+   Video: What are sound waves? (search results)
+   Views: choose the clearest high-view result available in your region
+   https://www.youtube.com/results?search_query=sound+waves+amplitude+frequency+beginner+audio
+   Learn: the physical intuition only; no maths is required for the project.
+
+
+PART 3 - TIME, FREQUENCY, FFT, AND SPECTROGRAMS (P0/P1)
+--------------------------------------------------------
+
+8. Fourier transform intuition
+   Video: But what is the Fourier Transform? A visual introduction. - 3Blue1Brown
+   Views: about 12.15M
+   https://www.youtube.com/watch?v=spUNpyF58BY
+   Learn: a complicated waveform can be described as a mixture of frequencies.
+   This is the conceptual reason frequency features can reveal musical events.
+   Project mapping: FFT helper in src/features.js.
+
+9. Short-Time Fourier Transform (STFT)
+   Video: Short-Time Fourier Transform Explained Easily - Valerio Velardo
+   Views: about 99K
+   https://www.youtube.com/watch?v=-Yxj3yfvY-4
+   Learn: why we analyze short overlapping windows instead of transforming an
+   entire song at once; window size creates a time/frequency trade-off.
+   Project mapping: MFCC pipeline and spectral-flux extraction.
+
+10. Spectrogram and audio visualization
+    Video: Coding Adventure: Analyzing Audio - Sebastian Lague
+    Views: view count not exposed
+    https://www.youtube.com/results?search_query=Sebastian+Lague+Coding+Adventure+Analyzing+Audio
+    Learn: how STFT windows become a time-frequency image and why a waveform
+    and spectrogram show different information.
+    Project mapping: waveform preview in src/app.js; future spectrogram view.
+
+11. FFT implementation detail (optional)
+    Video: Fourier Transform / FFT coding tutorials (search results)
+    Views: choose a high-view explanation after watching 3Blue1Brown first
+    https://www.youtube.com/results?search_query=FFT+Fast+Fourier+Transform+audio+implementation+tutorial
+    Learn: what the code is doing, not the full derivation. This is P2 because
+    our project already isolates FFT behind src/features.js.
+
+
+PART 4 - AUDIO FEATURES USED BY THIS PROJECT (P1)
+--------------------------------------------------
+
+12. Feature extraction overview
+    Video: How to Extract Audio Features (The Sound of AI)
+    Views: view count not exposed
+    https://www.youtube.com/watch?v=8A-W1xk7qs8
+    Learn: turning raw PCM into compact measurements that an algorithm can
+    compare. The video may show Python; the ideas transfer directly to JS.
+    Project mapping: src/audio-profiles.js, src/features.js.
+
+13. RMS energy
+    Video: RMS / root-mean-square audio level (search results)
+    Views: view count not exposed
+    https://www.youtube.com/results?search_query=RMS+energy+audio+feature+extraction+tutorial
+    Learn: a windowed measure of signal strength. It is useful for rough
+    activity boundaries, but it cannot understand words by itself.
+    Project mapping: extractRmsProfile() in src/audio-profiles.js and
+    src/energy-aligner.js.
+
+14. Spectral flux and onset intuition
+    Video: Spectral flux audio feature (search results)
+    Views: view count not exposed
+    https://www.youtube.com/results?search_query=spectral+flux+audio+feature+onset+detection+tutorial
+    Learn: how much the frequency content changes between adjacent windows;
+    useful for attacks, transitions, and phrase boundaries.
+    Project mapping: extractSpectralFluxProfile() in src/audio-profiles.js.
+
+15. MFCC
+    Video: Mel Frequency Cepstral Coefficients (MFCC) Explained
+    Views: view count not exposed by the YouTube page
+    https://www.youtube.com/watch?v=SJo7vPgRlBQ
+    Learn: window -> spectrum -> Mel filter bank -> logarithm -> cepstral
+    coefficients. MFCC is a compact description of spectral shape, not a lyric
+    transcription system.
+    Project mapping: src/features.js, src/mfcc-dtw.js,
+    src/template-aligner.js.
+
+16. Pitch and autocorrelation
+    Video: Pitch Detection of Speech Signal Using Autocorrelation - MATLAB Helper
+    Views: about 11K
+    https://www.youtube.com/watch?v=LAhXjO7SAVw
+    Learn: a periodic waveform has a repeated pattern; autocorrelation estimates
+    its period and therefore a fundamental frequency (F0). Pitch is supportive
+    evidence, not enough to align lyrics alone.
+    Project mapping: src/pitch-profile.js.
+
+17. Correlation intuition
+    Video: Correlation Explained: Basics, Definition, Function, Types & Importance
+    Views: view count not exposed
+    https://www.youtube.com/watch?v=FKaCoiTwAsE
+    Learn: comparing a signal with a shifted version of itself or another
+    signal. This helps explain autocorrelation and future alignment features.
+
+
+PART 5 - ALIGNMENT ALGORITHMS (P1)
+----------------------------------
+
+18. Dynamic programming basics
+    Video: Dynamic Programming (search results with beginner explanations)
+    Views: choose a high-view explanation after learning the basic idea
+    https://www.youtube.com/results?search_query=dynamic+programming+algorithm+explained+beginner
+    Learn: solve a large optimization problem by reusing smaller subproblems.
+    Project mapping: src/boundary-dp-aligner.js and src/template-aligner.js.
+
+19. Sequence alignment and monotonic paths
+    Video: Basics of Sequence Alignment - Biologiks
+    Views: about 22K
+    https://www.youtube.com/watch?v=g9PJEDmoWn4
+    Learn: global alignment, local alignment, gaps, and why an alignment path
+    should move forward rather than jump backward. The example is biology, but
+    the algorithmic idea maps well to time sequences.
+
+20. Dynamic Time Warping (DTW)
+    Video: Dynamic Time Warping (DTW) Explained - StackWild
+    Views: about 7K
+    https://www.youtube.com/watch?v=C5joZ6Bwvmk
+    Learn: matching two sequences that have similar shape but different speed;
+    understand the cost matrix, path, monotonicity, and why constraints matter.
+    Project mapping: src/dtw.js and src/mfcc-dtw.js.
+
+21. Constrained DTW and templates
+    Video: Constrained DTW / sequence alignment (search results)
+    Views: view count not exposed
+    https://www.youtube.com/results?search_query=constrained+dynamic+time+warping+audio+sequence+alignment
+    Learn: why unrestricted DTW can make implausible matches, and how bounds,
+    duration priors, and templates reduce bad paths.
+    Project mapping: src/template-aligner.js, src/engine.js.
+
+22. Why line-level alignment is not speech recognition
+    Video: Forced alignment speech audio tutorial (search results)
+    Views: view count not exposed
+    https://www.youtube.com/results?search_query=forced+alignment+speech+audio+lyrics+explained
+    Learn: the difference between known text + timing (our current target),
+    speech-to-text transcription, and word-level forced alignment.
+    Project mapping: benchmarks/MFCC_DTW_EXPERIMENT.md and
+    benchmarks/REAL_DATA_EVALUATION.md.
+
+
+PART 6 - LRC, TEXT, AND MULTILINGUAL INPUT (P0)
+------------------------------------------------
+
+23. LRC format and synchronized lyrics
+    Video: LRC file format / synchronized lyrics (search results)
+    Views: view count not exposed
+    https://www.youtube.com/results?search_query=LRC+file+format+synchronized+lyrics+timestamps
+    Learn: a timestamp such as [00:12.30] is followed by lyric text; metadata
+    tags and line-level timing are separate from the audio codec.
+    Project mapping: src/lrc.js and src/lyrics.js.
+
+24. Unicode and UTF-8 basics
+    Video: UTF-8 and Unicode explained (search results)
+    Views: choose a high-view beginner explanation
+    https://www.youtube.com/results?search_query=UTF-8+Unicode+explained+beginner
+    Learn: why Telugu, Hindi, Tamil, Japanese, and other scripts are stored as
+    text encoding rather than converted into English. The alignment engine does
+    not use language as an acoustic feature.
+    Project mapping: src/lyrics.js and Unicode tests in test/lrc.test.mjs.
+
+
+PART 7 - WEB AUDIO AND THE USER INTERFACE (P1)
+----------------------------------------------
+
+25. Web Audio API overview
+    Video: Web Audio API tutorials (search results)
+    Views: choose the clearest high-view current result
+    https://www.youtube.com/results?search_query=Web+Audio+API+AudioContext+decodeAudioData+tutorial
+    Learn: AudioContext, AudioBuffer, decoding, playback, and why decoding is
+    asynchronous. This is what lets the browser show a waveform locally.
+    Project mapping: extractWaveform() and the <audio> element in src/app.js.
+
+26. JavaScript Canvas for waveform drawing
+    Video: HTML Canvas JavaScript tutorial (search results)
+    Views: choose a high-view beginner explanation
+    https://www.youtube.com/results?search_query=JavaScript+Canvas+API+draw+waveform+tutorial
+    Learn: pixels, lines, pointer coordinates, and redrawing a playhead.
+    Project mapping: renderWaveform() and seekFromWaveform() in src/app.js.
+
+27. ES modules
+    Video: How to Use JavaScript Modules | Import & Export Like a Pro
+    Views: about 1.1K (the topic is niche; selected for direct coverage)
+    https://www.youtube.com/watch?v=xiuyw8BMr5k
+    Learn: import/export boundaries and why each feature lives in a separate
+    file.
+    Project mapping: every file under src/.
+
+28. Browser file APIs and local privacy
+    Video: JavaScript File API / FileReader / local file input (search results)
+    Views: view count not exposed
+    https://www.youtube.com/results?search_query=JavaScript+File+API+FileReader+local+file+input+tutorial
+    Learn: selecting a local file, reading bytes/text, and keeping processing
+    on the device without uploading it.
+    Project mapping: file inputs in index.html and handlers in src/app.js.
+
+
+PART 8 - ELECTRON, NODE, NPM, AND NVM (P0/P1)
+----------------------------------------------
+
+29. Node.js runtime and npm
+    Video: Learn Node.js - Full Tutorial for Beginners
+    Views: about 1.23M
+    https://www.youtube.com/watch?v=RLtyhwFtXQA
+    Learn: Node runs JavaScript outside the browser; npm installs packages and
+    runs scripts. Understand package.json scripts, not every API.
+    Project mapping: package.json, scripts/*.mjs, src/project-store.mjs.
+
+30. NVM and version selection
+    Video: NVM Node Version Manager Windows (search results)
+    Views: choose a high-view Windows explanation
+    https://www.youtube.com/results?search_query=NVM+Windows+Node+Version+Manager+tutorial
+    Learn: keeping multiple Node versions and explicitly selecting the runtime.
+    Project mapping: project commands use
+    C:\\Users\\aksha\\AppData\\Local\\nvm\\v22.23.2.
+
+31. Electron main, renderer, and preload
+    Video: Electron JS Tutorial For Beginners - From Scratch To Advanced
+    Views: about 4.3K
+    https://www.youtube.com/watch?v=XLg6cR37Gpw
+    Learn: main process owns the window and privileged OS operations; renderer
+    owns the UI; preload exposes a narrow bridge. This is the most important
+    Electron concept for understanding our desktop shell.
+    Project mapping: desktop/main.cjs and desktop/preload.cjs.
+
+32. Electron security and IPC (official concepts)
+    Video: Electron preload / IPC tutorials (search results)
+    Views: view count not exposed
+    https://www.youtube.com/results?search_query=Electron+preload+IPC+contextIsolation+security+tutorial
+    Learn: why the renderer should not receive unrestricted Node.js access.
+    Project mapping: desktop/preload.cjs and secure BrowserWindow settings.
+
+33. Audio codec reality
+    Video: FFmpeg beginner audio conversion and decoding (search results)
+    Views: choose a high-view current tutorial
+    https://www.youtube.com/results?search_query=FFmpeg+beginner+tutorial+audio+decode+convert
+    Learn: MP3/M4A/FLAC are encoded formats; algorithms generally need decoded
+    PCM. FFmpeg is an optional future local adapter, not an internet service.
+    Project mapping: future decoder seam documented in
+    benchmarks/REAL_DATA_EVALUATION.md.
+
+
+PART 9 - STORAGE, VERSION CONTROL, TESTING, AND MEASUREMENT (P1)
+-----------------------------------------------------------------
+
+34. Git and GitHub
+    Video: Learn Git - Full Course for Beginners - freeCodeCamp
+    Views: about 1.42M
+    https://www.youtube.com/watch?v=zTjRZNkhiEU
+    Learn: commits, history, branches, diffs, and pushing. This explains why
+    every experiment is preserved rather than overwritten.
+    Project mapping: Git history and commit-by-commit documentation.
+
+35. JSON and structured project files
+    Video: JSON explained for beginners (search results)
+    Views: choose a high-view beginner explanation
+    https://www.youtube.com/results?search_query=JSON+file+format+explained+beginner
+    Learn: why a project can be reopened from human-readable metadata while the
+    large original audio file remains referenced instead of copied.
+    Project mapping: src/storage.js, src/project-store.mjs, projects/.
+
+36. Unit, integration, and end-to-end tests
+    Video: Static, Unit, Integration, and End-to-End Tests Explained
+    Views: view count not exposed
+    https://www.youtube.com/watch?v=TLccnKIMggA
+    Learn: a unit test checks one function; integration checks modules together;
+    end-to-end checks the application workflow.
+    Project mapping: test/lrc.test.mjs and future desktop smoke tests.
+
+37. Error metrics: MAE, MSE, RMSE
+    Video: Regression Metrics | MSE, MAE & RMSE - CampusX
+    Views: about 227K
+    https://www.youtube.com/watch?v=Ti7c-Hz7GSM
+    Learn: how to turn timestamp differences into understandable measurements.
+    Project mapping: src/metrics.js and scripts/run-benchmark.mjs.
+
+38. Benchmarking and reproducibility
+    Video: benchmarking software performance (search results)
+    Views: choose a practical high-view explanation
+    https://www.youtube.com/results?search_query=software+benchmarking+runtime+memory+metrics+tutorial
+    Learn: runtime, memory, repeatability, and why synthetic tests prove wiring
+    but not real-song accuracy.
+    Project mapping: benchmarks/*.md, scripts/run-*-experiment.mjs,
+    PROJECT_STATUS.md.
+
+
+PART 10 - OPTIONAL LATER TOPICS (P2)
+------------------------------------
+
+39. Vocal/source separation
+    Video: UVR5 Tutorial with Audio Examples - Sound Codex
+    Views: about 46K
+    https://www.youtube.com/watch?v=9kzlr6otFqU
+    Learn: separating vocals from accompaniment can make alignment easier, but
+    the cited tool uses neural models and has artifacts. This is optional and
+    deliberately not the current non-ML core.
+    Project mapping: planned modular separator boundary in PROJECT_STATUS.md.
+
+40. Forced alignment and word-level timing
+    Video: forced alignment / phoneme alignment (search results)
+    Views: choose after line-level DTW is understood
+    https://www.youtube.com/results?search_query=forced+alignment+phoneme+alignment+audio+text+tutorial
+    Learn: word/phoneme timestamps are a harder problem than line timestamps.
+    Project mapping: future word-level LRC/karaoke scope.
+
+41. Mobile and cross-platform packaging
+    Video: Capacitor or cross-platform desktop/mobile architecture (search results)
+    Views: choose later, after the platform-neutral core is stable
+    https://www.youtube.com/results?search_query=Capacitor+Electron+cross+platform+architecture+tutorial
+    Learn: why keeping src/engine.js independent of Electron makes future mobile
+    clients possible.
+
+42. Advanced speech/music recognition and ML
+    Video: audio machine learning / automatic speech recognition playlists
+    Views: choose only if the non-ML approach has been measured first
+    https://www.youtube.com/results?search_query=audio+machine+learning+speech+recognition+playlist
+    Learn: useful context for comparison, not a requirement. The current design
+    intentionally does not depend on an AI model or dataset for normal use.
+
+
+PROJECT FILE MAP - WHAT TO OPEN WHILE LEARNING
+----------------------------------------------
+
+User interface and desktop boundary
+  index.html       Controls, file inputs, waveform canvas, settings dialog.
+  styles.css       Themes, layout, accessible controls, timeline styling.
+  src/app.js       Playback, waveform, lyric editing, stamping, settings UI.
+  desktop/main.cjs Electron main process and native dialogs.
+  desktop/preload.cjs Narrow renderer-to-main bridge.
+
+Text and project data
+  src/domain.js    Lyric line/project models and normalization.
+  src/lyrics.js    TXT/LRC parsing and Unicode-preserving line creation.
+  src/lrc.js       Timestamp formatting and LRC export.
+  src/storage.js   Browser save/open/download helpers.
+  src/project-store.mjs Structured local project directories.
+  src/settings.js  Local themes, waveform colour, text size, shortcuts.
+  src/logger.js    Human-readable local activity log.
+
+Audio representation and features
+  src/audio-profiles.js RMS and spectral-flux profiles.
+  src/features.js  FFT and MFCC feature extraction.
+  src/pitch-profile.js Autocorrelation pitch/voicedness profile.
+  src/profile-fusion.js Normalize/resample/weight profiles.
+
+Alignment experiments (kept separate on purpose)
+  src/energy-aligner.js       Simple cumulative-energy candidate.
+  src/combined-aligner.js     Energy + spectral-flux candidate.
+  src/boundary-dp-aligner.js  Duration/onset dynamic programming.
+  src/multi-profile-aligner.js Energy + flux + pitch candidate.
+  src/dtw.js                  Generic constrained DTW primitive.
+  src/mfcc-dtw.js             MFCC sequence adapter.
+  src/template-aligner.js     Acoustic-template line segmentation.
+  src/engine.js               Stable platform-neutral synchronize() API.
+
+Evidence and private-data safety
+  src/metrics.js              MAE/median AE/RMSE/threshold metrics.
+  scripts/run-*-experiment.mjs Reproducible synthetic experiment runners.
+  scripts/prepare-local-evaluation.mjs Metadata-only private candidate stubs.
+  benchmarks/*.md             Separate rationale/results/limitations per study.
+  test/lrc.test.mjs           Automated regression tests (21 currently pass).
+
+
+ONE-SENTENCE SUMMARY
+--------------------
+The app does not “read lyrics from sound” magically: it decodes local audio,
+turns sound into explainable time-series features, proposes monotonic line
+boundaries using replaceable algorithms, lets a person correct them, and
+exports the verified timeline as LRC. The learning path above follows exactly
+that data flow.
