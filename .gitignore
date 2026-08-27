@@ -8,6 +8,7 @@ datasets/audio/
 *.lrc
 node_modules/
 benchmarks/results/
+benchmarks/private/
 
 # OS/editor files
 .DS_Store

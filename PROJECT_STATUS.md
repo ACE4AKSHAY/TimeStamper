@@ -100,9 +100,9 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 50 | Testing | 🟡 | Automated unit tests exist; integration/desktop UI tests are next. |
 | 51 | Unit tests | 🟡 | LRC conversion, parsing, Unicode, one-line lyrics and energy baseline are covered. |
 | 52 | Integration tests | ⏳ | Add audio + lyrics + export fixture tests. |
-| 53 | Benchmark dataset | ⏳ | Create separately; do not add copyrighted audio to the source repo. |
-| 54 | Dataset categories | ⏳ | Define balanced languages, genres and recording types with the dataset. |
-| 55 | Ground truth | ⏳ | Manually verify timestamps before metrics. |
+| 53 | Benchmark dataset | 🟡 | Private library-audit manifest tool now inventories local pairs without copying media; rights-cleared ground truth is next. |
+| 54 | Dataset categories | 🟡 | Manifest captures language-independent lyric/timestamp/instrumental review flags; genre/recording metadata is next. |
+| 55 | Ground truth | ⏳ | Manually verify candidate pairs; never assume downloaded LRC timestamps are ground truth. |
 | 56 | Experiment 1: energy baseline | 🟡 | Implemented as initial timing; reproducible metrics runner and synthetic smoke fixture now exist; rights-cleared audio evaluation is next. |
 | 57 | Experiment 2: spectral | ⏳ | Planned. |
 | 58 | Experiment 3: MFCC | ⏳ | Planned. |
@@ -159,7 +159,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 109 | Third technical milestone | ⏳ | MFCC + DTW comparison planned. |
 | 110 | Fourth technical milestone | ⏳ | Vocal separation comparison planned. |
 | 111 | Fifth technical milestone | 🔭 | Robust combined aligner later. |
-| 112 | Sixth technical milestone | 🟡 | Benchmark tooling and metrics exist; rights-cleared dataset expansion follows. |
+| 112 | Sixth technical milestone | 🟡 | Benchmark tooling and private-library manifest exist; rights-cleared dataset expansion follows. |
 | 113 | Success criteria | 🟡 | Local import, editing, LRC, privacy, logs and modularity are met; automatic accuracy, separation and benchmarks remain. |
 | 114 | Final research question | ⏳ | Answer with measured benchmark results—not assumptions. |
 | 115 | Final project aim | 🟡 | Architecture follows the aim; required experimental proof and advanced stages remain. |
@@ -171,7 +171,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 
 ## Recommended next steps
 
-1. Replace the synthetic fixture with a small rights-cleared, manually verified dataset and run the benchmark.
+1. Review the private library manifest, exclude instrumental/mismatched/unverified items, and create a small rights-cleared ground-truth set.
 2. Add a rights-cleared dataset manifest and run the energy benchmark against verified pairs.
 3. Add spectrogram/MFCC extractors and a constrained DTW comparison.
 4. Integrate a modular local vocal separator and compare full-mix versus vocal-assisted results.

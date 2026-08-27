@@ -9,6 +9,7 @@ import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { saveProject, loadProject } from "../src/project-store.mjs";
+import { classifyLyricsText, normalizeStem } from "../src/dataset.js";
 
 test("LRC timestamps round to centiseconds", () => {
   assert.equal(secondsToLrc(12.426), "[00:12.43]");
@@ -63,4 +64,11 @@ test("file-backed ProjectStore keeps a reopenable project layout", async () => {
   const loaded = await loadProject(root);
   assert.equal(loaded.timeline.lines[0].originalText, "hello");
   assert.match(await readFile(join(root, "timeline", "timeline.json"), "utf8"), /hello/u);
+});
+
+test("dataset classification separates timestamp and review states", () => {
+  assert.equal(classifyLyricsText("[00:01.00]one\n[00:02.00]two", "song.lrc").timestampStatus, "fully_timestamped");
+  assert.equal(classifyLyricsText("one\ntwo", "song.lrc").timestampStatus, "untimestamped");
+  assert.equal(classifyLyricsText("[00:01.00]one\ntwo", "piano.lrc").reviewRequired, true);
+  assert.equal(normalizeStem("Song (Official Video) - SenSongsMp3.Co.mp3"), "song");
 });

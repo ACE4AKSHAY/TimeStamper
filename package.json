@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node scripts/serve.mjs",
     "desktop": "electron .",
+    "audit-library": "node scripts/audit-library.mjs",
     "test": "node --test"
   },
   "main": "desktop/main.cjs",

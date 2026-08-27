@@ -14,6 +14,8 @@ case-id/
 
 `reference.json` should contain `startTime` values in seconds and a note about who/when verified them. Do not use an automatically generated LRC as ground truth. Begin with a small, balanced set (for example 20–30 tracks across languages and recording conditions), then grow it after the measurement process is stable. The application itself does not need a dataset for manual editing or normal offline use; the dataset is needed for scientific evaluation and regression testing.
 
+For a local collection audit (the output is ignored by Git), run `npm run audit-library -- "C:\\Users\\aksha\\Music"`. The manifest records relative paths, timestamp coverage, exact filename candidates and likely instrumental hints. It cannot prove that a lyric file matches the recording or that timestamps are correct; those decisions remain manual.
+
 Run the synthetic smoke benchmark with:
 
 ```powershell
