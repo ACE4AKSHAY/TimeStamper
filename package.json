@@ -8,6 +8,7 @@
     "start": "node scripts/serve.mjs",
     "desktop": "electron .",
     "audit-library": "node scripts/audit-library.mjs",
+    "create-review-queue": "node scripts/create-review-queue.mjs",
     "test": "node --test"
   },
   "main": "desktop/main.cjs",

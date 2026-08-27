@@ -21,3 +21,11 @@ export function createDatasetItem(lyricFile, audioFiles, lyricInfo) {
   const candidates = audioFiles.filter((file) => normalizeStem(file.name) === stem).map((file) => file.path);
   return { lyricPath: lyricFile.path, ...lyricInfo, normalizedStem: stem, audioCandidates: candidates, reviewStatus: candidates.length === 1 && !lyricInfo.reviewRequired ? "candidate" : "needs_manual_review" };
 }
+
+export function createReviewQueue(items, limit = 20) {
+  return items.filter((item) => item.audioCandidates.length === 1 && !item.probableInstrumental && item.timestampStatus !== "invalid").slice(0, limit).map((item) => ({
+    ...item,
+    reviewStatus: "pending",
+    review: { audioMatchesLyrics: null, isVocalRecording: null, timestampsVerified: null, correctedTimestampCount: 0, notes: "" },
+  }));
+}

@@ -102,7 +102,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 52 | Integration tests | ⏳ | Add audio + lyrics + export fixture tests. |
 | 53 | Benchmark dataset | 🟡 | Private library-audit manifest tool now inventories local pairs without copying media; rights-cleared ground truth is next. |
 | 54 | Dataset categories | 🟡 | Manifest captures language-independent lyric/timestamp/instrumental review flags; genre/recording metadata is next. |
-| 55 | Ground truth | ⏳ | Manually verify candidate pairs; never assume downloaded LRC timestamps are ground truth. |
+| 55 | Ground truth | 🟡 | Private review queue and manual checklist now exist; no real pair is considered verified yet. |
 | 56 | Experiment 1: energy baseline | 🟡 | Implemented as initial timing; reproducible metrics runner and synthetic smoke fixture now exist; rights-cleared audio evaluation is next. |
 | 57 | Experiment 2: spectral | ⏳ | Planned. |
 | 58 | Experiment 3: MFCC | ⏳ | Planned. |
@@ -160,7 +160,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 110 | Fourth technical milestone | ⏳ | Vocal separation comparison planned. |
 | 111 | Fifth technical milestone | 🔭 | Robust combined aligner later. |
 | 112 | Sixth technical milestone | 🟡 | Benchmark tooling and private-library manifest exist; rights-cleared dataset expansion follows. |
-| 113 | Success criteria | 🟡 | Local import, editing, LRC, privacy, logs and modularity are met; automatic accuracy, separation and benchmarks remain. |
+| 113 | Success criteria | 🟡 | Local import, editing, LRC, privacy, logs and modularity are met; manual ground truth and automatic accuracy remain. |
 | 114 | Final research question | ⏳ | Answer with measured benchmark results—not assumptions. |
 | 115 | Final project aim | 🟡 | Architecture follows the aim; required experimental proof and advanced stages remain. |
 | 116 | Final project identity | ✅ | Project is described as an audio-text synchronization engine and LRC generator, not merely an LRC generator. |
@@ -171,8 +171,8 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 
 ## Recommended next steps
 
-1. Review the private library manifest, exclude instrumental/mismatched/unverified items, and create a small rights-cleared ground-truth set.
-2. Select rights-cleared verified pairs from the private manifest and measure the energy baseline.
+1. Follow `benchmarks/REVIEW_GUIDE.md` and manually verify 5–10 clear vocal pairs from the private queue.
+2. Select verified pairs from the private manifest and measure the energy baseline.
 3. Connect MFCC/DTW to a line-level acoustic-template strategy, then compare it with the energy baseline.
 4. Integrate a modular local vocal separator and compare full-mix versus vocal-assisted results.
 5. Add packaging/release automation only after the desktop workflow is stable.

@@ -9,7 +9,7 @@ import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { saveProject, loadProject } from "../src/project-store.mjs";
-import { classifyLyricsText, normalizeStem } from "../src/dataset.js";
+import { classifyLyricsText, createReviewQueue, normalizeStem } from "../src/dataset.js";
 import { extractMfcc } from "../src/features.js";
 import { constrainedDtw } from "../src/dtw.js";
 import { alignMfccSequences } from "../src/mfcc-dtw.js";
@@ -75,6 +75,15 @@ test("dataset classification separates timestamp and review states", () => {
   assert.equal(classifyLyricsText("one\ntwo", "song.lrc").timestampStatus, "untimestamped");
   assert.equal(classifyLyricsText("[00:01.00]one\ntwo", "piano.lrc").reviewRequired, true);
   assert.equal(normalizeStem("Song (Official Video) - SenSongsMp3.Co.mp3"), "song");
+});
+
+test("review queue excludes likely instrumentals and requires manual decisions", () => {
+  const queue = createReviewQueue([
+    { lyricPath: "a.lrc", audioCandidates: ["a.mp3"], probableInstrumental: false, timestampStatus: "fully_timestamped" },
+    { lyricPath: "piano.lrc", audioCandidates: ["piano.mp3"], probableInstrumental: true, timestampStatus: "fully_timestamped" },
+  ], 20);
+  assert.equal(queue.length, 1);
+  assert.equal(queue[0].review.timestampsVerified, null);
 });
 
 test("MFCC extraction returns finite feature frames", () => {
