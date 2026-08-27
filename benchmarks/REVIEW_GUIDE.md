@@ -41,3 +41,14 @@ $env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
 ```
 
 The validator separates `approved`, `pending`, and `rejected` items. An approved item is marked `benchmarkReady` only when its manually verified `reference` timestamp array has also been added. Approval is never inferred from a downloaded LRC file.
+
+## Import the separate private analysis copy
+
+If you have a prepared `dataset_private` folder with `private_match_inventory.csv`, import its metadata into an ignored local candidate file:
+
+```powershell
+$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
+& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe' scripts/import-private-manifest.mjs 'C:\Users\aksha\Desktop\manus lyric-sync\dataset_private'
+```
+
+This does not copy or read the audio. It carries forward timestamp status, match score and special-version flags, and marks every item `benchmarkReady: false` until a human adds verified reference timestamps.

@@ -218,6 +218,18 @@ The repository uses small, descriptive commits so a beginner can inspect one mil
 
 **Future:** Derive templates from verified anchors/vocal separation, compare candidate costs for confidence, handle silence/intro/outro, and integrate only after real-data evidence.
 
+### 5.13 Private manifest import and review gate
+
+**Why:** Your separate private copy already contains richer matching results than the generic folder audit. We need to use those results without placing audio, lyrics, or private paths in GitHub.
+
+**How:** `src/private-manifest.js` parses quoted CSV safely and converts each row into a research candidate. `scripts/import-private-manifest.mjs` reads only `private_match_inventory.csv` plus the names in the copied `audio/` and `lyrics/` directories, preserves match/timestamp/special-version metadata, and writes an ignored JSON candidate file. It never copies or decodes source media. Each row records `audioExists` and `lyricExists` so a report claim cannot create a phantom pair. `benchmarkReady` stays false until manual reference timestamps exist.
+
+**Files:** `src/private-manifest.js`, `scripts/import-private-manifest.mjs`, `benchmarks/REVIEW_GUIDE.md`, `.gitignore`.
+
+**Current limit:** The importer cannot prove a filename match, vocal presence, or timestamp correctness. It is organization and safety tooling, not a replacement for listening review.
+
+**Future:** Add an in-app review screen, import corrected timelines from LyricSync projects, attach duration/codec metadata, and produce benchmark cases only from explicitly approved rows.
+
 ## 6. How the complete system links together
 
 ```text

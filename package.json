@@ -10,6 +10,7 @@
     "audit-library": "node scripts/audit-library.mjs",
     "create-review-queue": "node scripts/create-review-queue.mjs",
     "validate-review-queue": "node scripts/validate-review-queue.mjs",
+    "import-private-manifest": "node scripts/import-private-manifest.mjs",
     "test": "node --test"
   },
   "main": "desktop/main.cjs",

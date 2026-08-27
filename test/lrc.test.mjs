@@ -10,6 +10,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { saveProject, loadProject } from "../src/project-store.mjs";
 import { classifyLyricsText, createReviewQueue, normalizeStem, validateReviewQueue } from "../src/dataset.js";
+import { createResearchCandidates, parseCsv } from "../src/private-manifest.js";
 import { extractMfcc } from "../src/features.js";
 import { constrainedDtw } from "../src/dtw.js";
 import { alignMfccSequences } from "../src/mfcc-dtw.js";
@@ -90,6 +91,15 @@ test("review validation separates pending, rejected and benchmark-ready items", 
   const base = { audioCandidates: ["a.mp3"], review: { audioMatchesLyrics: true, isVocalRecording: true, timestampsVerified: true }, reference: [1] };
   const result = validateReviewQueue([base, { ...base, review: { ...base.review, timestampsVerified: null } }, { ...base, review: { ...base.review, isVocalRecording: false } }]);
   assert.deepEqual(result.summary, { total: 3, approved: 1, benchmarkReady: 1, pending: 1, rejected: 1 });
+});
+
+test("private manifest CSV parsing preserves quoted commas and candidate state", () => {
+  const rows = parseCsv('name,description\n"song, live","a quoted value"\n');
+  assert.equal(rows[0].name, "song, live");
+  const candidates = createResearchCandidates([{ lyric_name: "a.lrc", audio_name_candidate: "a.mp3", lyric_format: ".lrc", timestamp_count: "12", match_score: "1", instrumental_or_special_version_flag: "False", annotation_status: "timestamped_lyrics_lrc", match_status: "matched_high_confidence" }]);
+  assert.equal(candidates[0].reviewStatus, "candidate_ready");
+  assert.equal(candidates[0].benchmarkReady, false);
+  assert.equal(candidates[0].audioName, "a.mp3");
 });
 
 test("MFCC extraction returns finite feature frames", () => {
