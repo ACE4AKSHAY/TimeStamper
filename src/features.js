@@ -4,7 +4,7 @@ function nextPowerOfTwo(value) { let size = 1; while (size < value) size *= 2; r
 function hzToMel(hz) { return 2595 * Math.log10(1 + hz / 700); }
 function melToHz(mel) { return 700 * (10 ** (mel / 2595) - 1); }
 
-function fftMagnitudes(frame) {
+export function fftMagnitudes(frame) {
   const size = nextPowerOfTwo(frame.length); const real = new Float64Array(size); const imag = new Float64Array(size);
   for (let i = 0; i < frame.length; i++) real[i] = frame[i] * (0.54 - 0.46 * Math.cos(TWO_PI * i / Math.max(1, frame.length - 1)));
   for (let i = 1, j = 0; i < size; i++) { let bit = size >> 1; for (; j & bit; bit >>= 1) j ^= bit; j ^= bit; if (i < j) { [real[i], real[j]] = [real[j], real[i]]; } }

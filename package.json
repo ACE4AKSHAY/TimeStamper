@@ -1,6 +1,6 @@
 {
   "name": "lyricsync",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "Offline-first desktop audio-text synchronization foundation",
@@ -11,6 +11,7 @@
     "create-review-queue": "node scripts/create-review-queue.mjs",
     "validate-review-queue": "node scripts/validate-review-queue.mjs",
     "import-private-manifest": "node scripts/import-private-manifest.mjs",
+    "compare-engines": "node scripts/run-engine-comparison.mjs",
     "test": "node --test"
   },
   "main": "desktop/main.cjs",

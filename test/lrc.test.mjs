@@ -15,6 +15,8 @@ import { extractMfcc } from "../src/features.js";
 import { constrainedDtw } from "../src/dtw.js";
 import { alignMfccSequences } from "../src/mfcc-dtw.js";
 import { alignLineTemplates } from "../src/template-aligner.js";
+import { fuseProfiles, normalizeProfile, resampleProfile } from "../src/profile-fusion.js";
+import { extractExplainableProfiles, extractRmsProfile, extractSpectralFluxProfile } from "../src/audio-profiles.js";
 
 test("LRC timestamps round to centiseconds", () => {
   assert.equal(secondsToLrc(12.426), "[00:12.43]");
@@ -133,4 +135,32 @@ test("engine exposes template MFCC-DTW line timestamps", () => {
   const result = synchronize({ lyrics: lines, engine: "template-mfcc-dtw", parameters: { audioFrames: audio, lineTemplates: [[[0], [0.1]], [[1], [1.1]]], frameRate: 10, minLength: 2, maxLength: 4, window: 3 } });
   assert.equal(result.lines[0].startTime, 0);
   assert.equal(result.lines[1].alignmentMethod, "template_mfcc_dtw");
+});
+
+test("profile fusion normalizes and resamples explainable signals", () => {
+  assert.deepEqual(resampleProfile([0, 10], 3), [0, 5, 10]);
+  assert.deepEqual(normalizeProfile([2, 4, 6]), [0, 0.5, 1]);
+  const result = fuseProfiles({ energy: [0, 1, 0], flux: [0, 0, 2] }, { energy: 2, flux: 1 });
+  assert.equal(result.length, 3);
+  assert.deepEqual(result.components, [{ name: "energy", weight: 2 }, { name: "flux", weight: 1 }]);
+  assert.ok(result.profile.every((value) => Number.isFinite(value)));
+});
+
+test("combined profile engine remains deterministic and editable", () => {
+  const lines = ["one", "two", "three"].map((originalText, order) => ({ id: `combined-${order}`, originalText, order }));
+  const result = synchronize({ engine: "combined-profile", lyrics: lines, duration: 30, parameters: { profiles: { energy: [0.1, 0.8, 0.2, 0.7], flux: [0.2, 0.4, 0.9, 0.1] }, weights: { energy: 2, flux: 1 } } });
+  assert.equal(result.engine, "combined-profile");
+  assert.equal(result.lines.length, 3);
+  assert.equal(result.lines[0].alignmentMethod, "combined_profile");
+  assert.ok(result.lines.every((line) => Number.isFinite(line.startTime)));
+});
+
+test("explainable audio profiles extract finite energy and spectral change", () => {
+  const samples = Array.from({ length: 4096 }, (_, index) => (index % 256 < 32 ? Math.sin(index / 3) : 0));
+  const energy = extractRmsProfile(samples, { frameSize: 128, hopSize: 64, bins: 20 });
+  const flux = extractSpectralFluxProfile(samples, { frameSize: 128, hopSize: 64, bins: 20 });
+  assert.equal(energy.length, 20);
+  assert.equal(flux.length, 20);
+  assert.ok([...energy, ...flux].every(Number.isFinite));
+  assert.deepEqual(Object.keys(extractExplainableProfiles(samples, { frameSize: 128, hopSize: 64, bins: 8 })), ["energy", "spectralFlux"]);
 });

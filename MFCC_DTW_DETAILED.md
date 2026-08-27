@@ -230,6 +230,24 @@ The repository uses small, descriptive commits so a beginner can inspect one mil
 
 **Future:** Add an in-app review screen, import corrected timelines from LyricSync projects, attach duration/codec metadata, and produce benchmark cases only from explicitly approved rows.
 
+### 5.14 Explainable profile combination experiment
+
+**Why:** RMS energy alone is a weak boundary signal. The next non-ML experiment combines normalized RMS energy with spectral flux so the engine can test whether sudden spectral changes provide useful complementary evidence.
+
+**How:** `src/audio-profiles.js` extracts finite RMS and spectral-flux arrays from PCM. `src/profile-fusion.js` resamples profiles to a common length, normalizes them independently, and applies explicit weights. `src/combined-aligner.js` sends the fused profile through the existing monotonic editable timeline heuristic. `src/engine.js` exposes this as `engine: "combined-profile"`.
+
+**Experiment:** `scripts/run-engine-comparison.mjs` compares `energy-baseline` and `combined-profile` using the same reference timestamps and writes ignored results. `benchmarks/COMBINATION_EXPERIMENT.md` documents ownership, assumptions, and the real-data protocol.
+
+**Limit:** This is still a candidate generator, not lyric recognition or ground truth. No learned model or internet connection is involved. Real evaluation needs rights-cleared audio and manually verified starts.
+
+### 5.15 Reviewed timeline workflow hardening
+
+**Why:** Manual stamping becomes error-prone when the selected row disappears below the scroll area or when a correction silently creates an impossible timeline.
+
+**How:** `src/app.js` now scrolls the newly selected row into view after `T` stamping, seeks playback when a timestamp or lyric row is clicked, and rejects a timestamp earlier than the previous line. Rejections use a short bottom toast and restore the previous value; no sound or network request is used. Row actions keep accessible labels/tooltips while the clear action uses a trash icon.
+
+**Dynamic shortcuts:** `src/settings.js` stores shortcut keys with the appearance settings. The Settings dialog captures a user-selected key for play/stop, stamp-next-line, and playback nudges, rejects duplicate assignments, and the global handler reads the saved values instead of hard-coded keys.
+
 ## 6. How the complete system links together
 
 ```text

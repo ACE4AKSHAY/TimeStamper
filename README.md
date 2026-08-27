@@ -1,4 +1,4 @@
-# LyricSync v0.1
+# LyricSync v0.3
 
 An offline-first, desktop-first foundation for the **Lightweight Offline Audio-Text Synchronization Engine and LRC Generator** project. This first milestone establishes the editable timeline and project workflow before algorithmic alignment is introduced.
 
@@ -12,11 +12,12 @@ Online lyrics/LRC discovery is deliberately a future **optional connector**, not
 
 - Import common browser-supported audio files, view a decoded waveform, seek and play.
 - Import TXT or LRC lyrics, or paste lyrics directly. UTF-8 and Unicode normalization preserve native scripts such as Telugu, Hindi, Tamil, Japanese and more; lyrics do not need a language selection to work. A one-line lyric document is also valid.
-- Edit a line-level timeline: select a line and stamp either the current position or a typed time, use `T`, or adjust by a user-chosen millisecond value (100 ms by default).
+- Edit a line-level timeline: select a line and stamp either the current position or a typed time, use the configurable stamp shortcut (default `T`), or adjust by a user-chosen millisecond value (100 ms by default). Clicking a timestamp or lyric row seeks the audio and waveform to that point; stamping scrolls the next selected line into view, and a short toast prevents out-of-order timestamps.
 - Click or drag the waveform to seek, with millisecond time feedback. Use a direct time field for exact navigation.
-- General Settings provide built-in themes, waveform colour and text-size preferences, plus a discoverable shortcut list. Settings are stored locally and isolated from the synchronization engine.
+- General Settings provide built-in themes, waveform colour and text-size preferences, plus user-editable shortcuts for play/stop, stamping and playback nudging. Settings are stored locally and isolated from the synchronization engine.
 - Transport includes hold-to-rewind and hold-to-fast-forward controls, a separate reset-to-start control, and a stop button that preserves the current position.
 - The next research layer is available as **Initial timing**: a local RMS-energy baseline that distributes existing lyric lines through active audio. It is intentionally labelled as a low-confidence editable estimate—not lyric recognition—and should be reviewed line by line.
+- The reusable engine also exposes a deterministic **combined-profile** experiment that fuses normalized RMS energy and spectral flux with explicit weights. It is isolated from the UI and contains no AI/ML model or network dependency.
 - Export valid centisecond LRC, including optional title, artist, album and language metadata.
 - Save/reopen a human-readable `.lyricsync.json` project. Audio is deliberately only referenced by name; reselect it after reopening so the application does not copy large private media files.
 - Human-readable activity log download.
@@ -72,9 +73,13 @@ The v0.1 browser UI is a thin client over reusable ES modules:
 - `src/project-store.mjs` — structured local project directory storage for desktop/CLI workflows
 - `src/metrics.js` and `scripts/run-benchmark.mjs` — accuracy and resource measurement for experiments
 - `src/features.js` — configurable pure-JavaScript MFCC extraction
+- `src/audio-profiles.js` and `src/profile-fusion.js` — explainable RMS/spectral-flux extraction and weighted profile fusion
+- `src/combined-aligner.js` — reusable combined-profile candidate generator
 - `src/dtw.js` and `src/mfcc-dtw.js` — constrained DTW and MFCC sequence alignment
 
 MFCC and constrained DTW primitives are now present. They compare two feature sequences; they do not magically infer words from lyrics. The next research task is to define and validate how each known lyric line gets an acoustic/template representation, then use that representation to produce line timestamps. This keeps the research honest and prevents a generic DTW path from being mislabeled as lyric recognition.
+
+Run `npm run compare-engines` to compare the energy baseline and combined profile on the checked-in synthetic fixture. The output is a wiring smoke test, not evidence of real-song accuracy.
 
 The platform-neutral core can be reused by a future mobile client or a native frontend on another operating system. Vocal separation, full automatic line mapping, forced alignment, and automatic engine selection remain later stages.
 

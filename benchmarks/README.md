@@ -22,3 +22,12 @@ Run the synthetic smoke benchmark with:
 $env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
 & 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe' scripts/run-benchmark.mjs benchmarks/example.synthetic.json
 ```
+
+Compare the deterministic energy baseline with the explainable weighted profile engine:
+
+```powershell
+$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
+& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe' scripts/run-engine-comparison.mjs benchmarks/example.synthetic.json
+```
+
+The comparison consumes explicit `energy` and `spectralFlux` arrays, normalizes each to 0..1, fuses them using documented weights, and reports the same timestamp metrics for both methods. Results are generated under `benchmarks/results/`, which is ignored by Git. Synthetic results validate wiring only; real accuracy requires rights-cleared audio and manually checked line starts.
