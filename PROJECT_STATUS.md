@@ -50,7 +50,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | ---: | --- | :---: | --- |
 | 1 | Project overview | 🟡 | Offline audio-text/LRC foundation is built; automatic synchronization remains experimental. |
 | 2 | Two connected projects | 🟡 | Desktop application exists; reusable engine modules have begun. |
-| 3 | Separate algorithm component | 🟡 | Domain, parser, exporter, energy aligner and UI are separated; formal package boundary is next. |
+| 3 | Separate algorithm component | 🟡 | Platform-neutral `synchronize()` entry point now exists; more engines and packaging are next. |
 | 4 | Patent / open-source consideration | ⚖️ | Keep the repository private until a qualified professional advises on disclosure/patent strategy. |
 | 5 | Core project intention | 🟡 | Offline/local goal is implemented as the architectural default. |
 | 6 | Primary problem | 🟡 | Existing TXT/LRC lyrics are accepted; precise audio-to-line alignment needs continued research. |
@@ -75,7 +75,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 25 | Chroma | ⏳ | Future structure-analysis comparison. |
 | 26 | Onset detection | ⏳ | Future boundary-support comparison. |
 | 27 | Audio feature fusion | ⏳ | Add only after individual extractors are benchmarked. |
-| 28 | Alignment engine | 🟡 | RMS baseline module exists; common engine interface is next. |
+| 28 | Alignment engine | 🟡 | Platform-neutral energy-baseline `synchronize()` interface exists; alternate engines are next. |
 | 29 | Dynamic Time Warping | ⏳ | Planned after MFCC feature extraction. |
 | 30 | Dynamic programming | ⏳ | Planned after baseline metrics exist. |
 | 31 | Structure-aware alignment | 🔭 | Later research phase. |
@@ -86,7 +86,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 36 | Human review | ✅ | Playback, waveform, timeline selection and direct timestamp editing work. |
 | 37 | Fast correction | 🟡 | Exact time entry, custom adjustment and insert/duplicate work; undo/redo and tap workflow are next. |
 | 38 | Visualization | 🟡 | Waveform is done; research plots are later. |
-| 39 | Local project storage | 🟡 | Human-readable project JSON is saved; full structured directory/caches are next. |
+| 39 | Local project storage | 🟡 | Browser download and Node `ProjectStore` structured directory are present; feature caches are next. |
 | 40 | Storage principle | ✅ | Original audio is referenced, not copied into project JSON. |
 | 41 | Cache design | ⏳ | Add file-backed feature cache after desktop storage structure. |
 | 42 | Reproducibility | 🟡 | Method/confidence fields are saved; full run configuration record is next. |
@@ -126,7 +126,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 76 | Modular feature extraction | 🟡 | RMS is separate; formal extractor interface and additional extractors are next. |
 | 77 | Modular alignment | 🟡 | Energy aligner is standalone; common contract and alternate engines are next. |
 | 78 | Modular export | 🟡 | LRC exporter is separate; other exporters are future modules. |
-| 79 | Modular storage | 🟡 | Serializer is separate; ProjectStore/cache filesystem layout is pending. |
+| 79 | Modular storage | 🟡 | Node `ProjectStore` now creates project/audio/lyrics/features/alignment/timeline/etc. folders; cache policy is next. |
 | 80 | Logging module | ✅ | `ProjectLogger` is a standalone module. |
 | 81 | Experiment reproducibility | ⏳ | Add dataset/version/machine/config captured runs. |
 | 82 | Results format | 🟡 | Energy benchmark writes JSON and Markdown; CSV is next. |
@@ -143,7 +143,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 93 | Default configuration | 🟡 | Current defaults favour local manual correction; algorithm defaults need benchmarks. |
 | 94 | CLI | ⏳ | Add after platform-neutral engine API exists. |
 | 95 | Batch processing | 🔭 | Future feature after reliable non-interactive engine. |
-| 96 | Library/API | ⏳ | Extract engine package/API before mobile or alternate frontend. |
+| 96 | Library/API | 🟡 | Platform-neutral `synchronize()` API now exists; extract/publish a formal package after more engines stabilize. |
 | 97 | License | ⚖️ | Decide only after dependency, commercial and patent strategy review. |
 | 98 | Development phases | 🟡 | Phases 1–3 foundation/RMS baseline are underway; do not jump to advanced phases prematurely. |
 | 99 | Version 0.1 | ✅ | Audio import, TXT/LRC/paste, waveform, playback, manual timestamping, LRC, project save and logs are present. |
@@ -159,7 +159,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 109 | Third technical milestone | ⏳ | MFCC + DTW comparison planned. |
 | 110 | Fourth technical milestone | ⏳ | Vocal separation comparison planned. |
 | 111 | Fifth technical milestone | 🔭 | Robust combined aligner later. |
-| 112 | Sixth technical milestone | ⏳ | Benchmark tooling follows the baseline. |
+| 112 | Sixth technical milestone | 🟡 | Benchmark tooling and metrics exist; rights-cleared dataset expansion follows. |
 | 113 | Success criteria | 🟡 | Local import, editing, LRC, privacy, logs and modularity are met; automatic accuracy, separation and benchmarks remain. |
 | 114 | Final research question | ⏳ | Answer with measured benchmark results—not assumptions. |
 | 115 | Final project aim | 🟡 | Architecture follows the aim; required experimental proof and advanced stages remain. |
@@ -172,7 +172,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 ## Recommended next steps
 
 1. Replace the synthetic fixture with a small rights-cleared, manually verified dataset and run the benchmark.
-2. Introduce a platform-neutral engine API and file-backed `ProjectStore`/feature cache.
+2. Add a rights-cleared dataset manifest and run the energy benchmark against verified pairs.
 3. Add spectrogram/MFCC extractors and a constrained DTW comparison.
 4. Integrate a modular local vocal separator and compare full-mix versus vocal-assisted results.
 5. Add packaging/release automation only after the desktop workflow is stable.

@@ -68,6 +68,9 @@ The v0.1 browser UI is a thin client over reusable ES modules:
 - `src/app.js` — UI, playback, waveform visualization and manual editor
 - `desktop/` — minimal secure Electron shell; the renderer has no Node.js access
 - `src/online-provider.js` — optional online-search contract, intentionally unused by core functionality
+- `src/engine.js` — platform-neutral `synchronize()` entry point for reusable alignment engines
+- `src/project-store.mjs` — structured local project directory storage for desktop/CLI workflows
+- `src/metrics.js` and `scripts/run-benchmark.mjs` — accuracy and resource measurement for experiments
 
 The next phase should extract the existing modules into a platform-neutral engine package, then add a measurable RMS/energy baseline. That core can be reused by a future mobile client or a native frontend on another operating system. Vocal separation, MFCC/DTW, forced alignment, and automatic timestamping are intentionally deferred until their hypotheses and benchmarks are ready.
 

@@ -4,6 +4,11 @@ import { secondsToLrc, lrcToSeconds, exportLrc } from "../src/lrc.js";
 import { parseLyrics } from "../src/lyrics.js";
 import { createProject } from "../src/domain.js";
 import { createEnergyInitialTimeline } from "../src/energy-aligner.js";
+import { synchronize } from "../src/engine.js";
+import { mkdtemp, readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { saveProject, loadProject } from "../src/project-store.mjs";
 
 test("LRC timestamps round to centiseconds", () => {
   assert.equal(secondsToLrc(12.426), "[00:12.43]");
@@ -41,4 +46,21 @@ test("energy baseline creates ordered editable initial timestamps", () => {
   assert.ok(output[0].startTime <= output[1].startTime);
   assert.ok(output[1].startTime <= output[2].startTime);
   assert.equal(output[0].alignmentMethod, "energy_baseline");
+});
+
+test("platform-neutral engine returns reproducible structured alignment", () => {
+  const lines = parseLyrics("one\ntwo").lines;
+  const result = synchronize({ lyrics: lines, energyProfile: [0.1, 0.8, 0.2], duration: 30 });
+  assert.equal(result.engine, "energy-baseline");
+  assert.equal(result.lines.length, 2);
+  assert.ok(result.lines.every((line) => line.alignmentMethod === "energy_baseline"));
+});
+
+test("file-backed ProjectStore keeps a reopenable project layout", async () => {
+  const root = await mkdtemp(join(tmpdir(), "lyricsync-test-"));
+  const project = createProject(); project.timeline.lines = parseLyrics("hello").lines; project.lyrics.lines = project.timeline.lines;
+  await saveProject(project, root);
+  const loaded = await loadProject(root);
+  assert.equal(loaded.timeline.lines[0].originalText, "hello");
+  assert.match(await readFile(join(root, "timeline", "timeline.json"), "utf8"), /hello/u);
 });
