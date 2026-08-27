@@ -10,6 +10,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { saveProject, loadProject } from "../src/project-store.mjs";
 import { classifyLyricsText, normalizeStem } from "../src/dataset.js";
+import { extractMfcc } from "../src/features.js";
+import { constrainedDtw } from "../src/dtw.js";
+import { alignMfccSequences } from "../src/mfcc-dtw.js";
 
 test("LRC timestamps round to centiseconds", () => {
   assert.equal(secondsToLrc(12.426), "[00:12.43]");
@@ -71,4 +74,21 @@ test("dataset classification separates timestamp and review states", () => {
   assert.equal(classifyLyricsText("one\ntwo", "song.lrc").timestampStatus, "untimestamped");
   assert.equal(classifyLyricsText("[00:01.00]one\ntwo", "piano.lrc").reviewRequired, true);
   assert.equal(normalizeStem("Song (Official Video) - SenSongsMp3.Co.mp3"), "song");
+});
+
+test("MFCC extraction returns finite feature frames", () => {
+  const samples = Array.from({ length: 1024 }, (_, i) => Math.sin(2 * Math.PI * 5 * i / 128));
+  const result = extractMfcc(samples, 8000, { frameSize: 128, hopSize: 64, melBands: 10, coefficients: 6 });
+  assert.ok(result.frames.length > 1);
+  assert.equal(result.frames[0].length, 6);
+  assert.ok(result.frames.flat().every(Number.isFinite));
+});
+
+test("constrained DTW returns an ordered path and MFCC adapter metadata", () => {
+  const a = [[0], [1], [2], [3]]; const b = [[0], [1.1], [2.2]];
+  const result = constrainedDtw(a, b, { window: 2 });
+  assert.ok(result.path.length >= 4);
+  assert.equal(result.path[0][0], 0);
+  assert.equal(result.path.at(-1)[1], 2);
+  assert.equal(alignMfccSequences({ frames: a, frameRate: 10 }, { frames: b, frameRate: 8 }).method, "mfcc_dtw");
 });

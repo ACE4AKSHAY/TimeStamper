@@ -64,19 +64,19 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 14 | Vocal separation implementation | ⏳ | Define pluggable Demucs/FutureSeparator adapter after baseline evaluation. |
 | 15 | User processing modes | ⏳ | Fast/Balanced/Vocal-assisted modes come with separator integration. |
 | 16 | Core pipeline | 🟡 | Local input, parsing, waveform/RMS, timeline and LRC export work; remaining analysis/alignment stages are pending. |
-| 17 | Audio analysis | 🟡 | Waveform and RMS are implemented; other features await experiments. |
+| 17 | Audio analysis | 🟡 | Waveform/RMS and MFCC are implemented; spectrogram/pitch/spectral/chroma/onset features await experiments. |
 | 18 | Waveform | ✅ | Visual, clickable/draggable seekable waveform is implemented. |
 | 19 | RMS / energy | ✅ | RMS energy extraction and a clearly labelled initial-timing baseline are implemented. |
 | 20 | Spectrogram | ⏳ | Add only as a measurable feature extractor. |
 | 21 | Mel spectrogram | ⏳ | Future research comparison. |
-| 22 | MFCC | ⏳ | Future research comparison. |
+| 22 | MFCC | 🟡 | Pure-JS MFCC extractor with configurable frame/hop/mel/coefficient settings is implemented and tested. |
 | 23 | Pitch / F0 | ⏳ | Future research comparison. |
 | 24 | Spectral features | ⏳ | Future research comparison. |
 | 25 | Chroma | ⏳ | Future structure-analysis comparison. |
 | 26 | Onset detection | ⏳ | Future boundary-support comparison. |
 | 27 | Audio feature fusion | ⏳ | Add only after individual extractors are benchmarked. |
 | 28 | Alignment engine | 🟡 | Platform-neutral energy-baseline `synchronize()` interface exists; alternate engines are next. |
-| 29 | Dynamic Time Warping | ⏳ | Planned after MFCC feature extraction. |
+| 29 | Dynamic Time Warping | 🟡 | Constrained DTW and MFCC sequence adapter are implemented and tested; lyric-line mapping still needs acoustic templates/features. |
 | 30 | Dynamic programming | ⏳ | Planned after baseline metrics exist. |
 | 31 | Structure-aware alignment | 🔭 | Later research phase. |
 | 32 | Lyric-aware constraints | ⏳ | Global ordering is preserved; stronger constraints await a real alignment engine. |
@@ -148,7 +148,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 98 | Development phases | 🟡 | Phases 1–3 foundation/RMS baseline are underway; do not jump to advanced phases prematurely. |
 | 99 | Version 0.1 | ✅ | Audio import, TXT/LRC/paste, waveform, playback, manual timestamping, LRC, project save and logs are present. |
 | 100 | Version 0.2 | 🟡 | RMS, initial automatic timing, metrics and synthetic benchmark are present; rights-cleared dataset validation is next. |
-| 101 | Version 0.3 | ⏳ | Spectrogram, MFCC, DTW and comparison planned. |
+| 101 | Version 0.3 | 🟡 | MFCC and constrained DTW primitives are present; UI integration and real verified-pair comparison are next. |
 | 102 | Version 0.4 | ⏳ | Vocal separation and full-vs-vocal measurement planned. |
 | 103 | Version 0.5 | ⏳ | Multiple engines and benchmarking planned. |
 | 104 | Version 1.0 | 🔭 | Target after validated line-level synchronization, review workflow, storage, CLI and benchmarks. |
@@ -172,8 +172,8 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 ## Recommended next steps
 
 1. Review the private library manifest, exclude instrumental/mismatched/unverified items, and create a small rights-cleared ground-truth set.
-2. Add a rights-cleared dataset manifest and run the energy benchmark against verified pairs.
-3. Add spectrogram/MFCC extractors and a constrained DTW comparison.
+2. Select rights-cleared verified pairs from the private manifest and measure the energy baseline.
+3. Connect MFCC/DTW to a line-level acoustic-template strategy, then compare it with the energy baseline.
 4. Integrate a modular local vocal separator and compare full-mix versus vocal-assisted results.
 5. Add packaging/release automation only after the desktop workflow is stable.
 

@@ -71,8 +71,12 @@ The v0.1 browser UI is a thin client over reusable ES modules:
 - `src/engine.js` — platform-neutral `synchronize()` entry point for reusable alignment engines
 - `src/project-store.mjs` — structured local project directory storage for desktop/CLI workflows
 - `src/metrics.js` and `scripts/run-benchmark.mjs` — accuracy and resource measurement for experiments
+- `src/features.js` — configurable pure-JavaScript MFCC extraction
+- `src/dtw.js` and `src/mfcc-dtw.js` — constrained DTW and MFCC sequence alignment
 
-The next phase should extract the existing modules into a platform-neutral engine package, then add a measurable RMS/energy baseline. That core can be reused by a future mobile client or a native frontend on another operating system. Vocal separation, MFCC/DTW, forced alignment, and automatic timestamping are intentionally deferred until their hypotheses and benchmarks are ready.
+MFCC and constrained DTW primitives are now present. They compare two feature sequences; they do not magically infer words from lyrics. The next research task is to define and validate how each known lyric line gets an acoustic/template representation, then use that representation to produce line timestamps. This keeps the research honest and prevents a generic DTW path from being mislabeled as lyric recognition.
+
+The platform-neutral core can be reused by a future mobile client or a native frontend on another operating system. Vocal separation, full automatic line mapping, forced alignment, and automatic engine selection remain later stages.
 
 ## Constraints
 
