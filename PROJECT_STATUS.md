@@ -29,6 +29,21 @@ Run tests with the same prefix and `npm.cmd run test`.
 | 🔭 | Future scope / deliberate later phase |
 | ⚖️ | Decision, research, or legal item—not a feature to code yet |
 
+## Resources the project needs
+
+| Stage | Required resources | What is and is not required |
+| --- | --- | --- |
+| Use the current desktop app | A Windows/macOS/Linux computer, local audio files, TXT/LRC lyrics, and NVM Node 22 for development | No internet, GPU, cloud account, paid API, or dataset is required for manual editing and LRC export. |
+| Develop/run the desktop shell | Electron 37 installed through `package.json`; NVM-managed Node/npm | Internet is needed only to install development dependencies. The running app reads local files and works offline. |
+| Support more audio formats | FFmpeg and a local audio-normalization adapter | This is a future packaging/runtime dependency; it is not needed for the current browser-codec-supported inputs. |
+| Build synchronization research | Rights-cleared audio, correct UTF-8 lyrics, manually verified line timestamps, metadata, and repeatable machine measurements | A dataset is needed for scientific claims, regression tests, and comparing algorithms—not for ordinary app use. |
+| Add vocal separation | A pluggable local separator such as Demucs, model storage, CPU/RAM/disk budget, and test tracks | GPU should remain optional; model downloads are setup-time and the offline app must continue to work without the separator. |
+| Future mobile/other OS clients | Platform-neutral engine API plus a client-specific UI/audio layer | Mobile packaging should reuse the engine; it should not make the core depend on Electron. |
+
+### Dataset answer in plain language
+
+You do **not** need a dataset to use LyricSync or to manually create an LRC. You **do** need one to answer the research question honestly: whether energy, MFCC/DTW, vocal separation, or another method is accurate and efficient. Start with the checked-in synthetic fixture only to verify code. For real experiments, keep a small private or rights-cleared set outside Git (20–30 varied tracks is a practical starting point), with UTF-8 lyrics, manually verified line starts, language/genre/recording metadata, and a note of verification. Never use generated timestamps as ground truth, and do not commit copyrighted audio, private lyrics, feature caches, or generated results.
+
 ## Original requirements traceability table
 
 | # | Original brief item | Status | Current position / next action |
@@ -88,7 +103,7 @@ Run tests with the same prefix and `npm.cmd run test`.
 | 53 | Benchmark dataset | ⏳ | Create separately; do not add copyrighted audio to the source repo. |
 | 54 | Dataset categories | ⏳ | Define balanced languages, genres and recording types with the dataset. |
 | 55 | Ground truth | ⏳ | Manually verify timestamps before metrics. |
-| 56 | Experiment 1: energy baseline | 🟡 | Implemented as initial timing; dataset-driven accuracy/speed/RAM measurement is next. |
+| 56 | Experiment 1: energy baseline | 🟡 | Implemented as initial timing; reproducible metrics runner and synthetic smoke fixture now exist; rights-cleared audio evaluation is next. |
 | 57 | Experiment 2: spectral | ⏳ | Planned. |
 | 58 | Experiment 3: MFCC | ⏳ | Planned. |
 | 59 | Experiment 4: pitch | ⏳ | Planned. |
@@ -97,9 +112,9 @@ Run tests with the same prefix and `npm.cmd run test`.
 | 62 | Experiment 7: structure-aware | 🔭 | Later research phase. |
 | 63 | Experiment 8: optional AI baseline | 🔭 | Later comparison only; not the primary design. |
 | 64 | Experimental principle | ✅ | Current energy approach is explicitly a measured hypothesis, not assumed accurate. |
-| 65 | Accuracy metrics | ⏳ | Implement MAE, median AE, RMSE and threshold percentages with benchmark ground truth. |
-| 66 | Performance metrics | ⏳ | Add timing/RTF reporting in experiment runner. |
-| 67 | Resource metrics | ⏳ | Add memory/CPU/GPU/disk measurements in experiment runner. |
+| 65 | Accuracy metrics | 🟡 | MAE, median AE, RMSE and 0.25/0.50/1.00-second thresholds are implemented in `src/metrics.js`. |
+| 66 | Performance metrics | 🟡 | Benchmark runner records runtime; RTF and stage timings are next. |
+| 67 | Resource metrics | 🟡 | Benchmark runner records observed Node heap; CPU/GPU/disk measurements are next. |
 | 68 | UX metrics | ⏳ | Track corrections and review time after usable automatic alignment exists. |
 | 69 | Failure analysis | ⏳ | Add failure categories to benchmark reports. |
 | 70 | Multilingual support | ✅ | UTF-8/Unicode lyric storage and parsing are tested; performance measurement by language is pending. |
@@ -114,7 +129,7 @@ Run tests with the same prefix and `npm.cmd run test`.
 | 79 | Modular storage | 🟡 | Serializer is separate; ProjectStore/cache filesystem layout is pending. |
 | 80 | Logging module | ✅ | `ProjectLogger` is a standalone module. |
 | 81 | Experiment reproducibility | ⏳ | Add dataset/version/machine/config captured runs. |
-| 82 | Results format | ⏳ | Add CSV, JSON and Markdown experiment reports. |
+| 82 | Results format | 🟡 | Energy benchmark writes JSON and Markdown; CSV is next. |
 | 83 | Research report | ⏳ | Draft after benchmark evidence exists. |
 | 84 | Existing-system research | ⏳ | Research architectures/licensing/limitations before implementing advanced engines. |
 | 85 | Do not copy existing projects | ✅ | Current implementation is independent and modular. |
@@ -132,7 +147,7 @@ Run tests with the same prefix and `npm.cmd run test`.
 | 97 | License | ⚖️ | Decide only after dependency, commercial and patent strategy review. |
 | 98 | Development phases | 🟡 | Phases 1–3 foundation/RMS baseline are underway; do not jump to advanced phases prematurely. |
 | 99 | Version 0.1 | ✅ | Audio import, TXT/LRC/paste, waveform, playback, manual timestamping, LRC, project save and logs are present. |
-| 100 | Version 0.2 | 🟡 | RMS and initial automatic timing are present; benchmarked confidence prototype is next. |
+| 100 | Version 0.2 | 🟡 | RMS, initial automatic timing, metrics and synthetic benchmark are present; rights-cleared dataset validation is next. |
 | 101 | Version 0.3 | ⏳ | Spectrogram, MFCC, DTW and comparison planned. |
 | 102 | Version 0.4 | ⏳ | Vocal separation and full-vs-vocal measurement planned. |
 | 103 | Version 0.5 | ⏳ | Multiple engines and benchmarking planned. |
@@ -156,7 +171,7 @@ Run tests with the same prefix and `npm.cmd run test`.
 
 ## Recommended next steps
 
-1. Add benchmark fixtures and metrics for the energy baseline. This turns the current initial-timing feature into evidence rather than a guess.
+1. Replace the synthetic fixture with a small rights-cleared, manually verified dataset and run the benchmark.
 2. Introduce a platform-neutral engine API and file-backed `ProjectStore`/feature cache.
 3. Add spectrogram/MFCC extractors and a constrained DTW comparison.
 4. Integrate a modular local vocal separator and compare full-mix versus vocal-assisted results.
