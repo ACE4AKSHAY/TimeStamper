@@ -168,14 +168,16 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 118 | Technical principle | ✅ | Energy baseline is marked experimental and is testable/replaceable. |
 | 119 | Product principle | 🟡 | UI already follows select/import → review → export; processing-mode choice arrives with separation. |
 | 120 | Final vision | 🔭 | Reusable timestamped-text technology remains the long-term direction after core lyric alignment is proven. |
+| 121 | Real-data preparation | 🟡 | `scripts/prepare-local-evaluation.mjs` now creates ignored metadata-only stubs from the private collection; a local PCM decoder and manually verified references are still needed for trustworthy accuracy measurements. |
 
 ## Recommended next steps
 
-1. Follow `benchmarks/REVIEW_GUIDE.md` and manually verify 5–10 clear vocal pairs from the private queue.
-2. Select verified pairs from the private manifest and measure the energy baseline.
-3. Connect MFCC/DTW to a line-level acoustic-template strategy, then compare it with the energy baseline.
-4. Integrate a modular local vocal separator and compare full-mix versus vocal-assisted results.
-5. Add packaging/release automation only after the desktop workflow is stable.
+1. Run `scripts/prepare-local-evaluation.mjs` and follow `benchmarks/REAL_DATA_EVALUATION.md`.
+2. Manually verify 5–10 clear vocal pairs from the private queue; downloaded LRC timestamps remain suggestions.
+3. Add an optional local PCM decoder adapter and measure the energy/profile/DP engines on those references.
+4. Connect MFCC/DTW to a line-level acoustic-template strategy, then compare it with the profile engines.
+5. Integrate a modular local vocal separator and compare full-mix versus vocal-assisted results.
+6. Add packaging/release automation only after the desktop workflow is stable.
 
 ## Version-history rule
 

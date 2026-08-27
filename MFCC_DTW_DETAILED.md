@@ -264,6 +264,32 @@ The repository uses small, descriptive commits so a beginner can inspect one mil
 
 `scripts/run-ablation-study.mjs` compares the preserved energy, profile-fusion, boundary-DP, and multi-profile engines on identical cases. It reports each method's metrics and MAE delta against the energy baseline. This is the evidence gate for later selection; it does not delete or silently replace any algorithm. See `benchmarks/ABLATION_EXPERIMENT.md`.
 
+### 5.20 Real-data evaluation preparation
+
+**Why:** Synthetic fixtures verify that an implementation is internally
+consistent, but they cannot answer whether a song's recording, lyrics, and
+downloaded timestamps actually belong together. The private collection also
+contains instrumental/special versions and unverified lyric files, so using it
+blindly would produce misleading accuracy claims.
+
+**How:** `scripts/prepare-local-evaluation.mjs` selects a bounded set of
+high-confidence, timestamped, non-special candidates from the private manifest,
+checks that the referenced files exist, parses lyric files as UTF-8, and writes
+ignored metadata-only stubs under `benchmarks/private/`. It preserves absolute
+local paths for the user's machine but never copies audio or lyrics into Git.
+The output records decoder availability and an explicit review object whose
+three Boolean decisions remain `null` until a person listens.
+
+**Boundary:** The current project has no Node-side MP3 decoder dependency and
+this machine has no `ffmpeg`/`ffprobe` command. Chromium can still decode files
+for playback and waveform extraction in the app. Automated acoustic benchmark
+runs need a local PCM decoder adapter; this is the next implementation seam,
+not a reason to couple the engine to Electron.
+
+See `benchmarks/REAL_DATA_EVALUATION.md` for the exact NVM command, privacy
+guarantees, and the small manual gate required before treating results as
+ground truth.
+
 ## 6. How the complete system links together
 
 ```text
@@ -302,6 +328,14 @@ The private-library path is separate from synchronization:
 ```text
 Music folder -> scripts/audit-library.mjs -> ignored local manifest
              -> human review -> approved ground-truth dataset
+
+Private evaluation preparation stays metadata-only:
+
+```text
+private_match_inventory.csv -> scripts/prepare-local-evaluation.mjs
+                            -> ignored local-evaluation.json stubs
+                            -> optional decoder adapter -> same src/engine.js APIs
+```
 ```
 
 ## 7. What “finished” means right now
@@ -317,16 +351,17 @@ Music folder -> scripts/audit-library.mjs -> ignored local manifest
 | DTW | 🟡 | Constrained sequence comparison works; text-to-acoustic mapping remains. |
 | Template line alignment | 🟡 | Algorithm works with templates; template acquisition is unresolved. |
 | Vocal separation | ⏳ | Required capability, not implemented yet. |
-| Fully automatic lyric synchronization | ⏳ | Not claimed yet. |
+| Real private evaluation preparation | 🟡 | Local metadata-only candidate stubs are generated; a PCM decoder and human-verified reference timestamps are still required for accuracy claims. |
+| Fully automatic lyric synchronization | ⏳ | The reusable engines are implemented as candidates; real-data comparison, confidence calibration and difficult-recording fallbacks remain. |
 | Online lyrics/LRC search | 🔭 | Optional future connector, never a core dependency. |
 
 ## 8. Recommended next work
 
-1. Manually select a small set of clearly matching, vocal, rights-cleared or private evaluation pairs from the audit manifest.
-2. Verify line timestamps by listening and record them as ground truth separately from downloaded LRC files.
-3. Add audio duration/codec inspection and approved-dataset metadata.
-4. Benchmark RMS on those pairs and record accuracy/resource results.
-5. Design how acoustic templates are obtained, then compare template-MFCC-DTW against RMS.
+1. Run `scripts/prepare-local-evaluation.mjs` against the private copy; it is now the repeatable preparation command.
+2. Manually select a small set of clearly matching, vocal, rights-cleared or private evaluation pairs from the generated stubs.
+3. Verify line timestamps by listening and record them as ground truth separately from downloaded LRC files.
+4. Add a local PCM decoder adapter (FFmpeg is the simplest optional implementation) and benchmark the engines on those pairs.
+5. Design how acoustic templates are obtained, then compare template-MFCC-DTW against the profile engines.
 6. Add optional vocal separation only after measuring whether its cost improves results.
 
 ## 9. Commands for a beginner

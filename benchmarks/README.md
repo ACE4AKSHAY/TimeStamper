@@ -9,6 +9,7 @@
 - [`PITCH_EXPERIMENT.md`](./PITCH_EXPERIMENT.md) — Experiment 05, autocorrelation pitch/F0 profile.
 - [`MULTI_PROFILE_EXPERIMENT.md`](./MULTI_PROFILE_EXPERIMENT.md) — Experiment 06, energy + spectral flux + pitch combination.
 - [`ABLATION_EXPERIMENT.md`](./ABLATION_EXPERIMENT.md) — Common evidence runner comparing all current non-ML engines.
+- [`REAL_DATA_EVALUATION.md`](./REAL_DATA_EVALUATION.md) — Private-library preparation, decoder boundary, and exact human-review gate.
 
 The checked-in `example.synthetic.json` is only a deterministic smoke fixture; it contains no copyrighted audio. A research dataset is needed to answer whether the algorithm works. It should be kept outside Git unless every audio/lyric item is licensed for redistribution.
 
@@ -25,6 +26,11 @@ case-id/
 `reference.json` should contain `startTime` values in seconds and a note about who/when verified them. Do not use an automatically generated LRC as ground truth. Begin with a small, balanced set (for example 20–30 tracks across languages and recording conditions), then grow it after the measurement process is stable. The application itself does not need a dataset for manual editing or normal offline use; the dataset is needed for scientific evaluation and regression testing.
 
 For a local collection audit (the output is ignored by Git), run `npm run audit-library -- "C:\\Users\\aksha\\Music"`. The manifest records relative paths, timestamp coverage, exact filename candidates and likely instrumental hints. It cannot prove that a lyric file matches the recording or that timestamps are correct; those decisions remain manual.
+
+To prepare a bounded set of real private candidates without copying media into
+the repository, run `npm run prepare-local-evaluation`. The generated
+`benchmarks/private/local-evaluation.json` is ignored by Git and keeps only
+absolute local paths, metadata and empty review fields.
 
 Run the synthetic smoke benchmark with:
 

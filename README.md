@@ -23,6 +23,23 @@ Online lyrics/LRC discovery is deliberately a future **optional connector**, not
 - Human-readable activity log download.
 - Unit tests for LRC parsing/export.
 
+## Real private-library evaluation
+
+The reusable engines are ready for a real-data evaluation pass, but a
+downloaded LRC is not automatically ground truth. Generate ignored,
+metadata-only stubs from the private collection with the requested NVM Node:
+
+```powershell
+$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
+& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' run prepare-local-evaluation
+```
+
+The output is `benchmarks/private/local-evaluation.json`; it contains paths and
+review fields, not copied media or lyric text, and is ignored by Git. Review
+5–10 clear vocal pairs in the app before using them as accuracy references.
+See [`benchmarks/REAL_DATA_EVALUATION.md`](benchmarks/REAL_DATA_EVALUATION.md)
+for the exact checklist and the decoder boundary.
+
 ## Run as a desktop application
 
 The project now includes an Electron desktop shell for Windows, macOS and Linux. Install the development dependency once (an internet connection is only needed for that installation), then run it locally:
@@ -82,7 +99,13 @@ MFCC and constrained DTW primitives are now present. They compare two feature se
 
 Run `npm run compare-engines` to compare the energy baseline and combined profile on the checked-in synthetic fixture. The output is a wiring smoke test, not evidence of real-song accuracy.
 
-The platform-neutral core can be reused by a future mobile client or a native frontend on another operating system. Vocal separation, full automatic line mapping, forced alignment, and automatic engine selection remain later stages.
+The platform-neutral core can be reused by a future mobile client or a native frontend on another operating system. The project can technically meet its
+objective as a line-level offline synchronizer: the remaining work is measured
+real-recording validation, confidence/fallback handling, and optional decoder
+or vocal-separation adapters. Near-perfect results for every arbitrary
+recording cannot be guaranteed because wrong lyrics, instrumental versions,
+live timing, noise, overlapping vocals and long intros are genuinely
+ambiguous; verified vocal recordings are the realistic high-accuracy target.
 
 ## Constraints
 
