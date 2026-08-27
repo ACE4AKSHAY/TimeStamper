@@ -6,6 +6,7 @@
 - [`COMBINATION_EXPERIMENT.md`](./COMBINATION_EXPERIMENT.md) — Experiment 02, weighted RMS + spectral flux.
 - [`MFCC_DTW_EXPERIMENT.md`](./MFCC_DTW_EXPERIMENT.md) — Experiment 03, acoustic-template MFCC + constrained DTW.
 - [`BOUNDARY_DP_EXPERIMENT.md`](./BOUNDARY_DP_EXPERIMENT.md) — Experiment 04, duration/onset dynamic programming.
+- [`PITCH_EXPERIMENT.md`](./PITCH_EXPERIMENT.md) — Experiment 05, autocorrelation pitch/F0 profile.
 
 The checked-in `example.synthetic.json` is only a deterministic smoke fixture; it contains no copyrighted audio. A research dataset is needed to answer whether the algorithm works. It should be kept outside Git unless every audio/lyric item is licensed for redistribution.
 

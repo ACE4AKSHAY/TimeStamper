@@ -1,0 +1,12 @@
+{
+  "datasetVersion": "pitch-synthetic-v1",
+  "description": "Deterministic sine and silence segments for testing autocorrelation pitch extraction; no copyrighted audio.",
+  "sampleRate": 8000,
+  "frameSize": 512,
+  "hopSize": 256,
+  "segments": [
+    { "id": "tone-200", "frequencyHz": 200, "durationSeconds": 0.8 },
+    { "id": "tone-320", "frequencyHz": 320, "durationSeconds": 0.8 },
+    { "id": "silence", "frequencyHz": 0, "durationSeconds": 0.8 }
+  ]
+}

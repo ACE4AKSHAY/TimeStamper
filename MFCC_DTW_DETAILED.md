@@ -252,6 +252,10 @@ The repository uses small, descriptive commits so a beginner can inspect one mil
 
 `src/boundary-dp-aligner.js` is a separate deterministic segment optimizer. It chooses monotonic line boundaries using explicit duration-deviation and onset-reward costs. The reusable `boundary-dp` engine, fixture, runner, and rationale live alongside—not instead of—the other experiments. See `benchmarks/BOUNDARY_DP_EXPERIMENT.md` for the assumptions, wiring command, synthetic result, and real-data limitations.
 
+### 5.17 Pitch/F0 experiment
+
+`src/pitch-profile.js` is an independent bounded-autocorrelation estimator for voiced fundamental frequency and silence. It produces both per-frame pitch metadata and a voicedness profile that can be tested later as a fusion input. `benchmarks/PITCH_EXPERIMENT.md` documents its synthetic quality runner and why pitch alone is not lyric alignment.
+
 ## 6. How the complete system links together
 
 ```text

@@ -74,6 +74,7 @@ The v0.1 browser UI is a thin client over reusable ES modules:
 - `src/metrics.js` and `scripts/run-benchmark.mjs` — accuracy and resource measurement for experiments
 - `src/features.js` — configurable pure-JavaScript MFCC extraction
 - `src/audio-profiles.js` and `src/profile-fusion.js` — explainable RMS/spectral-flux extraction and weighted profile fusion
+- `src/pitch-profile.js` — bounded autocorrelation pitch and voicedness extraction
 - `src/combined-aligner.js` — reusable combined-profile candidate generator
 - `src/dtw.js` and `src/mfcc-dtw.js` — constrained DTW and MFCC sequence alignment
 

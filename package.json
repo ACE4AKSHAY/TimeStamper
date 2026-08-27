@@ -14,6 +14,7 @@
     "compare-engines": "node scripts/run-engine-comparison.mjs",
     "experiment-template-dtw": "node scripts/run-template-dtw-experiment.mjs",
     "experiment-boundary-dp": "node scripts/run-boundary-dp-experiment.mjs",
+    "experiment-pitch": "node scripts/run-pitch-experiment.mjs",
     "test": "node --test"
   },
   "main": "desktop/main.cjs",

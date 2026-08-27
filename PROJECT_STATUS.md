@@ -70,7 +70,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 20 | Spectrogram | ⏳ | Add only as a measurable feature extractor. |
 | 21 | Mel spectrogram | ⏳ | Future research comparison. |
 | 22 | MFCC | 🟡 | Pure-JS MFCC extractor with configurable frame/hop/mel/coefficient settings is implemented and tested. |
-| 23 | Pitch / F0 | ⏳ | Future research comparison. |
+| 23 | Pitch / F0 | 🟡 | Pure-JS bounded autocorrelation pitch/voicedness extractor and synthetic quality runner are implemented; real vocal evaluation is next. |
 | 24 | Spectral features | ⏳ | Future research comparison. |
 | 25 | Chroma | ⏳ | Future structure-analysis comparison. |
 | 26 | Onset detection | ⏳ | Future boundary-support comparison. |
@@ -106,7 +106,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 56 | Experiment 1: energy baseline | 🟡 | Implemented as initial timing; reproducible metrics runner, synthetic smoke fixture and dedicated experiment document exist; rights-cleared audio evaluation is next. |
 | 57 | Experiment 2: spectral | ⏳ | Planned. |
 | 58 | Experiment 3: MFCC | 🟡 | Acoustic-template MFCC + constrained DTW runner, fixture and dedicated document are implemented; real template acquisition/evaluation is next. |
-| 59 | Experiment 4: pitch | ⏳ | Planned. |
+| 59 | Experiment 4: pitch | 🟡 | Dedicated pitch experiment, synthetic fixture, runner and documentation are implemented; rights-cleared vocal evaluation is next. |
 | 60 | Experiment 5: combined features | 🟡 | Deterministic energy-vs-spectral-flux comparison script and synthetic fixture are implemented; rights-cleared evaluation is next. |
 | 61 | Experiment 6: separation comparison | ⏳ | Planned with vocal separator. |
 | 62 | Experiment 7: structure-aware | 🔭 | Later research phase. |

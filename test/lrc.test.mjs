@@ -18,6 +18,7 @@ import { alignLineTemplates } from "../src/template-aligner.js";
 import { fuseProfiles, normalizeProfile, resampleProfile } from "../src/profile-fusion.js";
 import { extractExplainableProfiles, extractRmsProfile, extractSpectralFluxProfile } from "../src/audio-profiles.js";
 import { alignByBoundaryDp } from "../src/boundary-dp-aligner.js";
+import { extractPitchProfile, pitchVoicednessProfile } from "../src/pitch-profile.js";
 
 test("LRC timestamps round to centiseconds", () => {
   assert.equal(secondsToLrc(12.426), "[00:12.43]");
@@ -175,4 +176,13 @@ test("boundary dynamic programming returns monotonic constrained segments", () =
   assert.ok(result.segments.every((segment, index) => index === 0 || segment.startFrame >= result.segments[index - 1].endFrame));
   const engineResult = synchronize({ engine: "boundary-dp", lyrics: lines, duration: 12, parameters: { profile, minLength: 2, maxLength: 6 } });
   assert.equal(engineResult.lines[0].alignmentMethod, "boundary_dynamic_programming");
+});
+
+test("autocorrelation pitch profile detects a bounded voiced tone", () => {
+  const sampleRate = 8000, samples = Array.from({ length: 4096 }, (_, index) => Math.sin(2 * Math.PI * 200 * index / sampleRate));
+  const pitch = extractPitchProfile(samples, sampleRate, { frameSize: 512, hopSize: 256, minFrequency: 100, maxFrequency: 400 });
+  const voiced = pitch.frames.filter((frame) => frame.voiced);
+  assert.ok(voiced.length > 0);
+  assert.ok(Math.abs(voiced[Math.floor(voiced.length / 2)].frequencyHz - 200) < 8);
+  assert.equal(pitchVoicednessProfile(pitch).length, pitch.frames.length);
 });
