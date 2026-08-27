@@ -84,10 +84,11 @@
         <label>Text size
           <select id="text-scale-setting"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select>
         </label>
-        <div class="settings-shortcuts"><h3>Keyboard shortcuts</h3><dl><div><dt><kbd>Space</kbd></dt><dd>Play or stop</dd></div><div><dt><kbd>T</kbd></dt><dd>Stamp selected line at the chosen stamp time</dd></div><div><dt><kbd>←</kbd> / <kbd>→</kbd></dt><dd>Move waveform position by the chosen adjustment</dd></div></dl></div>
+        <div class="settings-shortcuts"><h3>Keyboard shortcuts</h3><p class="hint">Click a field, then press the key you want to use.</p><div class="shortcut-grid"><label>Play / stop <input id="shortcut-play" class="shortcut-input" type="text" readonly></label><label>Stamp next line <input id="shortcut-stamp" class="shortcut-input" type="text" readonly></label><label>Move playback earlier <input id="shortcut-earlier" class="shortcut-input" type="text" readonly></label><label>Move playback later <input id="shortcut-later" class="shortcut-input" type="text" readonly></label></div></div>
         <div class="actions"><button id="reset-settings" type="button">Reset defaults</button><button class="primary" id="save-settings" value="default">Save settings</button></div>
       </form>
     </dialog>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <input id="project-file" type="file" accept=".json" hidden />
     <script type="module" src="src/app.js"></script>
   </body>

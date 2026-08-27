@@ -7,7 +7,7 @@ import { DEFAULT_SETTINGS, applySettings, loadSettings, saveSettings } from "./s
 import { createEnergyInitialTimeline } from "./energy-aligner.js";
 
 const $ = (id) => document.getElementById(id);
-let project = createProject(); let audioUrl = null; let selectedId = null; let peaks = []; let energyProfile = []; let waveformDragging = false; let scanTimer = null; let scanWasPlaying = false; let settings = loadSettings();
+let project = createProject(); let audioUrl = null; let selectedId = null; let peaks = []; let energyProfile = []; let waveformDragging = false; let scanTimer = null; let scanWasPlaying = false; let toastTimer = null; let settings = loadSettings();
 const log = new ProjectLogger(renderLog); const audio = $("audio");
 const timelineLines = () => project.timeline.lines;
 const timestamp = (time) => Number.isFinite(time) ? secondsToLrc(time) : "—";
@@ -32,6 +32,14 @@ function parseEditorTime(value) {
 function activeStampTime() { const typed = $("stamp-time").value.trim(); return typed ? parseEditorTime(typed) : audio.currentTime; }
 function adjustmentSeconds() { return Math.max(0.001, Number($("adjust-ms").value) / 1000 || 0.1); }
 function updateMetadata() { ["title", "artist", "album", "language"].forEach((key) => { project.metadata[key] = $(key).value.trim(); }); }
+function showToast(message, level = "info") { const toast = $("toast"); toast.textContent = message; toast.className = `toast visible ${level}`; clearTimeout(toastTimer); toastTimer = setTimeout(() => { toast.className = "toast"; }, 2600); }
+function normalizedShortcut(key) { if (key === " ") return "Space"; if (key.length === 1) return key.toUpperCase(); return key; }
+function shortcutLabel(key) { return key === "ArrowLeft" ? "←" : key === "ArrowRight" ? "→" : key === "Escape" ? "Esc" : key; }
+function seekToTime(seconds) { if (!audio.duration || !Number.isFinite(seconds)) return; audio.currentTime = Math.max(0, Math.min(audio.duration, seconds)); updatePositionDisplays(audio.currentTime); renderWaveform(); }
+function selectLine(line, seek = true) { selectedId = line.id; if (seek && Number.isFinite(line.startTime)) seekToTime(line.startTime); renderTimeline(); }
+function scrollSelectedLineIntoView() { requestAnimationFrame(() => { const selected = $("timeline").querySelector("tr.selected"); selected?.scrollIntoView({ block: "nearest", behavior: "smooth" }); }); }
+function previousTimestamp(line) { const index = timelineLines().indexOf(line); return index > 0 ? timelineLines()[index - 1].startTime : null; }
+function acceptsTimestamp(line, seconds) { const previous = previousTimestamp(line); if (Number.isFinite(previous) && seconds < previous) { showToast(`Line ${line.order + 1} must be at or after the previous line (${formatClock(previous)}).`, "warning"); return false; } return true; }
 
 function render() {
   ["title", "artist", "album", "language"].forEach((key) => { $(key).value = project.metadata[key] || ""; });
@@ -47,17 +55,18 @@ function render() {
 function renderTimeline() {
   $("timeline").replaceChildren(...timelineLines().map((line, index) => {
     const tr = document.createElement("tr"); tr.className = line.id === selectedId ? "selected" : "";
-    tr.innerHTML = `<td>${index + 1}</td><td><input class="time-input" aria-label="Timestamp for line ${index + 1}" value="${Number.isFinite(line.startTime) ? formatClock(line.startTime) : ""}" placeholder="mm:ss.mmm"></td><td class="line-text"></td><td class="row-actions"><button aria-label="Stamp chosen time" title="Stamp chosen time">⏱</button> <button aria-label="Clear timestamp" title="Clear timestamp">⌫</button> <button aria-label="Insert empty line after" title="Insert empty line after">＋</button> <button aria-label="Duplicate line" title="Duplicate line">⧉</button></td>`;
+    tr.innerHTML = `<td>${index + 1}</td><td><input class="time-input" aria-label="Timestamp for line ${index + 1}" value="${Number.isFinite(line.startTime) ? formatClock(line.startTime) : ""}" placeholder="mm:ss.mmm"></td><td class="line-text"></td><td class="row-actions"><button aria-label="Stamp chosen time" title="Stamp chosen time">⏱</button> <button aria-label="Clear timestamp" title="Clear timestamp">🗑</button> <button aria-label="Insert empty line after" title="Insert empty line after">＋</button> <button aria-label="Duplicate line" title="Duplicate line">⧉</button></td>`;
     tr.querySelector(".line-text").textContent = line.originalText;
-    tr.addEventListener("click", (event) => { if (!event.target.matches("input,button")) { selectedId = line.id; renderTimeline(); } });
-    tr.querySelector(".line-text").addEventListener("click", () => { selectedId = line.id; renderTimeline(); });
+    tr.addEventListener("click", (event) => { if (!event.target.matches("input,button")) selectLine(line); });
+    tr.querySelector(".line-text").addEventListener("click", () => selectLine(line));
+    tr.querySelector("input").addEventListener("click", () => { if (selectedId !== line.id) selectLine(line); else if (Number.isFinite(line.startTime)) seekToTime(line.startTime); });
     tr.querySelector("input").addEventListener("change", (event) => setTimestamp(line, event.target.value));
     tr.querySelectorAll("button")[0].addEventListener("click", () => stamp(line));
     tr.querySelectorAll("button")[1].addEventListener("click", () => { line.startTime = null; line.manuallyCorrected = true; log.info(`Cleared timestamp for line ${index + 1}`); render(); });
     tr.querySelectorAll("button")[2].addEventListener("click", () => insertLineAfter(index, ""));
     tr.querySelectorAll("button")[3].addEventListener("click", () => insertLineAfter(index, line.originalText, line.startTime));
     return tr;
-  }));
+  })); scrollSelectedLineIntoView();
 }
 
 function insertLineAfter(index, text, startTime = null) {
@@ -69,6 +78,7 @@ function insertLineAfter(index, text, startTime = null) {
 function setTimestamp(line, value) {
   const seconds = parseEditorTime(value);
   if (seconds === null) { log.warning(`Invalid timestamp “${value}”. Use mm:ss.mmm, hh:mm:ss.mmm, or seconds.`); renderTimeline(); return; }
+  if (!acceptsTimestamp(line, seconds)) { renderTimeline(); return; }
   line.startTime = seconds; line.manuallyCorrected = true; selectedId = line.id; log.info(`Set timestamp for line ${line.order + 1} to ${formatClock(seconds)}`); render();
 }
 
@@ -77,13 +87,14 @@ function stamp(line = timelineLines().find((item) => item.id === selectedId)) {
   const time = activeStampTime();
   if (time === null) { log.warning("The stamp time is invalid. Use mm:ss.mmm, hh:mm:ss.mmm, or seconds."); return; }
   const currentIndex = timelineLines().indexOf(line);
-  line.startTime = Math.min(time, audio.duration || time); line.manuallyCorrected = true; selectedId = timelineLines()[currentIndex + 1]?.id || line.id; log.info(`Stamped line ${line.order + 1} at ${formatClock(line.startTime)}${selectedId !== line.id ? "; selected the next line." : ""}`); render();
+  const boundedTime = Math.min(time, audio.duration || time); if (!acceptsTimestamp(line, boundedTime)) return;
+  line.startTime = boundedTime; line.manuallyCorrected = true; selectedId = timelineLines()[currentIndex + 1]?.id || line.id; log.info(`Stamped line ${line.order + 1} at ${formatClock(line.startTime)}${selectedId !== line.id ? "; selected the next line." : ""}`); render();
 }
 
 function shiftSelected(direction) {
   const line = timelineLines().find((item) => item.id === selectedId);
   if (!line || !Number.isFinite(line.startTime)) { log.warning("Select a timestamped line to adjust it."); return; }
-  const delta = direction * adjustmentSeconds(); line.startTime = Math.max(0, line.startTime + delta); line.manuallyCorrected = true; log.info(`Adjusted line ${line.order + 1} by ${Math.round(delta * 1000)} ms`); render();
+  const delta = direction * adjustmentSeconds(); const nextTime = Math.max(0, line.startTime + delta); if (!acceptsTimestamp(line, nextTime)) return; line.startTime = nextTime; line.manuallyCorrected = true; log.info(`Adjusted line ${line.order + 1} by ${Math.round(delta * 1000)} ms`); render();
 }
 
 function createInitialTiming() {
@@ -139,7 +150,7 @@ $("lyrics-file").addEventListener("change", async (event) => { const file = even
 $("load-lyrics").addEventListener("click", () => loadLyrics($("lyrics-text").value)); $("clear-timestamps").addEventListener("click", () => { timelineLines().forEach((line) => { line.startTime = null; }); log.info("Cleared all timestamps."); render(); });
 $("play-toggle").addEventListener("click", togglePlayback); $("seek").addEventListener("input", (event) => { const seconds = Number(event.target.value); audio.currentTime = seconds; updatePositionDisplays(seconds); renderWaveform(); });
 $("reset-audio").addEventListener("click", resetAudio); ["pointerup", "pointerleave", "pointercancel"].forEach((eventName) => $("rewind").addEventListener(eventName, () => stopScan(-1))); $("rewind").addEventListener("pointerdown", () => startScan(-1)); ["pointerup", "pointerleave", "pointercancel"].forEach((eventName) => $("fast-forward").addEventListener(eventName, () => stopScan(1))); $("fast-forward").addEventListener("pointerdown", () => startScan(1));
-$("jump-to-time").addEventListener("click", () => { const seconds = parseEditorTime($("jump-time").value); if (seconds === null) { log.warning("The Go to time value is invalid."); return; } audio.currentTime = Math.min(seconds, audio.duration || seconds); updatePositionDisplays(); renderWaveform(); });
+$("jump-to-time").addEventListener("click", () => { const seconds = parseEditorTime($("jump-time").value); if (seconds === null) { log.warning("The Go to time value is invalid."); return; } seekToTime(seconds); });
 $("stamp").addEventListener("click", () => stamp()); $("shift-earlier").addEventListener("click", () => shiftSelected(-1)); $("shift-later").addEventListener("click", () => shiftSelected(1));
 $("auto-timestamp").addEventListener("click", createInitialTiming);
 $("waveform").addEventListener("pointerdown", (event) => { waveformDragging = true; $("waveform").setPointerCapture(event.pointerId); seekFromWaveform(event); }); $("waveform").addEventListener("pointermove", (event) => { seekFromWaveform(event, waveformDragging); }); $("waveform").addEventListener("pointerup", (event) => { waveformDragging = false; $("waveform").releasePointerCapture(event.pointerId); $("waveform-tooltip").classList.remove("visible"); }); $("waveform").addEventListener("pointerleave", () => { if (!waveformDragging) $("waveform-tooltip").classList.remove("visible"); });
@@ -148,9 +159,12 @@ $("save-project").addEventListener("click", async () => { updateMetadata(); cons
 $("export-lrc").addEventListener("click", async () => { updateMetadata(); const count = timelineLines().filter((line) => Number.isFinite(line.startTime)).length; if (!count) { log.warning("No timestamps to export."); return; } const result = await saveText(exportLrc(project), `${safeName(project.metadata.title)}.lrc`, "text/plain;charset=utf-8", [{ name: "LRC lyrics", extensions: ["lrc"] }]); if (!result.canceled) log.info(result.path ? `LRC exported: ${result.path}` : `Exported ${count} timestamped line(s) as LRC.`); });
 $("open-project").addEventListener("click", async () => { const desktopFile = await openText([{ name: "LyricSync project", extensions: ["json"] }]); if (!desktopFile) { if (!window.lyricSyncDesktop) $("project-file").click(); return; } try { project = deserializeProject(desktopFile.content); selectedId = project.timeline.lines[0]?.id || null; peaks = []; log.info(`Opened project: ${desktopFile.path}. Re-select the audio file to play it.`); render(); } catch (error) { log.error(error.message); alert(error.message); } });
 $("project-file").addEventListener("change", async (event) => { const file = event.target.files[0]; if (!file) return; try { project = deserializeProject(await file.text()); selectedId = project.timeline.lines[0]?.id || null; peaks = []; log.info(`Opened project: ${file.name}. Re-select the audio file to play it.`); render(); } catch (error) { log.error(error.message); alert(error.message); } }); $("download-log").addEventListener("click", () => downloadText(log.text(), "lyricsync.log", "text/plain;charset=utf-8"));
-$("open-settings").addEventListener("click", () => { $("theme-setting").value = settings.theme; $("waveform-color-setting").value = settings.waveformColor; $("text-scale-setting").value = settings.textScale; $("settings-dialog").showModal(); });
-$("save-settings").addEventListener("click", () => { settings = { theme: $("theme-setting").value, waveformColor: $("waveform-color-setting").value, textScale: $("text-scale-setting").value }; saveSettings(settings); applySettings(settings); renderWaveform(); log.info("General settings saved locally."); });
-$("reset-settings").addEventListener("click", () => { settings = { ...DEFAULT_SETTINGS }; $("theme-setting").value = settings.theme; $("waveform-color-setting").value = settings.waveformColor; $("text-scale-setting").value = settings.textScale; applySettings(settings); renderWaveform(); });
+function setShortcutInput(id, value) { $(id).dataset.shortcut = value; $(id).value = shortcutLabel(value); }
+function populateShortcutInputs() { setShortcutInput("shortcut-play", settings.shortcuts.playToggle); setShortcutInput("shortcut-stamp", settings.shortcuts.stamp); setShortcutInput("shortcut-earlier", settings.shortcuts.playbackEarlier); setShortcutInput("shortcut-later", settings.shortcuts.playbackLater); }
+$("open-settings").addEventListener("click", () => { $("theme-setting").value = settings.theme; $("waveform-color-setting").value = settings.waveformColor; $("text-scale-setting").value = settings.textScale; populateShortcutInputs(); $("settings-dialog").showModal(); });
+$("save-settings").addEventListener("click", (event) => { const readShortcut = (id) => $(id).dataset.shortcut || normalizedShortcut($(id).value); const shortcuts = { playToggle: readShortcut("shortcut-play"), stamp: readShortcut("shortcut-stamp"), playbackEarlier: readShortcut("shortcut-earlier"), playbackLater: readShortcut("shortcut-later") }; if (new Set(Object.values(shortcuts)).size !== Object.values(shortcuts).length) { event.preventDefault(); showToast("Each keyboard shortcut must be different.", "warning"); return; } settings = { theme: $("theme-setting").value, waveformColor: $("waveform-color-setting").value, textScale: $("text-scale-setting").value, shortcuts }; saveSettings(settings); applySettings(settings); renderWaveform(); log.info("General settings and shortcuts saved locally."); });
+$("reset-settings").addEventListener("click", () => { settings = { ...DEFAULT_SETTINGS, shortcuts: { ...DEFAULT_SETTINGS.shortcuts } }; $("theme-setting").value = settings.theme; $("waveform-color-setting").value = settings.waveformColor; $("text-scale-setting").value = settings.textScale; populateShortcutInputs(); applySettings(settings); renderWaveform(); });
+[["shortcut-play", "playToggle"], ["shortcut-stamp", "stamp"], ["shortcut-earlier", "playbackEarlier"], ["shortcut-later", "playbackLater"]].forEach(([id]) => $(id).addEventListener("keydown", (event) => { if (["Tab", "Shift", "Control", "Alt", "Meta"].includes(event.key)) return; event.preventDefault(); const value = normalizedShortcut(event.key); setShortcutInput(id, value); }));
 audio.addEventListener("loadedmetadata", () => { project.audio.duration = audio.duration; $("seek").max = audio.duration; log.info(`Audio duration: ${audio.duration.toFixed(3)} seconds.`); render(); }); audio.addEventListener("timeupdate", () => { updatePositionDisplays(); renderWaveform(); }); audio.addEventListener("play", () => setPlayButton(true)); audio.addEventListener("pause", () => setPlayButton(false)); audio.addEventListener("ended", () => { audio.currentTime = 0; });
-window.addEventListener("keydown", (event) => { if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName) || $("settings-dialog").open) return; if (event.key === " ") { event.preventDefault(); togglePlayback(); } if (event.key.toLowerCase() === "t") { event.preventDefault(); stamp(); } if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); const delta = event.key === "ArrowLeft" ? -adjustmentSeconds() : adjustmentSeconds(); audio.currentTime = Math.max(0, Math.min(audio.duration || Infinity, audio.currentTime + delta)); } });
-applySettings(settings); log.info("LyricSync v0.2 initialized. Processing remains local on this device."); render();
+window.addEventListener("keydown", (event) => { if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName) || $("settings-dialog").open) return; const key = normalizedShortcut(event.key); if (key === settings.shortcuts.playToggle) { event.preventDefault(); togglePlayback(); } else if (key === settings.shortcuts.stamp) { event.preventDefault(); stamp(); } else if (key === settings.shortcuts.playbackEarlier) { event.preventDefault(); seekToTime((audio.currentTime || 0) - adjustmentSeconds()); } else if (key === settings.shortcuts.playbackLater) { event.preventDefault(); seekToTime((audio.currentTime || 0) + adjustmentSeconds()); } });
+applySettings(settings); log.info("LyricSync v0.3 initialized. Processing remains local on this device."); render();
