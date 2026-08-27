@@ -1,63 +1,301 @@
-# MFCC + DTW milestone — detailed beginner guide
+# LyricSync — complete project guide
 
-This document explains exactly what was added in the MFCC/DTW-to-line-timestamp step, why each file exists, and how the pieces connect. It is written so you can review the project even if you are learning software development by experimenting.
+This is the project-wide beginner guide for **Lightweight Offline Audio-Text Synchronization Engine and LRC Generator**. The filename is retained so existing links continue to work; the document now covers the entire repository from the first commit through the current commit, not only MFCC/DTW.
 
-## The problem this milestone addresses
+## 1. Project identity
 
-MFCC describes the sound at short time windows. DTW compares two sequences even when one is stretched or compressed in time. Neither operation understands a Telugu, Hindi, Japanese, English, or any other lyric by itself. To produce a timestamp for a known lyric line, the system needs an **acoustic template** for that line: a feature sequence representing the sound expected for that line.
+| Item | Decision |
+| --- | --- |
+| User outcome | Take an audio recording plus lyrics the user already has and produce editable, timestamped LRC lines. |
+| Core technical question | Can local audio analysis and temporal alignment produce practically useful line timing with modest resources? |
+| Product shape | Desktop-first, offline-first application with a reusable platform-neutral engine. |
+| Online behavior | Optional future lyric/LRC lookup only; no internet is required for importing, editing, synchronizing, saving, or exporting. |
+| Language behavior | Lyrics are treated as UTF-8/Unicode text. Telugu, Hindi, Tamil, Japanese, English and other scripts are not filtered or converted to English. Language selection is metadata, not a prerequisite for alignment. |
+| Current maturity | Version 0.2 development foundation: manual editor, RMS baseline, benchmark tooling, engine/storage modules, MFCC/DTW primitives, and template-assisted alignment. |
 
-The new template aligner accepts one feature template per lyric line and finds a globally ordered segmentation of the audio feature sequence. This is an explicit research boundary, not a hidden claim of speech recognition. A template may eventually come from a manually verified reference, a vocal-isolated clip, or an optional phonetic/acoustic model. The current milestone tests the mechanism with synthetic feature sequences.
+## 2. Status legend
 
-## Files and their links
+| Symbol | Meaning |
+| --- | --- |
+| ✅ | Implemented and covered by a test or direct runtime check |
+| 🟡 | Implemented partially; integration, real-data validation, or hardening remains |
+| ⏳ | Planned next |
+| 🔭 | Future scope, deliberately deferred |
+| ⚖️ | Research/legal/product decision rather than code that should be guessed |
 
-| File | What it does | How it links to the rest |
+## 3. Version history: what changed in each commit
+
+The repository uses small, descriptive commits so a beginner can inspect one milestone at a time. `origin/main` is synchronized with the current local `main` branch.
+
+| Commit | Message | Main additions | Why it was built |
+| --- | --- | --- | --- |
+| `3d4cc99` | `feat: add offline desktop lyric synchronization foundation` | Electron shell, local browser UI, lyric parser, LRC exporter, project model, logging, settings, storage download, waveform/playback/manual editor, Unicode tests | Establishes the smallest useful product: audio + known lyrics → editable timeline → LRC. It proves the workflow before expensive algorithms. |
+| `9d8ed43` | `feat: add energy baseline benchmark and research guidance` | RMS-energy initial timing, metrics, benchmark runner, synthetic fixture, dataset guidance, v0.2 versioning | Creates the first measurable automatic hypothesis without claiming that energy recognizes words. |
+| `71356ea` | `feat: add reusable engine API and project store` | Platform-neutral `synchronize()` API and Node `ProjectStore` directory layout | Separates algorithm code from the desktop UI and makes future CLI/mobile frontends possible. |
+| `8ab4630` | `feat: add private music library audit manifest` | Local library audit, filename pairing, timestamp-status classification, instrumental hints | Handles real collections safely. It inventories files without copying media and flags uncertain data instead of calling it ground truth. |
+| `699ca56` | `feat: add MFCC extraction and constrained DTW` | Local FFT/MFCC extractor, constrained DTW, MFCC-DTW adapter | Adds the next research representations while keeping parameters configurable and testable. |
+| `fee1966` | `feat: add template-assisted line alignment` | Global line-template segmentation, engine support, detailed guide | Connects acoustic comparison to line timestamps through an explicit template input rather than hiding the hard text-to-audio problem. |
+
+## 4. Repository map
+
+| Path | Responsibility | Used by |
 | --- | --- | --- |
-| `src/features.js` | Converts PCM audio into configurable MFCC frame vectors using a local FFT, Mel filter bank and DCT. | A future audio loader supplies its `frames` to DTW or the template aligner. It has no Electron or network dependency. |
-| `src/dtw.js` | Computes a monotonic, window-constrained DTW path and normalized cost between two feature sequences. | `src/mfcc-dtw.js` and `src/template-aligner.js` call it as the common temporal-comparison primitive. |
-| `src/mfcc-dtw.js` | Adapts MFCC result objects or raw frame arrays to DTW and labels the method `mfcc_dtw`. | Useful for sequence comparison experiments; it intentionally does not invent lyric timestamps. |
-| `src/template-aligner.js` | Uses dynamic programming over line order and repeated constrained DTW calls to choose start/end frames for each lyric template. | Receives audio frames and line templates, then returns line-level segments with seconds and costs. |
-| `src/engine.js` | Provides the platform-neutral `synchronize()` entry point. | The desktop UI, future CLI, and future mobile client can call the same engine contract. It now supports `energy-baseline` and `template-mfcc-dtw`. |
-| `test/lrc.test.mjs` | Tests MFCC finiteness, DTW path shape, template segmentation and engine output. | Protects the algorithm while the UI and future Python/native implementations evolve. |
-| `PROJECT_STATUS.md` | Tracks the original 120 requirements and milestone state. | This is the project-level source of truth for what is finished versus planned. |
+| `index.html` | Desktop renderer layout: project fields, import controls, waveform, transport, timeline, settings dialog and log | `src/app.js`, Electron shell |
+| `styles.css` | Theme-aware, responsive and keyboard-focusable UI styling | `index.html` |
+| `desktop/main.cjs` | Secure Electron main process; creates window and native text Open/Save IPC handlers | Electron runtime |
+| `desktop/preload.cjs` | Exposes only safe `saveText`/`openText` functions to the renderer | `src/storage.js` |
+| `scripts/serve.mjs` | Dependency-free local development web server | `npm run start` |
+| `scripts/run-benchmark.mjs` | Runs a JSON dataset through the engine and writes local JSON/Markdown measurements | `src/engine.js`, `src/metrics.js` |
+| `scripts/audit-library.mjs` | Scans a chosen local music folder and writes an ignored manifest | `src/dataset.js` |
+| `src/domain.js` | `LyricLine`, project model, Unicode normalization, application version | Parser, UI, engine, storage |
+| `src/lyrics.js` | TXT/LRC parser and normalized lyric input | UI and tests |
+| `src/lrc.js` | Timestamp conversion and LRC export | UI and tests |
+| `src/logger.js` | Human-readable INFO/WARNING/ERROR project logger | UI |
+| `src/storage.js` | Browser downloads and Electron-aware native save/open abstraction | UI |
+| `src/settings.js` | Locally persisted theme, waveform colour and text-size preferences | UI |
+| `src/online-provider.js` | Optional future online-search contract; no provider is enabled | Future connector only |
+| `src/energy-aligner.js` | Lightweight energy-profile line-time estimator | UI initial timing, engine |
+| `src/metrics.js` | MAE, median absolute error, RMSE and threshold percentages | Benchmark runner |
+| `src/engine.js` | Platform-neutral synchronization API; dispatches energy or template engine | UI/CLI/mobile future |
+| `src/project-store.mjs` | Structured file-backed project save/load for desktop/CLI | Future desktop pipeline |
+| `src/dataset.js` | Filename normalization, lyric timestamp classification and review flags | Library audit |
+| `src/features.js` | PCM → MFCC frame vectors using FFT, Mel filters and DCT | MFCC experiments |
+| `src/dtw.js` | Window-constrained DTW path and cost | MFCC and template aligners |
+| `src/mfcc-dtw.js` | DTW adapter for MFCC result objects | Experiments |
+| `src/template-aligner.js` | Dynamic-programming line segmentation using one acoustic template per line | Template engine |
+| `test/lrc.test.mjs` | All current unit/integration-style algorithm and storage tests | `npm run test` |
+| `benchmarks/example.synthetic.json` | Small deterministic, non-copyrighted smoke fixture | Benchmark runner |
+| `benchmarks/README.md` | Real dataset schema, ground-truth and privacy rules | Researchers/users |
+| `PROJECT_STATUS.md` | Traceability matrix for all 120 original brief sections | Project planning |
+| `package.json` / `package-lock.json` | Scripts, version, Electron dependency and reproducible install versions | NVM/npm |
+| `.gitignore` | Keeps node modules, private manifests, caches, results and media out of Git | Git |
 
-## Data flow
+## 5. Feature-by-feature explanation
+
+### 5.1 Offline desktop foundation
+
+**Why:** The application must work without internet, cloud APIs, or mandatory GPU access. A desktop shell gives local file access and a path to Windows/macOS/Linux packaging.
+
+**How:** Electron loads the local `index.html`. The renderer has `contextIsolation` and no Node integration. Native file operations are narrow IPC methods in `desktop/main.cjs`, exposed through `desktop/preload.cjs`. In a browser, the same UI falls back to normal file inputs/downloads.
+
+**Files:** `desktop/main.cjs`, `desktop/preload.cjs`, `index.html`, `styles.css`, `package.json`, `package-lock.json`.
+
+**Current limit:** Packaging installers and FFmpeg-backed format normalization are not done. Browser/Electron codec support determines which audio files decode today.
+
+**Future:** Add signed platform packages, FFmpeg adapter, background workers, crash-safe cancellation, and a separate mobile frontend that reuses the engine instead of Electron.
+
+### 5.2 Lyric input and Unicode handling
+
+**Why:** The user supplies correct lyrics, often in TXT or partially/fully timestamped LRC. The system must not depend on English or on a language label.
+
+**How:** `src/lyrics.js` strips optional BOM, recognizes LRC metadata/timestamps, normalizes whitespace and NFC Unicode, and creates `LyricLine` objects. Untimestamped lines receive `null` start times. A single lyric line is valid. Native scripts are retained as-is.
+
+**Files:** `src/lyrics.js`, `src/domain.js`, `test/lrc.test.mjs`.
+
+**Current limit:** It does not automatically translate, transliterate, identify language, or judge whether downloaded lyrics match the audio.
+
+**Future:** Optional language metadata detection, line-ending/duplicate cleanup, SRT/VTT/ASS input, and explicit user review for mismatches.
+
+### 5.3 Timeline and LRC export
+
+**Why:** LRC is the first practical output and only needs a start timestamp per line.
+
+**How:** The UI edits `LyricLine.startTime`. `src/lrc.js` converts seconds to centiseconds with rounding, sorts timestamped lines by time, writes optional artist/title/album/language headers, and omits lines that have no timestamp rather than exporting invalid values.
+
+**Files:** `src/lrc.js`, `src/domain.js`, `src/app.js`, `test/lrc.test.mjs`.
+
+**Current limit:** Export is line-level. End times, word timing, karaoke effects and other subtitle formats are not implemented.
+
+**Future:** Enhanced/word-level LRC, SRT/VTT/ASS exporters, validation warnings for missing lines, and export profiles.
+
+### 5.4 Waveform, playback and manual review
+
+**Why:** Automatic alignment will sometimes fail. A person needs to see the signal, listen, make fast corrections, and understand the current position.
+
+**How:** `src/app.js` creates an object URL for the selected local audio, decodes a downsampled waveform through `AudioContext`, draws it on a canvas, and maps pointer position to `audio.currentTime`. The slider and waveform show `mm:ss.mmm`. Play/stop, reset, hold-to-rewind, hold-to-fast-forward, exact seek, editable stamp time, custom millisecond adjustment, keyboard shortcuts and row insert/duplicate actions are all local UI behavior.
+
+**Files:** `index.html`, `styles.css`, `src/app.js`, `src/settings.js`.
+
+**Current limit:** Waveform decoding happens in the renderer and is not yet a worker; very large files may use more memory. There is no undo/redo history yet.
+
+**Future:** Worker-based decoding, zoom/regions, snap-to-candidate, undo/redo, accessibility announcements for selected lines, and low-confidence highlighting.
+
+### 5.5 Local project storage and logging
+
+**Why:** Projects must reopen without hiding everything in one opaque file, and users/developers must understand what happened.
+
+**How:** Browser mode downloads a `.lyricsync.json`; Electron mode uses native Save/Open dialogs. `src/project-store.mjs` additionally creates `project.json`, `lyrics/normalized.json`, `timeline/timeline.json`, and reserved folders for features, separation, alignment, exports, logs and experiments. `ProjectLogger` records timestamped human-readable entries.
+
+**Files:** `src/storage.js`, `src/project-store.mjs`, `src/logger.js`, `desktop/main.cjs`.
+
+**Current limit:** The renderer project save is a user-selected file, not yet an automatic managed project directory. Audio is referenced by name and must be reselected after reopening.
+
+**Future:** Managed project roots, cache fingerprints, atomic saves, migration versions, DEBUG logs, and crash recovery.
+
+### 5.6 RMS/energy baseline
+
+**Why:** A simple baseline is needed before advanced algorithms. It tests whether active audio regions can provide useful initial timing at low cost.
+
+**How:** The waveform decoder calculates per-bin RMS energy. `src/energy-aligner.js` subtracts a low percentile threshold, treats remaining energy as weights, and places known lyric lines at weighted cumulative positions. It marks outputs `energy_baseline` with deliberately low confidence.
+
+**Files:** `src/energy-aligner.js`, `src/app.js`, `src/engine.js`, `scripts/run-benchmark.mjs`.
+
+**Current limit:** Energy does not identify words or know whether a vocal is singing. It can only suggest broad active positions and must be reviewed.
+
+**Future:** Silence/phrase segmentation, vocal-activity features, calibrated confidence and real verified-pair accuracy measurement.
+
+### 5.7 Benchmarking and metrics
+
+**Why:** The project must produce evidence rather than assume AI, DTW, separation or energy is best.
+
+**How:** `scripts/run-benchmark.mjs` reads a JSON dataset containing duration, energy profile, lyrics and manually supplied reference times. It invokes the engine, computes MAE, median absolute error, RMSE and percentages within 0.25/0.50/1.00 seconds, records runtime/heap, and writes JSON plus Markdown locally.
+
+**Files:** `src/metrics.js`, `scripts/run-benchmark.mjs`, `benchmarks/example.synthetic.json`, `benchmarks/README.md`.
+
+**Current limit:** The checked-in fixture is synthetic and cannot establish song-level accuracy. CPU/GPU/disk metrics and CSV output remain incomplete.
+
+**Future:** Rights-cleared real fixtures, stage timing, RTF, CPU/RAM/GPU/disk measurements, failure categories, CSV reports and regression thresholds.
+
+### 5.8 Platform-neutral engine API
+
+**Why:** The algorithm should be reusable independently of Electron and eventually usable by a CLI, library, mobile client or another operating system.
+
+**How:** `src/engine.js` accepts normalized lyrics, duration, energy profile or template parameters and returns structured lines plus method/version metadata. The UI is a caller, not the owner of alignment logic.
+
+**Files:** `src/engine.js`, `src/domain.js`, `src/energy-aligner.js`, `src/template-aligner.js`.
+
+**Current limit:** Only energy baseline and template-MFCC-DTW modes exist. The template mode requires acoustic templates and is not yet wired to a one-click UI workflow.
+
+**Future:** Formal TypeScript/Python package boundary, engine registry, configuration schema, CLI and mobile bindings.
+
+### 5.9 Private music-library audit and dataset preparation
+
+**Why:** A personal folder can contain vocal songs, piano/instrumental versions, downloaded lyrics, missing timestamps, duplicates and mismatched recordings. Treating every file as truth would invalidate experiments.
+
+**How:** `scripts/audit-library.mjs` recursively reads only local filenames and UTF-8 lyric text. `src/dataset.js` normalizes filename stems, detects timestamp coverage (`fully_timestamped`, `partially_timestamped`, `untimestamped`, `invalid`), finds exact audio-name candidates, and flags likely instrumental hints. It writes a relative-path manifest under ignored `benchmarks/private/`.
+
+**Files:** `src/dataset.js`, `scripts/audit-library.mjs`, `benchmarks/README.md`, `.gitignore`.
+
+**Current audit:** 1,027 audio files, 133 lyric files, 66 fully timestamped, 1 partial, 65 untimestamped, 17 likely instrumental, 118 exact candidates, and 77 needing review.
+
+**Current limit:** Filename hints cannot prove audio content or lyric correctness. Downloaded LRC timestamps are not automatically ground truth.
+
+**Future:** User review UI, metadata editing, audio duration/codec inspection, duplicate detection, rights/licensing fields, and export of approved benchmark subsets.
+
+### 5.10 MFCC feature extraction
+
+**Why:** MFCC is a compact representation of short-time spectral shape and is useful for testing local acoustic similarity.
+
+**How:** `src/features.js` applies a Hamming window, radix-2 FFT, Mel-spaced triangular filter banks, log energy and DCT. Frame size, hop size, Mel-band count and coefficient count are configurable. It returns feature vectors plus frame-rate metadata.
+
+**Files:** `src/features.js`, `test/lrc.test.mjs`.
+
+**Current limit:** This is a dependency-free research implementation, not yet optimized like a mature native/scientific DSP library. MFCC features describe sound; they do not contain lyric text.
+
+**Future:** Validate against a reference library, normalize features, add delta/delta-delta coefficients, cache frames, and move heavy extraction to a worker/native backend.
+
+### 5.11 Constrained DTW
+
+**Why:** Singing speed varies. DTW can compare sequences despite local stretching/compression, while a window constraint limits implausible paths and runtime.
+
+**How:** `src/dtw.js` fills a cost matrix using Euclidean frame distance, allows diagonal/up/left transitions, restricts cells to a Sakoe–Chiba-style window, then reconstructs the lowest-cost path and normalized cost.
+
+**Files:** `src/dtw.js`, `src/mfcc-dtw.js`, `test/lrc.test.mjs`.
+
+**Current limit:** DTW needs two acoustic sequences. Supplying only text and audio is not enough to create the second sequence.
+
+**Future:** Alternative distances, normalization, multi-resolution DTW, pruning, memory optimization and benchmark comparisons.
+
+### 5.12 Template-assisted line alignment
+
+**Why:** This is the bridge from feature comparison to line-level timestamps. It makes the difficult assumption explicit: one acoustic feature template is supplied for each known lyric line.
+
+**How:** `src/template-aligner.js` evaluates candidate audio segments against each line template with constrained DTW. A global dynamic-programming table chooses a monotonic sequence of segment boundaries under minimum/maximum lengths. The result includes start/end seconds and costs. `src/engine.js` exposes it as `template-mfcc-dtw`.
+
+**Files:** `src/template-aligner.js`, `src/engine.js`, `src/dtw.js`, `test/lrc.test.mjs`.
+
+**Current limit:** The project has not yet solved how to obtain templates automatically from ordinary lyrics. Current tests use synthetic vectors; this feature is not presented as finished automatic lyric recognition.
+
+**Future:** Derive templates from verified anchors/vocal separation, compare candidate costs for confidence, handle silence/intro/outro, and integrate only after real-data evidence.
+
+## 6. How the complete system links together
 
 ```text
-local audio
-  -> PCM samples
-  -> src/features.js (MFCC frames)
-  -> src/template-aligner.js
-       + lyric line acoustic templates
-       + src/dtw.js for each candidate segment
-       + dynamic programming for global line order
-  -> start/end seconds per known lyric line
-  -> src/lrc.js (existing exporter)
-  -> synchronized LRC
+User selects local audio + TXT/LRC/pasted lyrics
+             |
+             v
+index.html / src/app.js  ---- settings + playback + review
+             |
+             +--> src/lyrics.js --> src/domain.js (normalized LyricLine[])
+             |
+             +--> local PCM --> src/features.js (MFCC) / RMS profile
+                                      |
+                                      +--> src/energy-aligner.js
+                                      |
+                                      +--> src/dtw.js
+                                              |
+                                      src/template-aligner.js
+             |
+             v
+       src/engine.js (structured timeline)
+             |
+             +--> src/lrc.js --> LRC file
+             +--> src/project-store.mjs --> local project folders
+             +--> src/logger.js --> readable log
 ```
 
-The current desktop UI still uses the energy baseline for its initial-timing button. Template alignment is available through the engine API first so it can be benchmarked safely before exposing a misleading one-click UI workflow.
+The benchmark path calls the same engine without the UI:
 
-## Why dynamic programming is used
+```text
+dataset JSON -> scripts/run-benchmark.mjs -> src/engine.js
+             -> src/metrics.js -> JSON + Markdown result
+```
 
-Searching each lyric line independently could assign several lines to the same audio region or put a later line before an earlier one. The template aligner stores the best cost for every `(number of lines completed, audio frame reached)` state. It only extends from an earlier frame, so the final result is globally ordered and covers the audio sequence under configured minimum/maximum segment lengths.
+The private-library path is separate from synchronization:
 
-## What was tested
+```text
+Music folder -> scripts/audit-library.mjs -> ignored local manifest
+             -> human review -> approved ground-truth dataset
+```
 
-The tests use tiny synthetic vectors rather than songs. They verify that:
+## 7. What “finished” means right now
 
-1. MFCC output contains finite configurable vectors.
-2. DTW returns a path beginning and ending at the expected sequence positions.
-3. Template alignment produces non-overlapping, monotonic line segments.
-4. The public engine API returns line timestamps and method metadata.
+| Area | State | Honest interpretation |
+| --- | :---: | --- |
+| Offline desktop foundation | ✅ | The app can run locally and does not require internet during normal use. |
+| Unicode/TXT/LRC input | ✅ | Native-language text is preserved and parsed. |
+| Manual line timing and LRC | ✅ | A user can create and correct line-level LRC. |
+| RMS baseline | 🟡 | Produces editable guesses; real-song accuracy is not established. |
+| Benchmark code | 🟡 | The measurement machinery works; synthetic data is not research evidence. |
+| MFCC | 🟡 | Extractor works and is tested; production performance/reference validation remains. |
+| DTW | 🟡 | Constrained sequence comparison works; text-to-acoustic mapping remains. |
+| Template line alignment | 🟡 | Algorithm works with templates; template acquisition is unresolved. |
+| Vocal separation | ⏳ | Required capability, not implemented yet. |
+| Fully automatic lyric synchronization | ⏳ | Not claimed yet. |
+| Online lyrics/LRC search | 🔭 | Optional future connector, never a core dependency. |
 
-No personal music or lyrics were copied into the repository. Your local collection remains useful later, but real evaluation requires manually verified line times and a decision about whether each recording is vocal, instrumental, mismatched, or uncertain.
+## 8. Recommended next work
 
-## What remains before claiming automatic synchronization
+1. Manually select a small set of clearly matching, vocal, rights-cleared or private evaluation pairs from the audit manifest.
+2. Verify line timestamps by listening and record them as ground truth separately from downloaded LRC files.
+3. Add audio duration/codec inspection and approved-dataset metadata.
+4. Benchmark RMS on those pairs and record accuracy/resource results.
+5. Design how acoustic templates are obtained, then compare template-MFCC-DTW against RMS.
+6. Add optional vocal separation only after measuring whether its cost improves results.
 
-- Decide how line templates are obtained without requiring the user to record every line.
-- Add actual rights-cleared/verified song fixtures and compare energy versus MFCC-DTW.
-- Add confidence from competing segment costs and temporal consistency.
-- Add vocal separation as an optional preprocessing backend.
-- Integrate this engine into the UI only after the benchmarks show it helps.
+## 9. Commands for a beginner
 
-This staged approach is intentional: the code now exposes the difficult assumption instead of hiding it behind a button that would appear more intelligent than the evidence supports.
+Use NVM Node 22 explicitly:
+
+```powershell
+$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
+& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' run test
+& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' run desktop
+& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' run audit-library -- 'C:\Users\aksha\Music'
+```
+
+The audit manifest and benchmark results are ignored by Git. That is intentional: private file paths, personal lyrics, audio, generated caches and experimental outputs do not belong in the public repository.
+
+## 10. GitHub history
+
+The canonical repository is [ACE4AKSHAY/TimeStamper](https://github.com/ACE4AKSHAY/TimeStamper). The current local `main` branch tracks `origin/main`, and each milestone above has been pushed in order. This preserves the reasoning trail: a reviewer can start at the foundation commit and inspect one research decision at a time.
