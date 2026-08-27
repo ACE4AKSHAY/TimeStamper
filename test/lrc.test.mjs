@@ -17,6 +17,7 @@ import { alignMfccSequences } from "../src/mfcc-dtw.js";
 import { alignLineTemplates } from "../src/template-aligner.js";
 import { fuseProfiles, normalizeProfile, resampleProfile } from "../src/profile-fusion.js";
 import { extractExplainableProfiles, extractRmsProfile, extractSpectralFluxProfile } from "../src/audio-profiles.js";
+import { alignByBoundaryDp } from "../src/boundary-dp-aligner.js";
 
 test("LRC timestamps round to centiseconds", () => {
   assert.equal(secondsToLrc(12.426), "[00:12.43]");
@@ -163,4 +164,15 @@ test("explainable audio profiles extract finite energy and spectral change", () 
   assert.equal(flux.length, 20);
   assert.ok([...energy, ...flux].every(Number.isFinite));
   assert.deepEqual(Object.keys(extractExplainableProfiles(samples, { frameSize: 128, hopSize: 64, bins: 8 })), ["energy", "spectralFlux"]);
+});
+
+test("boundary dynamic programming returns monotonic constrained segments", () => {
+  const lines = ["a", "b", "c"].map((originalText, order) => ({ id: `boundary-${order}`, originalText, order }));
+  const profile = [0.1, 0.2, 0.9, 0.3, 0.1, 0.2, 0.95, 0.25, 0.1, 0.3, 1, 0.2];
+  const result = alignByBoundaryDp(lines, profile, 12, { minLength: 2, maxLength: 6, boundaryWeight: 1 });
+  assert.equal(result.segments.length, 3);
+  assert.equal(result.segments[0].startFrame, 0);
+  assert.ok(result.segments.every((segment, index) => index === 0 || segment.startFrame >= result.segments[index - 1].endFrame));
+  const engineResult = synchronize({ engine: "boundary-dp", lyrics: lines, duration: 12, parameters: { profile, minLength: 2, maxLength: 6 } });
+  assert.equal(engineResult.lines[0].alignmentMethod, "boundary_dynamic_programming");
 });

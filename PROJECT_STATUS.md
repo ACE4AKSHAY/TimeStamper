@@ -77,10 +77,10 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 27 | Audio feature fusion | 🟡 | Pure-JS RMS + spectral-flux extraction and explicit weighted fusion are implemented; real-data benchmarking is next. |
 | 28 | Alignment engine | 🟡 | Platform-neutral `synchronize()` exposes energy, combined-profile and template-MFCC-DTW engines. |
 | 29 | Dynamic Time Warping | 🟡 | Constrained DTW and MFCC sequence adapter are implemented and tested; lyric-line mapping still needs acoustic templates/features. |
-| 30 | Dynamic programming | ⏳ | Planned after baseline metrics exist. |
+| 30 | Dynamic programming | 🟡 | Independent duration/onset boundary-DP engine, fixture, runner and dedicated document are implemented; real-data tuning is next. |
 | 31 | Structure-aware alignment | 🔭 | Later research phase. |
 | 32 | Lyric-aware constraints | 🟡 | Template alignment preserves global lyric order and monotonic segments; template creation/validation is next. |
-| 33 | Timestamp generation | 🟡 | Manual/energy estimates and template-MFCC-DTW line timestamps work when acoustic templates are supplied. |
+| 33 | Timestamp generation | 🟡 | Manual, energy, combined-profile, boundary-DP and template-MFCC-DTW line timestamps work under their documented inputs. |
 | 34 | Timestamp refinement | 🟡 | Template DTW supplies segment costs; confidence/margin refinement is next. |
 | 35 | Confidence | 🟡 | Baseline records low confidence; algorithmic confidence model is pending. |
 | 36 | Human review | ✅ | Playback, waveform, timeline selection, click-to-seek, autoscroll and direct timestamp editing work. |

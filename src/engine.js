@@ -1,6 +1,7 @@
 import { createEnergyInitialTimeline } from "./energy-aligner.js";
 import { alignLineTemplates } from "./template-aligner.js";
 import { createCombinedInitialTimeline } from "./combined-aligner.js";
+import { alignByBoundaryDp } from "./boundary-dp-aligner.js";
 
 export const ENGINE_VERSION = "0.3.0";
 
@@ -15,6 +16,11 @@ export function synchronize({ lyrics, duration, energyProfile, engine = "energy-
   if (engine === "combined-profile") {
     const alignment = createCombinedInitialTimeline(lines, parameters.profiles || { energy: energyProfile || [] }, duration, parameters);
     return { engine, engineVersion: ENGINE_VERSION, parameters: alignment.parameters, profileFusion: alignment.fusion, lines: alignment.lines, generatedAt: new Date().toISOString() };
+  }
+  if (engine === "boundary-dp") {
+    const alignment = alignByBoundaryDp(lines, parameters.profile || energyProfile || [], duration, parameters);
+    const alignedLines = lines.map((line, index) => ({ ...line, startTime: alignment.segments[index].startTime, endTime: alignment.segments[index].endTime, alignmentMethod: alignment.method, confidence: null }));
+    return { engine, engineVersion: ENGINE_VERSION, parameters: { ...parameters, profile: undefined }, lines: alignedLines, alignment, generatedAt: new Date().toISOString() };
   }
   if (engine === "template-mfcc-dtw") {
     const alignment = alignLineTemplates(parameters.audioFrames, parameters.lineTemplates, parameters);

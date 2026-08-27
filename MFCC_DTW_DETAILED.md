@@ -248,6 +248,10 @@ The repository uses small, descriptive commits so a beginner can inspect one mil
 
 **Dynamic shortcuts:** `src/settings.js` stores shortcut keys with the appearance settings. The Settings dialog captures a user-selected key for play/stop, stamp-next-line, and playback nudges, rejects duplicate assignments, and the global handler reads the saved values instead of hard-coded keys.
 
+### 5.16 Boundary dynamic-programming experiment
+
+`src/boundary-dp-aligner.js` is a separate deterministic segment optimizer. It chooses monotonic line boundaries using explicit duration-deviation and onset-reward costs. The reusable `boundary-dp` engine, fixture, runner, and rationale live alongside—not instead of—the other experiments. See `benchmarks/BOUNDARY_DP_EXPERIMENT.md` for the assumptions, wiring command, synthetic result, and real-data limitations.
+
 ## 6. How the complete system links together
 
 ```text
