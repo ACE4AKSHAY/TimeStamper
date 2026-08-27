@@ -256,6 +256,10 @@ The repository uses small, descriptive commits so a beginner can inspect one mil
 
 `src/pitch-profile.js` is an independent bounded-autocorrelation estimator for voiced fundamental frequency and silence. It produces both per-frame pitch metadata and a voicedness profile that can be tested later as a fusion input. `benchmarks/PITCH_EXPERIMENT.md` documents its synthetic quality runner and why pitch alone is not lyric alignment.
 
+### 5.18 Multi-profile combination experiment
+
+`src/multi-profile-aligner.js` is a preserved adapter that combines energy, spectral flux, and pitch voicedness before boundary DP. It records component weights and keeps every underlying engine independent. See `benchmarks/MULTI_PROFILE_EXPERIMENT.md` for its isolated fixture, ablation plan, and non-ML limitations.
+
 ## 6. How the complete system links together
 
 ```text

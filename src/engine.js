@@ -2,6 +2,7 @@ import { createEnergyInitialTimeline } from "./energy-aligner.js";
 import { alignLineTemplates } from "./template-aligner.js";
 import { createCombinedInitialTimeline } from "./combined-aligner.js";
 import { alignByBoundaryDp } from "./boundary-dp-aligner.js";
+import { alignMultiProfile } from "./multi-profile-aligner.js";
 
 export const ENGINE_VERSION = "0.3.0";
 
@@ -21,6 +22,10 @@ export function synchronize({ lyrics, duration, energyProfile, engine = "energy-
     const alignment = alignByBoundaryDp(lines, parameters.profile || energyProfile || [], duration, parameters);
     const alignedLines = lines.map((line, index) => ({ ...line, startTime: alignment.segments[index].startTime, endTime: alignment.segments[index].endTime, alignmentMethod: alignment.method, confidence: null }));
     return { engine, engineVersion: ENGINE_VERSION, parameters: { ...parameters, profile: undefined }, lines: alignedLines, alignment, generatedAt: new Date().toISOString() };
+  }
+  if (engine === "multi-profile-boundary-dp") {
+    const alignment = alignMultiProfile(lines, parameters.profiles || { energy: energyProfile || [] }, duration, parameters);
+    return { engine, engineVersion: ENGINE_VERSION, parameters: { weights: alignment.fusion.components }, profileFusion: alignment.fusion, alignment: alignment.alignment, lines: alignment.lines, generatedAt: new Date().toISOString() };
   }
   if (engine === "template-mfcc-dtw") {
     const alignment = alignLineTemplates(parameters.audioFrames, parameters.lineTemplates, parameters);

@@ -19,6 +19,7 @@ import { fuseProfiles, normalizeProfile, resampleProfile } from "../src/profile-
 import { extractExplainableProfiles, extractRmsProfile, extractSpectralFluxProfile } from "../src/audio-profiles.js";
 import { alignByBoundaryDp } from "../src/boundary-dp-aligner.js";
 import { extractPitchProfile, pitchVoicednessProfile } from "../src/pitch-profile.js";
+import { alignMultiProfile } from "../src/multi-profile-aligner.js";
 
 test("LRC timestamps round to centiseconds", () => {
   assert.equal(secondsToLrc(12.426), "[00:12.43]");
@@ -185,4 +186,12 @@ test("autocorrelation pitch profile detects a bounded voiced tone", () => {
   assert.ok(voiced.length > 0);
   assert.ok(Math.abs(voiced[Math.floor(voiced.length / 2)].frequencyHz - 200) < 8);
   assert.equal(pitchVoicednessProfile(pitch).length, pitch.frames.length);
+});
+
+test("multi-profile boundary adapter preserves explicit component weights", () => {
+  const lines = ["a", "b", "c"].map((originalText, order) => ({ id: `multi-${order}`, originalText, order }));
+  const result = alignMultiProfile(lines, { energy: [0.2, 0.3, 0.4, 1, 0.2, 0.3, 0.4, 0.9, 0.2, 0.3, 0.4, 1], spectralFlux: [0.1, 0.2, 0.3, 0.9, 0.1, 0.2, 0.3, 1, 0.1, 0.2, 0.3, 0.9], voicedness: [0.3, 0.3, 0.4, 1, 0.3, 0.3, 0.4, 0.9, 0.3, 0.3, 0.4, 1] }, 12, { minLength: 2, maxLength: 6, weights: { energy: 0.5, spectralFlux: 0.3, voicedness: 0.2 } });
+  assert.equal(result.lines[0].alignmentMethod, "multi_profile_boundary_dp");
+  assert.deepEqual(result.fusion.components, [{ name: "energy", weight: 0.5 }, { name: "spectralFlux", weight: 0.3 }, { name: "voicedness", weight: 0.2 }]);
+  assert.equal(result.alignment.segments.length, 3);
 });

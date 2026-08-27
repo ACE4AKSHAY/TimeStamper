@@ -74,8 +74,8 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 24 | Spectral features | ⏳ | Future research comparison. |
 | 25 | Chroma | ⏳ | Future structure-analysis comparison. |
 | 26 | Onset detection | ⏳ | Future boundary-support comparison. |
-| 27 | Audio feature fusion | 🟡 | Pure-JS RMS + spectral-flux extraction and explicit weighted fusion are implemented; real-data benchmarking is next. |
-| 28 | Alignment engine | 🟡 | Platform-neutral `synchronize()` exposes energy, combined-profile and template-MFCC-DTW engines. |
+| 27 | Audio feature fusion | 🟡 | Pure-JS RMS, spectral-flux and pitch-voicedness extraction plus explicit weighted fusion are implemented; real-data benchmarking is next. |
+| 28 | Alignment engine | 🟡 | Platform-neutral `synchronize()` exposes energy, combined-profile, boundary-DP, multi-profile and template-MFCC-DTW engines. |
 | 29 | Dynamic Time Warping | 🟡 | Constrained DTW and MFCC sequence adapter are implemented and tested; lyric-line mapping still needs acoustic templates/features. |
 | 30 | Dynamic programming | 🟡 | Independent duration/onset boundary-DP engine, fixture, runner and dedicated document are implemented; real-data tuning is next. |
 | 31 | Structure-aware alignment | 🔭 | Later research phase. |
@@ -107,7 +107,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 57 | Experiment 2: spectral | ⏳ | Planned. |
 | 58 | Experiment 3: MFCC | 🟡 | Acoustic-template MFCC + constrained DTW runner, fixture and dedicated document are implemented; real template acquisition/evaluation is next. |
 | 59 | Experiment 4: pitch | 🟡 | Dedicated pitch experiment, synthetic fixture, runner and documentation are implemented; rights-cleared vocal evaluation is next. |
-| 60 | Experiment 5: combined features | 🟡 | Deterministic energy-vs-spectral-flux comparison script and synthetic fixture are implemented; rights-cleared evaluation is next. |
+| 60 | Experiment 5: combined features | 🟡 | Deterministic energy-vs-spectral-flux comparison and three-profile boundary-DP experiment are implemented; rights-cleared evaluation is next. |
 | 61 | Experiment 6: separation comparison | ⏳ | Planned with vocal separator. |
 | 62 | Experiment 7: structure-aware | 🔭 | Later research phase. |
 | 63 | Experiment 8: optional AI baseline | 🔭 | Later comparison only; not the primary design. |
@@ -124,7 +124,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 74 | Cancellation | ⏳ | Add safe job cancellation with worker-based processing. |
 | 75 | Modular vocal separation | ⏳ | Create interface when separator work starts. |
 | 76 | Modular feature extraction | 🟡 | RMS, spectral flux and MFCC are separate pure-JS modules with tests. |
-| 77 | Modular alignment | 🟡 | Energy, combined-profile and template-MFCC-DTW engines are standalone; template acquisition and comparison are next. |
+| 77 | Modular alignment | 🟡 | Energy, combined-profile, boundary-DP, multi-profile and template-MFCC-DTW engines are standalone; real comparison is next. |
 | 78 | Modular export | 🟡 | LRC exporter is separate; other exporters are future modules. |
 | 79 | Modular storage | 🟡 | Node `ProjectStore` now creates project/audio/lyrics/features/alignment/timeline/etc. folders; cache policy is next. |
 | 80 | Logging module | ✅ | `ProjectLogger` is a standalone module. |

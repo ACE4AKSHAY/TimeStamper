@@ -1,0 +1,31 @@
+{
+  "datasetVersion": "multi-profile-synthetic-v1",
+  "description": "Deterministic three-profile boundary fixture; no copyrighted audio.",
+  "weights": { "energy": 0.5, "spectralFlux": 0.3, "voicedness": 0.2 },
+  "cases": [
+    {
+      "id": "multi-01",
+      "language": "te",
+      "duration": 12,
+      "lyrics": ["ఒకటి", "రెండు", "మూడు"],
+      "profiles": {
+        "energy": [0.2, 0.3, 0.4, 1, 0.2, 0.3, 0.4, 0.9, 0.2, 0.3, 0.4, 1],
+        "spectralFlux": [0.1, 0.2, 0.3, 0.9, 0.1, 0.2, 0.3, 1, 0.1, 0.2, 0.3, 0.9],
+        "voicedness": [0.3, 0.3, 0.4, 1, 0.3, 0.3, 0.4, 0.9, 0.3, 0.3, 0.4, 1]
+      },
+      "reference": [0, 4, 8]
+    },
+    {
+      "id": "multi-02",
+      "language": "hi",
+      "duration": 10,
+      "lyrics": ["एक", "दो"],
+      "profiles": {
+        "energy": [0.4, 0.35, 0.3, 0.25, 0.2, 1, 0.4, 0.3, 0.2, 0.15],
+        "spectralFlux": [0.2, 0.3, 0.25, 0.2, 0.15, 0.9, 0.25, 0.2, 0.15, 0.1],
+        "voicedness": [0.5, 0.45, 0.4, 0.35, 0.3, 1, 0.5, 0.4, 0.3, 0.2]
+      },
+      "reference": [0, 5]
+    }
+  ]
+}
