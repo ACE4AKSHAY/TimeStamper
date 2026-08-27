@@ -103,9 +103,9 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 53 | Benchmark dataset | 🟡 | Private audit plus CSV importer/candidate builder now inventories local pairs without copying media; rights-cleared ground truth is next. |
 | 54 | Dataset categories | 🟡 | Manifest captures language-independent lyric/timestamp/instrumental review flags; genre/recording metadata is next. |
 | 55 | Ground truth | 🟡 | Private review queue, validator, CSV candidate builder and manual checklist now exist; no real pair is considered verified yet. |
-| 56 | Experiment 1: energy baseline | 🟡 | Implemented as initial timing; reproducible metrics runner and synthetic smoke fixture now exist; rights-cleared audio evaluation is next. |
+| 56 | Experiment 1: energy baseline | 🟡 | Implemented as initial timing; reproducible metrics runner, synthetic smoke fixture and dedicated experiment document exist; rights-cleared audio evaluation is next. |
 | 57 | Experiment 2: spectral | ⏳ | Planned. |
-| 58 | Experiment 3: MFCC | ⏳ | Planned. |
+| 58 | Experiment 3: MFCC | 🟡 | Acoustic-template MFCC + constrained DTW runner, fixture and dedicated document are implemented; real template acquisition/evaluation is next. |
 | 59 | Experiment 4: pitch | ⏳ | Planned. |
 | 60 | Experiment 5: combined features | 🟡 | Deterministic energy-vs-spectral-flux comparison script and synthetic fixture are implemented; rights-cleared evaluation is next. |
 | 61 | Experiment 6: separation comparison | ⏳ | Planned with vocal separator. |
@@ -156,7 +156,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 106 | Do not build everything at once | ✅ | Work is being staged: manual editor → RMS baseline → measurements → advanced engines. |
 | 107 | First technical milestone | ✅ | Song + lyrics → editable timeline → LRC is implemented. |
 | 108 | Second technical milestone | 🟡 | Simple automatic initial timestamps are implemented; now benchmark them. |
-| 109 | Third technical milestone | 🟡 | MFCC + constrained DTW primitives and template segmentation are implemented; acoustic-template evaluation is next. |
+| 109 | Third technical milestone | 🟡 | MFCC + constrained DTW primitives, template segmentation and an isolated synthetic experiment are implemented; real acoustic-template evaluation is next. |
 | 110 | Fourth technical milestone | ⏳ | Vocal separation comparison planned. |
 | 111 | Fifth technical milestone | 🔭 | Robust combined aligner later. |
 | 112 | Sixth technical milestone | 🟡 | Benchmark tooling and private-library manifest exist; rights-cleared dataset expansion follows. |

@@ -1,0 +1,24 @@
+{
+  "datasetVersion": "template-synthetic-v1",
+  "description": "Deterministic acoustic-template fixture for wiring the MFCC/DTW experiment. It contains no copyrighted audio.",
+  "cases": [
+    {
+      "id": "template-01",
+      "language": "te",
+      "frameRate": 10,
+      "lyrics": ["ఒకటి", "రెండు", "మూడు"],
+      "lineTemplates": [[[0, 0.1], [0.1, 0.2], [0.2, 0.3]], [[1, 1.1], [1.1, 1.2], [1.2, 1.3]], [[2, 2.1], [2.1, 2.2], [2.2, 2.3]]],
+      "audioFrames": [[0, 0.1], [0.1, 0.2], [0.2, 0.3], [0.05, 0.15], [1, 1.1], [1.1, 1.2], [1.2, 1.3], [1.05, 1.15], [2, 2.1], [2.1, 2.2], [2.2, 2.3], [2.05, 2.15]],
+      "reference": [0, 0.4, 0.8]
+    },
+    {
+      "id": "template-02",
+      "language": "hi",
+      "frameRate": 8,
+      "lyrics": ["एक", "दो"],
+      "lineTemplates": [[[0], [0.2], [0.4]], [[1], [1.2], [1.4]]],
+      "audioFrames": [[0], [0.2], [0.4], [0.1], [1], [1.2], [1.4], [1.1]],
+      "reference": [0, 0.5]
+    }
+  ]
+}

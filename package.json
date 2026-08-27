@@ -12,6 +12,7 @@
     "validate-review-queue": "node scripts/validate-review-queue.mjs",
     "import-private-manifest": "node scripts/import-private-manifest.mjs",
     "compare-engines": "node scripts/run-engine-comparison.mjs",
+    "experiment-template-dtw": "node scripts/run-template-dtw-experiment.mjs",
     "test": "node --test"
   },
   "main": "desktop/main.cjs",

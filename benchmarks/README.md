@@ -1,5 +1,11 @@
 # Benchmark dataset
 
+## Experiment documents
+
+- [`ENERGY_BASELINE_EXPERIMENT.md`](./ENERGY_BASELINE_EXPERIMENT.md) — Experiment 01, RMS baseline.
+- [`COMBINATION_EXPERIMENT.md`](./COMBINATION_EXPERIMENT.md) — Experiment 02, weighted RMS + spectral flux.
+- [`MFCC_DTW_EXPERIMENT.md`](./MFCC_DTW_EXPERIMENT.md) — Experiment 03, acoustic-template MFCC + constrained DTW.
+
 The checked-in `example.synthetic.json` is only a deterministic smoke fixture; it contains no copyrighted audio. A research dataset is needed to answer whether the algorithm works. It should be kept outside Git unless every audio/lyric item is licensed for redistribution.
 
 Each real case should have:
