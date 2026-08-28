@@ -319,6 +319,10 @@ Experiment 08 (`benchmarks/ROBUSTNESS_EXPERIMENT.md`) extends this audit with
 deterministic perturbations. It is an isolated failure-mode study, not a new
 production engine and not a replacement for real recordings.
 
+Experiment 09 (`benchmarks/PARAMETER_SWEEP_EXPERIMENT.md`) sweeps nearby engine
+weights and ranks them by line-start error. Its output is diagnostic only:
+synthetic winners are not silently made into application defaults.
+
 ## 6. How the complete system links together
 
 ```text

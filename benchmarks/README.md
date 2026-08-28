@@ -13,6 +13,7 @@
 - [`REFERENCE_TEMPLATE_EXPERIMENT.md`](./REFERENCE_TEMPLATE_EXPERIMENT.md) — Build MFCC templates from a verified reference timeline and align a target recording.
 - [`RESULTS_SUMMARY.md`](./RESULTS_SUMMARY.md) — Latest checked-in audit of synthetic experiment outputs and the current real-song evidence gap.
 - [`ROBUSTNESS_EXPERIMENT.md`](./ROBUSTNESS_EXPERIMENT.md) — Experiment 08, deterministic perturbations for noise, delayed onsets, intros, and uneven lines.
+- [`PARAMETER_SWEEP_EXPERIMENT.md`](./PARAMETER_SWEEP_EXPERIMENT.md) — Experiment 09, synthetic parameter sensitivity for current engines.
 
 The checked-in `example.synthetic.json` is only a deterministic smoke fixture; it contains no copyrighted audio. A research dataset is needed to answer whether the algorithm works. It should be kept outside Git unless every audio/lyric item is licensed for redistribution.
 

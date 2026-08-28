@@ -17,6 +17,7 @@ they are generated artifacts; regenerate this report with
 | Multi-profile boundary DP | `multi-profile-synthetic-v1` | 2 | 0.400 s MAE; 0.000 s median; 100% within 1.00 s |
 | Common ablation | `multi-profile-synthetic-v1` | 2 | energy 0.984 s; combined 1.638 s; boundary 0.400 s; multi-profile 0.400 s MAE |
 | Robustness perturbation sweep | `robustness-synthetic-v1` | 5 | energyBaseline: 0.635 s; combinedProfile: 0.286 s; boundaryDp: 0.360 s; multi-profile 0.360 s MAE |
+| Parameter sensitivity sweep | `parameter-sweep-synthetic-v1` | 2 | boundary-DP: 0.000 s; combined profile: 1.638 s; multi-profile boundary-DP: 0.400 s best MAE |
 
 ## Interpretation
 
@@ -36,6 +37,11 @@ line start for a long intro (5.000 s error). Delayed onsets shift later lines
 by about 1 second. The combined profile is more tolerant of the long-intro
 fixture, with 0.266 s MAE in that scenario. These are actionable hypotheses
 for real-song evaluation, not production guarantees.
+
+The parameter sweep found that many boundary-DP settings tie at 0.000 s on
+the uniform synthetic fixture, while all tested combined-profile weight pairs
+tie at 1.638 s. This means the fixture cannot identify trustworthy defaults;
+no synthetic winner is promoted automatically.
 
 ## Real-song status
 
@@ -64,5 +70,6 @@ npm run experiment-pitch
 npm run experiment-multi-profile
 npm run ablation-study
 npm run experiment-robustness
+npm run experiment-parameter-sweep
 npm run summarize-experiments
 ```
