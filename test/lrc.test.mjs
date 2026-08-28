@@ -24,6 +24,7 @@ import { alignByIntroAwareBoundaryDp } from "../src/intro-aware-aligner.js";
 import { alignByAdaptiveBoundaryDp } from "../src/adaptive-boundary-aligner.js";
 import { alignByTextWeightedBoundaryDp, estimateTextWeights } from "../src/text-weighted-aligner.js";
 import { refineBoundarySegments } from "../src/boundary-refiner.js";
+import { alignByEnsemble } from "../src/ensemble-aligner.js";
 import { summarizeConsensus, buildConsensusTimeline } from "../src/consensus-aligner.js";
 
 test("LRC timestamps round to centiseconds", () => {
@@ -222,6 +223,18 @@ test("local boundary refinement moves coarse boundaries toward onsets", () => {
   const result = refineBoundarySegments(coarse, profile, 12, { windowFrames: 4 });
   assert.deepEqual(result.boundaries, [0, 6, 18, 24]);
   assert.ok(result.decisions.every((decision) => decision.confidence >= 0));
+});
+
+test("ensemble alignment returns monotonic consensus and review diagnostics", () => {
+  const lines = ["short", "a longer lyric line", "last"].map((originalText, order) => ({ id: `ensemble-${order}`, originalText, order }));
+  const profile = [0.1, 0.1, 0.1, 0.1, 0.1, 1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1];
+  const result = alignByEnsemble(lines, profile, 12, { boundaryWeight: 0, minimumIntroFrames: profile.length + 1, windowFrames: 4 });
+  assert.equal(result.lines.length, 3);
+  assert.ok(result.lines.every((line, index) => index === 0 || line.startTime >= result.lines[index - 1].startTime));
+  assert.equal(result.lines[0].alignmentMethod, "ensemble_boundary_consensus");
+  assert.ok(result.lines.every((line) => line.alignmentReview.failureCategory));
+  const engineResult = synchronize({ engine: "ensemble-boundary", lyrics: lines, duration: 12, parameters: { profile, boundaryWeight: 0, minimumIntroFrames: profile.length + 1, windowFrames: 4 } });
+  assert.equal(engineResult.lines[1].alignmentMethod, "ensemble_boundary_consensus");
 });
 
 test("consensus layer returns a median timestamp and bounded confidence", () => {

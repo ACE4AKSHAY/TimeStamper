@@ -1,0 +1,22 @@
+{
+  "datasetVersion": "ensemble-boundary-synthetic-v1",
+  "description": "Independent boundary candidates with explicit agreement diagnostics; no copyrighted audio.",
+  "cases": [
+    {
+      "id": "ensemble-01",
+      "language": "mixed",
+      "duration": 12,
+      "lyrics": ["first line", "దీర్ఘమైన రెండవ పంక్తి", "last line"],
+      "profile": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 0.2, 0.1, 0.1, 0.1],
+      "reference": [0, 3, 9]
+    },
+    {
+      "id": "ensemble-02",
+      "language": "hi",
+      "duration": 10,
+      "lyrics": ["पहली पंक्ति", "दूसरी पंक्ति", "तीसरी पंक्ति"],
+      "profile": [0.2, 0.2, 0.2, 0.2, 0.2, 1, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 1, 0.2],
+      "reference": [0, 2.5, 9]
+    }
+  ]
+}
