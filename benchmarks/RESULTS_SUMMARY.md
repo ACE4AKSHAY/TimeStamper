@@ -19,6 +19,7 @@ they are generated artifacts; regenerate this report with
 | Robustness perturbation sweep | `robustness-synthetic-v1` | 5 | energyBaseline: 0.635 s; combinedProfile: 0.286 s; boundaryDp: 0.360 s; multi-profile 0.360 s MAE |
 | Parameter sensitivity sweep | `parameter-sweep-synthetic-v1` | 2 | boundary-DP: 0.000 s; combined profile: 1.638 s; multi-profile boundary-DP: 0.400 s best MAE |
 | Seeded generalization corpus | `generalization-synthetic-v1` | 60 | energyBaseline: 1.233 s; combinedProfile: 0.935 s; boundaryDp: 1.669 s; multi-profile 1.697 s MAE |
+| Intro-aware Boundary-DP | `intro-aware-synthetic-v1` | 5 | existing boundary-DP: 0.360 s; intro-aware variant: 0.200 s MAE; 100% within 1.00 s |
 
 ## Interpretation
 
@@ -50,6 +51,11 @@ within one second; Boundary-DP reaches 1.669 s MAE. This spread confirms that
 hand-designed fixture scores were optimistic and that real recordings remain
 the decisive test.
 
+The intro-aware candidate improves the five-case robustness subset from 0.360
+to 0.200 s MAE and removes the 5-second long-intro failure (down to 0.5 s).
+However, its active-start detector shifts a delayed-onset case by 0.5 s. It
+remains an experimental selectable engine; no default has been changed.
+
 ## Real-song status
 
 No real-song accuracy result exists yet. The private collection has not been
@@ -79,5 +85,6 @@ npm run ablation-study
 npm run experiment-robustness
 npm run experiment-parameter-sweep
 npm run experiment-generalization
+npm run experiment-intro-aware
 npm run summarize-experiments
 ```

@@ -327,6 +327,10 @@ Experiment 10 (`benchmarks/GENERALIZATION_EXPERIMENT.md`) repeats the comparison
 over a seeded randomized corpus. The fixed seed makes changes attributable to
 code or algorithm changes rather than a newly sampled fixture.
 
+Experiment 11 (`benchmarks/INTRO_AWARE_EXPERIMENT.md`) isolates a leading-intro
+detector around Boundary-DP. It is a candidate engine only; the original
+Boundary-DP path remains available for comparison.
+
 ## 6. How the complete system links together
 
 ```text

@@ -34,7 +34,7 @@ for (const scenario of scenarios) {
     aggregate[name].predicted.push(...predictions[name]);
     aggregate[name].reference.push(...scenario.reference);
   }
-  cases.push({ id: scenario.id, description: scenario.description, reference: scenario.reference, predictions, profileNotes: scenario.profileNotes });
+  cases.push({ id: scenario.id, description: scenario.description, duration: scenario.duration, reference: scenario.reference, predictions, profiles: scenario.profiles, profileNotes: scenario.profileNotes });
 }
 
 const metrics = Object.fromEntries(methodNames.map((name) => [name, scoreTimestamps(aggregate[name].predicted, aggregate[name].reference)]));

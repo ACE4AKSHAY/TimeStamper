@@ -23,6 +23,7 @@
     "experiment-robustness": "node scripts/run-robustness-experiment.mjs",
     "experiment-parameter-sweep": "node scripts/run-parameter-sweep-experiment.mjs",
     "experiment-generalization": "node scripts/run-generalization-experiment.mjs",
+    "experiment-intro-aware": "node scripts/run-intro-aware-experiment.mjs",
     "summarize-experiments": "node scripts/summarize-experiment-results.mjs",
     "test": "node --test"
   },

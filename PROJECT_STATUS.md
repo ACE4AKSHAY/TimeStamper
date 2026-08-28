@@ -175,6 +175,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 125 | Experiment 08 robustness | 🟡 | Isolated deterministic stress runner covers noise, delayed onsets, long intros and uneven lines; results remain synthetic until real references are verified. |
 | 126 | Experiment 09 parameter sweep | 🟡 | Boundary, combined-profile and multi-profile weights are swept on the synthetic fixture; no parameter is promoted without real-data evidence. |
 | 127 | Experiment 10 generalization | 🟡 | A seeded 60-case synthetic corpus varies lines, durations, intros, noise and onset delay; real-song evidence remains separate. |
+| 128 | Experiment 11 intro-aware DP | 🟡 | An isolated variant estimates a sustained active start before Boundary-DP; it is measured only on synthetic robustness cases and does not replace the original. |
 
 ## Recommended next steps
 

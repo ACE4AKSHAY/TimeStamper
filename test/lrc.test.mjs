@@ -20,6 +20,7 @@ import { extractExplainableProfiles, extractRmsProfile, extractSpectralFluxProfi
 import { alignByBoundaryDp } from "../src/boundary-dp-aligner.js";
 import { extractPitchProfile, pitchVoicednessProfile } from "../src/pitch-profile.js";
 import { alignMultiProfile } from "../src/multi-profile-aligner.js";
+import { alignByIntroAwareBoundaryDp } from "../src/intro-aware-aligner.js";
 
 test("LRC timestamps round to centiseconds", () => {
   assert.equal(secondsToLrc(12.426), "[00:12.43]");
@@ -177,6 +178,17 @@ test("boundary dynamic programming returns monotonic constrained segments", () =
   assert.ok(result.segments.every((segment, index) => index === 0 || segment.startFrame >= result.segments[index - 1].endFrame));
   const engineResult = synchronize({ engine: "boundary-dp", lyrics: lines, duration: 12, parameters: { profile, minLength: 2, maxLength: 6 } });
   assert.equal(engineResult.lines[0].alignmentMethod, "boundary_dynamic_programming");
+});
+
+test("intro-aware boundary DP preserves a detected leading intro", () => {
+  const lines = ["a", "b", "c"].map((originalText, order) => ({ id: `intro-${order}`, originalText, order }));
+  const profile = [0.1, 0.1, 0.1, 1, 0.2, 0.2, 0.9, 0.2, 0.2, 1, 0.2, 0.2];
+  const result = alignByIntroAwareBoundaryDp(lines, profile, 12, { minLength: 2, maxLength: 6 });
+  assert.equal(result.introFrame, 3);
+  assert.equal(result.segments[0].startFrame, 3);
+  assert.ok(result.segments.every((segment, index) => index === 0 || segment.startFrame >= result.segments[index - 1].endFrame));
+  const engineResult = synchronize({ engine: "intro-aware-boundary-dp", lyrics: lines, duration: 12, parameters: { profile, minLength: 2, maxLength: 6 } });
+  assert.equal(engineResult.lines[0].alignmentMethod, "intro_aware_boundary_dynamic_programming");
 });
 
 test("autocorrelation pitch profile detects a bounded voiced tone", () => {

@@ -15,6 +15,7 @@
 - [`ROBUSTNESS_EXPERIMENT.md`](./ROBUSTNESS_EXPERIMENT.md) — Experiment 08, deterministic perturbations for noise, delayed onsets, intros, and uneven lines.
 - [`PARAMETER_SWEEP_EXPERIMENT.md`](./PARAMETER_SWEEP_EXPERIMENT.md) — Experiment 09, synthetic parameter sensitivity for current engines.
 - [`GENERALIZATION_EXPERIMENT.md`](./GENERALIZATION_EXPERIMENT.md) — Experiment 10, seeded randomized synthetic cases for broader behavior coverage.
+- [`INTRO_AWARE_EXPERIMENT.md`](./INTRO_AWARE_EXPERIMENT.md) — Experiment 11, an isolated leading-intro-aware Boundary-DP variant.
 
 The checked-in `example.synthetic.json` is only a deterministic smoke fixture; it contains no copyrighted audio. A research dataset is needed to answer whether the algorithm works. It should be kept outside Git unless every audio/lyric item is licensed for redistribution.
 
