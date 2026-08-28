@@ -27,6 +27,7 @@ const definitions = [
   ["Template-DTW tempo robustness", "benchmarks/results/template-tempo-study.json", (data) => Object.entries(data.results).map(([name, result]) => `${name}: ${result.metrics.maeSeconds.toFixed(3)} s MAE`).join("; ")],
   ["Template-DTW noise robustness", "benchmarks/results/template-noise-study.json", (data) => Object.entries(data.results).map(([name, result]) => `${name}: ${result.metrics.maeSeconds.toFixed(3)} s MAE`).join("; ")],
   ["MFCC parameter sensitivity", "benchmarks/results/mfcc-parameter-study.json", (data) => `best ${data.best.metrics.maeSeconds.toFixed(3)} s MAE; worst ${data.worst.metrics.maeSeconds.toFixed(3)} s MAE across ${data.candidateCount} settings`],
+  ["Text-weighted Boundary-DP", "benchmarks/results/text-weighted-boundary-study.json", (data) => `equal-duration ${data.methods.boundaryDp.metrics.maeSeconds.toFixed(3)} s MAE; text-weighted ${data.methods.textWeightedBoundaryDp.metrics.maeSeconds.toFixed(3)} s MAE; ${(data.methods.textWeightedBoundaryDp.metrics.within100 * 100).toFixed(0)}% within 1.00 s`],
   ["Offline pipeline smoke", "benchmarks/results/offline-pipeline-smoke.json", (data) => `${data.metrics.maeSeconds.toFixed(3)} s MAE; ${data.decoder.samples} decoded samples; ${data.profiles.energyFrames} profile frames`],
   [
     "Common ablation",
@@ -72,6 +73,7 @@ const report = [
   "npm run experiment-template-dtw",
   "npm run experiment-boundary-dp",
   "npm run experiment-pitch",
+  "npm run experiment-text-weighted",
   "npm run experiment-multi-profile",
   "npm run ablation-study",
   "npm run summarize-experiments",

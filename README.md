@@ -95,11 +95,17 @@ The v0.1 browser UI is a thin client over reusable ES modules:
 - `src/audio-decoder.mjs` — dependency-free WAV decoding with optional local FFmpeg for compressed audio
 - `src/template-builder.js` — MFCC line-template extraction from a verified reference timeline
 - `src/combined-aligner.js` — reusable combined-profile candidate generator
+- `src/text-weighted-aligner.js` — Unicode-safe lyric-length prior with a selectable Boundary-DP variant
 - `src/dtw.js` and `src/mfcc-dtw.js` — constrained DTW and MFCC sequence alignment
 
 MFCC and constrained DTW primitives are now present. They compare two feature sequences; they do not magically infer words from lyrics. The next research task is to define and validate how each known lyric line gets an acoustic/template representation, then use that representation to produce line timestamps. This keeps the research honest and prevents a generic DTW path from being mislabeled as lyric recognition.
 
 Run `npm run compare-engines` to compare the energy baseline and combined profile on the checked-in synthetic fixture. The output is a wiring smoke test, not evidence of real-song accuracy.
+
+Run `npm run experiment-text-weighted` to compare equal-duration Boundary-DP
+with the isolated text-weighted prior. The prior is useful for testing uneven
+lyric line lengths but is not selected as the production default without
+real-song evidence.
 
 For a local decoded-file run, use `npm run align-local -- <audio-path> <lyric-path> [engine] [output-json]`. WAV/PCM works without extra packages; MP3/M4A/FLAC require an available local FFmpeg executable. See `benchmarks/REAL_DATA_EVALUATION.md` for the privacy boundary and example.
 

@@ -5,6 +5,7 @@ import { alignByBoundaryDp } from "./boundary-dp-aligner.js";
 import { alignMultiProfile } from "./multi-profile-aligner.js";
 import { alignByIntroAwareBoundaryDp } from "./intro-aware-aligner.js";
 import { alignByAdaptiveBoundaryDp } from "./adaptive-boundary-aligner.js";
+import { alignByTextWeightedBoundaryDp } from "./text-weighted-aligner.js";
 
 export const ENGINE_VERSION = "0.3.0";
 
@@ -32,6 +33,11 @@ export function synchronize({ lyrics, duration, energyProfile, engine = "energy-
   }
   if (engine === "adaptive-boundary-dp") {
     const alignment = alignByAdaptiveBoundaryDp(lines, parameters.profile || energyProfile || [], duration, parameters);
+    const alignedLines = lines.map((line, index) => ({ ...line, startTime: alignment.segments[index].startTime, endTime: alignment.segments[index].endTime, alignmentMethod: alignment.method, confidence: null }));
+    return { engine, engineVersion: ENGINE_VERSION, parameters: { ...parameters, profile: undefined }, alignment, lines: alignedLines, generatedAt: new Date().toISOString() };
+  }
+  if (engine === "text-weighted-boundary-dp") {
+    const alignment = alignByTextWeightedBoundaryDp(lines, parameters.profile || energyProfile || [], duration, parameters);
     const alignedLines = lines.map((line, index) => ({ ...line, startTime: alignment.segments[index].startTime, endTime: alignment.segments[index].endTime, alignmentMethod: alignment.method, confidence: null }));
     return { engine, engineVersion: ENGINE_VERSION, parameters: { ...parameters, profile: undefined }, alignment, lines: alignedLines, generatedAt: new Date().toISOString() };
   }

@@ -25,6 +25,7 @@ they are generated artifacts; regenerate this report with
 | Template-DTW tempo robustness | `template-tempo-synthetic-v1` | 6 | 0.020 s MAE for DTW windows 0, 1, and 2; 100% within 0.25 s |
 | Template-DTW noise robustness | `template-noise-synthetic-v1` | 16 | 0.013 s MAE for DTW windows 1–3; 100% within 0.25 s |
 | MFCC parameter sensitivity | `mfcc-parameter-synthetic-v1` | 18 | Best 0.008 s MAE; worst 0.128 s MAE across frame/hop/mel settings |
+| Text-weighted Boundary-DP | `text-weighted-boundary-synthetic-v1` | 2 | equal-duration 1.583 s MAE; text-weighted 0.317 s MAE; 100% within 1.00 s |
 | Offline pipeline smoke | `offline-pipeline-synthetic-v1` | 1 | 32,000 samples decoded; 64-frame profiles; multi-profile alignment 0.024 s MAE |
 
 ## Interpretation
@@ -92,6 +93,13 @@ tested deterministic feature noise and 10% frame drops. Windows 1–3 tied at
 0.013 s MAE, while window 0 was slightly worse at 0.019 s. This is a useful
 implementation signal but not evidence of robustness to real recording noise.
 
+Experiment 17 shows that a Unicode-safe lyric-length prior can improve the
+equal-duration Boundary-DP baseline on fixtures with intentionally uneven
+line lengths (1.583 s to 0.317 s MAE). This is a targeted synthetic result:
+held notes, rapid syllables, repeated phrases, and instrumental gaps may break
+the correlation between written length and sung duration. The engine remains
+selectable and is not the default.
+
 ## Real-song status
 
 No real-song accuracy result exists yet. The private collection has not been
@@ -128,5 +136,6 @@ npm run experiment-template-tempo
 npm run experiment-template-noise
 npm run experiment-mfcc-parameters
 npm run smoke-offline-pipeline
+npm run experiment-text-weighted
 npm run summarize-experiments
 ```

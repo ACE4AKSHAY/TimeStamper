@@ -22,6 +22,7 @@ import { extractPitchProfile, pitchVoicednessProfile } from "../src/pitch-profil
 import { alignMultiProfile } from "../src/multi-profile-aligner.js";
 import { alignByIntroAwareBoundaryDp } from "../src/intro-aware-aligner.js";
 import { alignByAdaptiveBoundaryDp } from "../src/adaptive-boundary-aligner.js";
+import { alignByTextWeightedBoundaryDp, estimateTextWeights } from "../src/text-weighted-aligner.js";
 import { summarizeConsensus, buildConsensusTimeline } from "../src/consensus-aligner.js";
 
 test("LRC timestamps round to centiseconds", () => {
@@ -199,6 +200,19 @@ test("adaptive boundary DP selects intro handling only above its threshold", () 
   const result = alignByAdaptiveBoundaryDp(lines, profile, 12, { minLength: 2, maxLength: 6, minimumIntroFrames: 3 });
   assert.equal(result.selectedEngine, "intro-aware-boundary-dp");
   assert.equal(result.segments[0].startFrame, 3);
+});
+
+test("text-weighted Boundary-DP handles Unicode line lengths", () => {
+  const lines = ["go now", "this is a much longer lyric line", "stay"].map((originalText, order) => ({ id: `text-weighted-${order}`, originalText, order }));
+  const weights = estimateTextWeights(lines);
+  assert.equal(weights.textLengths[0], 5);
+  assert.ok(weights.weights[1] > weights.weights[0]);
+  const result = alignByTextWeightedBoundaryDp(lines, Array.from({ length: 32 }, () => 0.5), 16, { boundaryWeight: 0 });
+  assert.equal(result.segments.length, 3);
+  assert.ok(result.segments.every((segment, index) => index === 0 || segment.startFrame >= result.segments[index - 1].endFrame));
+  assert.ok(result.segments[1].endFrame - result.segments[1].startFrame > result.segments[0].endFrame - result.segments[0].startFrame);
+  const engineResult = synchronize({ engine: "text-weighted-boundary-dp", lyrics: lines, duration: 16, parameters: { profile: Array.from({ length: 32 }, () => 0.5), boundaryWeight: 0 } });
+  assert.equal(engineResult.lines[0].alignmentMethod, "text_weighted_boundary_dynamic_programming");
 });
 
 test("consensus layer returns a median timestamp and bounded confidence", () => {

@@ -1,0 +1,22 @@
+{
+  "datasetVersion": "text-weighted-boundary-synthetic-v1",
+  "description": "Text-length prior fixture with multilingual-safe line weighting and no copyrighted audio.",
+  "cases": [
+    {
+      "id": "text-weighted-01",
+      "language": "mixed",
+      "duration": 16,
+      "lyrics": ["go now", "this is a much longer lyric line", "stay"],
+      "profile": [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+      "reference": [0, 2.5, 13.5]
+    },
+    {
+      "id": "text-weighted-02",
+      "language": "te",
+      "duration": 12,
+      "lyrics": ["ఒకటి", "ఇది కొంచెం పొడవైన పంక్తి", "మూడు"],
+      "profile": [0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4],
+      "reference": [0, 2, 10]
+    }
+  ]
+}
