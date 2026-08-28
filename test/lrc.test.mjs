@@ -21,6 +21,7 @@ import { alignByBoundaryDp } from "../src/boundary-dp-aligner.js";
 import { extractPitchProfile, pitchVoicednessProfile } from "../src/pitch-profile.js";
 import { alignMultiProfile } from "../src/multi-profile-aligner.js";
 import { alignByIntroAwareBoundaryDp } from "../src/intro-aware-aligner.js";
+import { alignByAdaptiveBoundaryDp } from "../src/adaptive-boundary-aligner.js";
 
 test("LRC timestamps round to centiseconds", () => {
   assert.equal(secondsToLrc(12.426), "[00:12.43]");
@@ -189,6 +190,14 @@ test("intro-aware boundary DP preserves a detected leading intro", () => {
   assert.ok(result.segments.every((segment, index) => index === 0 || segment.startFrame >= result.segments[index - 1].endFrame));
   const engineResult = synchronize({ engine: "intro-aware-boundary-dp", lyrics: lines, duration: 12, parameters: { profile, minLength: 2, maxLength: 6 } });
   assert.equal(engineResult.lines[0].alignmentMethod, "intro_aware_boundary_dynamic_programming");
+});
+
+test("adaptive boundary DP selects intro handling only above its threshold", () => {
+  const lines = ["a", "b", "c"].map((originalText, order) => ({ id: `adaptive-${order}`, originalText, order }));
+  const profile = [0.1, 0.1, 0.1, 1, 0.2, 0.2, 0.9, 0.2, 0.2, 1, 0.2, 0.2];
+  const result = alignByAdaptiveBoundaryDp(lines, profile, 12, { minLength: 2, maxLength: 6, minimumIntroFrames: 3 });
+  assert.equal(result.selectedEngine, "intro-aware-boundary-dp");
+  assert.equal(result.segments[0].startFrame, 3);
 });
 
 test("autocorrelation pitch profile detects a bounded voiced tone", () => {

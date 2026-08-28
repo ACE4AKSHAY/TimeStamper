@@ -331,6 +331,11 @@ Experiment 11 (`benchmarks/INTRO_AWARE_EXPERIMENT.md`) isolates a leading-intro
 detector around Boundary-DP. It is a candidate engine only; the original
 Boundary-DP path remains available for comparison.
 
+Experiment 12 (`benchmarks/ADAPTIVE_BOUNDARY_EXPERIMENT.md`) tests a thresholded
+selector that chooses the intro-aware candidate only for substantial detected
+intros. The selector is experimental and does not change the application
+default.
+
 ## 6. How the complete system links together
 
 ```text

@@ -176,6 +176,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 126 | Experiment 09 parameter sweep | 🟡 | Boundary, combined-profile and multi-profile weights are swept on the synthetic fixture; no parameter is promoted without real-data evidence. |
 | 127 | Experiment 10 generalization | 🟡 | A seeded 60-case synthetic corpus varies lines, durations, intros, noise and onset delay; real-song evidence remains separate. |
 | 128 | Experiment 11 intro-aware DP | 🟡 | An isolated variant estimates a sustained active start before Boundary-DP; it is measured only on synthetic robustness cases and does not replace the original. |
+| 129 | Experiment 12 adaptive Boundary-DP | 🟡 | A thresholded selector chooses intro-aware handling only for substantial detected intros; original and intro-aware engines remain separately available. |
 
 ## Recommended next steps
 

@@ -20,6 +20,7 @@ they are generated artifacts; regenerate this report with
 | Parameter sensitivity sweep | `parameter-sweep-synthetic-v1` | 2 | boundary-DP: 0.000 s; combined profile: 1.638 s; multi-profile boundary-DP: 0.400 s best MAE |
 | Seeded generalization corpus | `generalization-synthetic-v1` | 60 | energyBaseline: 1.233 s; combinedProfile: 0.935 s; boundaryDp: 1.669 s; multi-profile 1.697 s MAE |
 | Intro-aware Boundary-DP | `intro-aware-synthetic-v1` | 5 | existing boundary-DP: 0.360 s; intro-aware variant: 0.200 s MAE; 100% within 1.00 s |
+| Adaptive Boundary-DP | `adaptive-boundary-synthetic-v1` | 5 | existing: 0.360 s; intro-aware: 0.200 s; adaptive selector: 0.180 s MAE; 100% within 1.00 s |
 
 ## Interpretation
 
@@ -56,6 +57,11 @@ to 0.200 s MAE and removes the 5-second long-intro failure (down to 0.5 s).
 However, its active-start detector shifts a delayed-onset case by 0.5 s. It
 remains an experimental selectable engine; no default has been changed.
 
+The adaptive selector improves this five-case subset to 0.180 s MAE by using
+intro-aware handling only for the detected long intro and retaining the
+original engine elsewhere. This is a targeted synthetic result, not proof that
+the three-frame rule is correct for real songs.
+
 ## Real-song status
 
 No real-song accuracy result exists yet. The private collection has not been
@@ -86,5 +92,6 @@ npm run experiment-robustness
 npm run experiment-parameter-sweep
 npm run experiment-generalization
 npm run experiment-intro-aware
+npm run experiment-adaptive-boundary
 npm run summarize-experiments
 ```

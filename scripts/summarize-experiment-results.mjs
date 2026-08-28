@@ -22,6 +22,7 @@ const definitions = [
   ["Parameter sensitivity sweep", "benchmarks/results/parameter-sweep.json", (data) => Object.entries(data.results).map(([name, result]) => `${name}: ${result.best.metrics.maeSeconds.toFixed(3)} s best MAE`).join("; ")],
   ["Seeded generalization corpus", "benchmarks/results/generalization-study.json", (data) => Object.entries(data.metrics).map(([name, metrics]) => `${name}: ${metrics.maeSeconds.toFixed(3)} s MAE`).join("; ")],
   ["Intro-aware Boundary-DP", "benchmarks/results/intro-aware-study.json", (data) => Object.entries(data.metrics).map(([name, metrics]) => `${name}: ${metrics.maeSeconds.toFixed(3)} s MAE`).join("; ")],
+  ["Adaptive Boundary-DP", "benchmarks/results/adaptive-boundary-study.json", (data) => Object.entries(data.metrics).map(([name, metrics]) => `${name}: ${metrics.maeSeconds.toFixed(3)} s MAE`).join("; ")],
   [
     "Common ablation",
     "benchmarks/results/ablation-study.json",
