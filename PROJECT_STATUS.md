@@ -184,6 +184,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 134 | Experiment 15 template noise | 🟡 | Template-DTW is tested with deterministic feature noise and 10% frame drops across multiple windows; real acoustic corruption remains unmeasured. |
 | 135 | Experiment 16 MFCC parameters | 🟡 | MFCC frame, hop and mel-band combinations are self-aligned through template-DTW; real-song parameter calibration remains unmeasured. |
 | 136 | Offline pipeline smoke | 🟡 | In-memory WAV decoding, feature extraction, pitch profiling and multi-profile alignment now run end-to-end without private media. |
+| 137 | Real candidate validation | 🟡 | A private metadata-only scanner now checks MP3/LRC pairing, UTF-8 parsing, timestamp order, coverage and special-version hints before manual review. |
 
 ## Recommended next steps
 

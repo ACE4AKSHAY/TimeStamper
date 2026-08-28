@@ -23,6 +23,7 @@
 - [`MFCC_PARAMETER_EXPERIMENT.md`](./MFCC_PARAMETER_EXPERIMENT.md) — Experiment 16, self-alignment sensitivity to MFCC frame and filter-bank settings.
 - [`OFFLINE_PIPELINE_SMOKE.md`](./OFFLINE_PIPELINE_SMOKE.md) — Decoder-to-features-to-alignment end-to-end smoke path using generated WAV bytes.
 - [`REAL_FILE_REQUIREMENTS.md`](./REAL_FILE_REQUIREMENTS.md) — Exact private audio, lyrics, pairing, and verification requirements.
+- [`REAL_CANDIDATE_VALIDATION.md`](./REAL_CANDIDATE_VALIDATION.md) — Metadata-only validator for collected MP3/LRC candidates.
 - [`COMPATIBILITY.md`](./COMPATIBILITY.md) — Runtime boundary and optimization checks for reusable modules.
 - [`PERFORMANCE_BENCHMARK.md`](./PERFORMANCE_BENCHMARK.md) — Runtime and heap benchmark protocol for all alignment engines.
 
