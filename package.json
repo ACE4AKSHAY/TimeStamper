@@ -25,6 +25,7 @@
     "experiment-generalization": "node scripts/run-generalization-experiment.mjs",
     "experiment-intro-aware": "node scripts/run-intro-aware-experiment.mjs",
     "experiment-adaptive-boundary": "node scripts/run-adaptive-boundary-experiment.mjs",
+    "check-compatibility": "node scripts/check-compatibility.mjs",
     "summarize-experiments": "node scripts/summarize-experiment-results.mjs",
     "test": "node --test"
   },

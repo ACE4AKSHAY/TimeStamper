@@ -20,15 +20,21 @@ export function resampleProfile(profile, length) {
 
 export function normalizeProfile(profile) {
   const values = Array.from(profile || [], Number);
-  if (!values.length || values.some((value) => !Number.isFinite(value))) throw new Error("Profiles must contain finite numeric values.");
-  const minimum = Math.min(...values), maximum = Math.max(...values), range = maximum - minimum;
+  if (!values.length) throw new Error("Profiles must contain finite numeric values.");
+  let minimum = Infinity, maximum = -Infinity;
+  for (const value of values) {
+    if (!Number.isFinite(value)) throw new Error("Profiles must contain finite numeric values.");
+    minimum = Math.min(minimum, value);
+    maximum = Math.max(maximum, value);
+  }
+  const range = maximum - minimum;
   return range > 0 ? values.map((value) => (value - minimum) / range) : values.map(() => 0);
 }
 
 export function fuseProfiles(profiles, weights = {}) {
   const entries = Object.entries(profiles || {}).filter(([, profile]) => Array.isArray(profile) && profile.length);
   if (!entries.length) throw new Error("At least one non-empty profile is required for fusion.");
-  const length = Math.max(...entries.map(([, profile]) => profile.length));
+  const length = entries.reduce((largest, [, profile]) => Math.max(largest, profile.length), 0);
   const prepared = entries.map(([name, profile]) => ({ name, weight: Number.isFinite(weights[name]) ? Math.max(0, weights[name]) : 1, values: normalizeProfile(resampleProfile(profile, length)) }));
   const totalWeight = prepared.reduce((sum, item) => sum + item.weight, 0);
   if (!totalWeight) throw new Error("At least one profile weight must be greater than zero.");

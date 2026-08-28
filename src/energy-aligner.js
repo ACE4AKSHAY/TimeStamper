@@ -10,11 +10,15 @@ export function createEnergyInitialTimeline(lines, energyProfile, duration) {
   const threshold = sorted[Math.floor(sorted.length * 0.35)] || 0;
   const weights = energyProfile.map((value) => Math.max(0.00001, value - threshold * 0.35));
   const total = weights.reduce((sum, weight) => sum + weight, 0);
+  const cumulative = [];
+  weights.reduce((sum, weight, index) => (cumulative[index] = sum + weight), 0);
+  let maximum = 0;
+  for (const value of energyProfile) maximum = Math.max(maximum, value);
   let cursor = 0;
   return lines.map((line, index) => {
     const target = total * ((index + 0.15) / lines.length);
-    while (cursor < weights.length - 1 && weights.slice(0, cursor + 1).reduce((sum, weight) => sum + weight, 0) < target) cursor += 1;
-    const localStrength = energyProfile[cursor] / (Math.max(...energyProfile) || 1);
+    while (cursor < weights.length - 1 && cumulative[cursor] < target) cursor += 1;
+    const localStrength = energyProfile[cursor] / (maximum || 1);
     return {
       ...line,
       startTime: Math.min(duration, cursor / Math.max(1, energyProfile.length - 1) * duration),
