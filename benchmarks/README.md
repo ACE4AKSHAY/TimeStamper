@@ -18,6 +18,7 @@
 - [`INTRO_AWARE_EXPERIMENT.md`](./INTRO_AWARE_EXPERIMENT.md) — Experiment 11, an isolated leading-intro-aware Boundary-DP variant.
 - [`ADAPTIVE_BOUNDARY_EXPERIMENT.md`](./ADAPTIVE_BOUNDARY_EXPERIMENT.md) — Experiment 12, a thresholded selector between original and intro-aware Boundary-DP.
 - [`COMPATIBILITY.md`](./COMPATIBILITY.md) — Runtime boundary and optimization checks for reusable modules.
+- [`PERFORMANCE_BENCHMARK.md`](./PERFORMANCE_BENCHMARK.md) — Runtime and heap benchmark protocol for all alignment engines.
 
 The checked-in `example.synthetic.json` is only a deterministic smoke fixture; it contains no copyrighted audio. A research dataset is needed to answer whether the algorithm works. It should be kept outside Git unless every audio/lyric item is licensed for redistribution.
 

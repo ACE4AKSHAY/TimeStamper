@@ -178,6 +178,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 128 | Experiment 11 intro-aware DP | 🟡 | An isolated variant estimates a sustained active start before Boundary-DP; it is measured only on synthetic robustness cases and does not replace the original. |
 | 129 | Experiment 12 adaptive Boundary-DP | 🟡 | A thresholded selector chooses intro-aware handling only for substantial detected intros; original and intro-aware engines remain separately available. |
 | 130 | Compatibility and optimization | 🟡 | Portable core import smoke check and large-profile performance safeguards are implemented; Node 18 execution remains to be verified when that runtime is installed. |
+| 131 | Performance benchmark | 🟡 | Median/p95 runtime and observed heap measurements are now captured for all alignment engines on a deterministic fixture; cross-machine baselines remain future work. |
 
 ## Recommended next steps
 
