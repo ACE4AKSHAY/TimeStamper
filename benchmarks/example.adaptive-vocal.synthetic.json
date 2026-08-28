@@ -1,0 +1,24 @@
+{
+  "datasetVersion": "adaptive-vocal-boundary-synthetic-v1",
+  "description": "High-coverage voicedness selects gating; low-coverage voicedness falls back to energy.",
+  "cases": [
+    {
+      "id": "adaptive-vocal-high",
+      "language": "te",
+      "duration": 12,
+      "lyrics": ["మొదటి పంక్తి", "రెండవ పంక్తి", "చివరి పంక్తి"],
+      "energy": [0.1, 0.1, 0.1, 0.1, 1, 0.1, 0.8, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 0.1, 0.8, 0.2, 0.1, 0.1, 0.1, 0.1],
+      "voicedness": [0.8, 0.8, 0.8, 0.8, 0.1, 0.8, 1, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.1, 0.8, 1, 0.8, 0.8, 0.8, 0.8, 0.8],
+      "reference": [0, 3, 9]
+    },
+    {
+      "id": "adaptive-vocal-low",
+      "language": "hi",
+      "duration": 10,
+      "lyrics": ["पहली पंक्ति", "दूसरी पंक्ति", "तीसरी पंक्ति"],
+      "energy": [0.2, 0.2, 0.2, 0.2, 0.2, 1, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 1, 0.2],
+      "voicedness": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+      "reference": [0, 2.5, 9]
+    }
+  ]
+}

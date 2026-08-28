@@ -9,6 +9,7 @@ import { alignByTextWeightedBoundaryDp } from "./text-weighted-aligner.js";
 import { refineBoundarySegments } from "./boundary-refiner.js";
 import { alignByEnsemble } from "./ensemble-aligner.js";
 import { alignByVocalGatedBoundaryDp } from "./vocal-gated-aligner.js";
+import { alignByAdaptiveVocalBoundaryDp } from "./adaptive-vocal-aligner.js";
 
 export const ENGINE_VERSION = "0.3.0";
 
@@ -57,6 +58,11 @@ export function synchronize({ lyrics, duration, energyProfile, engine = "energy-
   }
   if (engine === "vocal-gated-boundary-dp") {
     const alignment = alignByVocalGatedBoundaryDp(lines, parameters.profiles || {}, duration, parameters);
+    const alignedLines = lines.map((line, index) => ({ ...line, startTime: alignment.segments[index].startTime, endTime: alignment.segments[index].endTime, alignmentMethod: alignment.method, confidence: null }));
+    return { engine, engineVersion: ENGINE_VERSION, parameters: { ...parameters, profiles: undefined }, alignment, lines: alignedLines, generatedAt: new Date().toISOString() };
+  }
+  if (engine === "adaptive-vocal-boundary-dp") {
+    const alignment = alignByAdaptiveVocalBoundaryDp(lines, parameters.profiles || {}, duration, parameters);
     const alignedLines = lines.map((line, index) => ({ ...line, startTime: alignment.segments[index].startTime, endTime: alignment.segments[index].endTime, alignmentMethod: alignment.method, confidence: null }));
     return { engine, engineVersion: ENGINE_VERSION, parameters: { ...parameters, profiles: undefined }, alignment, lines: alignedLines, generatedAt: new Date().toISOString() };
   }

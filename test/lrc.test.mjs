@@ -26,6 +26,7 @@ import { alignByTextWeightedBoundaryDp, estimateTextWeights } from "../src/text-
 import { refineBoundarySegments } from "../src/boundary-refiner.js";
 import { alignByEnsemble } from "../src/ensemble-aligner.js";
 import { alignByVocalGatedBoundaryDp, buildVocalGatedProfile } from "../src/vocal-gated-aligner.js";
+import { alignByAdaptiveVocalBoundaryDp, summarizeVoicedness } from "../src/adaptive-vocal-aligner.js";
 import { summarizeConsensus, buildConsensusTimeline } from "../src/consensus-aligner.js";
 
 test("LRC timestamps round to centiseconds", () => {
@@ -246,6 +247,18 @@ test("vocal gating suppresses unvoiced energy peaks", () => {
   const result = alignByVocalGatedBoundaryDp(["a", "b", "c"], { energy, voicedness }, 12, { boundaryWeight: 1, minimumIntroFrames: energy.length + 1, minLength: 2, maxLength: 12 });
   assert.equal(result.segments.length, 3);
   assert.equal(result.method, "vocal_gated_boundary_dynamic_programming");
+});
+
+test("adaptive vocal selector records why it gates or falls back", () => {
+  const energy = [0.1, 0.2, 1, 0.2, 0.1, 0.2, 0.9, 0.2, 0.1, 0.2];
+  const high = [0.1, 0.8, 1, 0.8, 0.1, 0.8, 1, 0.8, 0.1, 0.1];
+  const low = high.map(() => 0.1);
+  assert.ok(summarizeVoicedness(high).voicedCoverage > summarizeVoicedness(low).voicedCoverage);
+  const gated = alignByAdaptiveVocalBoundaryDp(["a", "b"], { energy, voicedness: high }, 10, { minLength: 2, maxLength: 8 });
+  const fallback = alignByAdaptiveVocalBoundaryDp(["a", "b"], { energy, voicedness: low }, 10, { minLength: 2, maxLength: 8 });
+  assert.equal(gated.selectedEngine, "vocal-gated-boundary-dp");
+  assert.equal(fallback.selectedEngine, "adaptive-boundary-dp");
+  assert.equal(fallback.selection.reason, "voiced_coverage_insufficient");
 });
 
 test("consensus layer returns a median timestamp and bounded confidence", () => {

@@ -29,6 +29,7 @@ they are generated artifacts; regenerate this report with
 | Boundary refinement | `boundary-refinement-synthetic-v1` | 2 | adaptive coarse 0.833 s MAE; refined 0.417 s MAE; 83% within 0.50 s |
 | Boundary ensemble | `ensemble-boundary-synthetic-v1` | 2 | adaptive 0.804 s MAE; refined 0.504 s MAE; consensus 0.587 s MAE; 83% within 1.00 s |
 | Vocal-gated Boundary-DP | `vocal-gated-boundary-synthetic-v1` | 2 | energy-only 0.583 s MAE; vocal-gated 0.417 s MAE; 83% within 0.50 s |
+| Adaptive vocal selector | `adaptive-vocal-boundary-synthetic-v1` | 2 | energy-only 0.583 s MAE; routed 0.417 s MAE; high coverage gates, low coverage falls back |
 | Offline pipeline smoke | `offline-pipeline-synthetic-v1` | 1 | 32,000 samples decoded; 64-frame profiles; multi-profile alignment 0.024 s MAE |
 
 ## Interpretation
@@ -119,6 +120,12 @@ Experiment 20 gates energy with explainable voicedness to reduce instrumental
 decoys. On its two-case fixture, vocal gating improves MAE from 0.583 s to
 0.417 s and reaches 83% within 0.50 s. The remaining 2.5-second miss shows
 that pitch-like instrumentation or absent vocals still require review.
+
+Experiment 21 routes by voicedness coverage: the high-coverage fixture selects
+vocal gating, while the low-coverage fixture falls back to energy-only
+alignment. The routed result is 0.417 s MAE versus 0.583 s for energy-only on
+this fixture. The 20% coverage threshold is provisional and must be calibrated
+on verified recordings.
 
 ## Real-song status
 

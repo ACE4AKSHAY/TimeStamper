@@ -25,6 +25,7 @@
 - [`BOUNDARY_REFINEMENT_EXPERIMENT.md`](./BOUNDARY_REFINEMENT_EXPERIMENT.md) — Experiment 18, bounded local onset refinement over a coarse segmentation.
 - [`ENSEMBLE_EXPERIMENT.md`](./ENSEMBLE_EXPERIMENT.md) — Experiment 19, consensus timestamps and explicit low-agreement diagnostics.
 - [`VOCAL_GATED_EXPERIMENT.md`](./VOCAL_GATED_EXPERIMENT.md) — Experiment 20, voicedness-gated boundary detection for instrumental decoys.
+- [`ADAPTIVE_VOCAL_EXPERIMENT.md`](./ADAPTIVE_VOCAL_EXPERIMENT.md) — Experiment 21, coverage-based routing between vocal-gated and energy-only alignment.
 - [`OFFLINE_PIPELINE_SMOKE.md`](./OFFLINE_PIPELINE_SMOKE.md) — Decoder-to-features-to-alignment end-to-end smoke path using generated WAV bytes.
 - [`REAL_FILE_REQUIREMENTS.md`](./REAL_FILE_REQUIREMENTS.md) — Exact private audio, lyrics, pairing, and verification requirements.
 - [`REAL_CANDIDATE_VALIDATION.md`](./REAL_CANDIDATE_VALIDATION.md) — Metadata-only validator for collected MP3/LRC candidates.
