@@ -25,6 +25,7 @@ import { alignByAdaptiveBoundaryDp } from "../src/adaptive-boundary-aligner.js";
 import { alignByTextWeightedBoundaryDp, estimateTextWeights } from "../src/text-weighted-aligner.js";
 import { refineBoundarySegments } from "../src/boundary-refiner.js";
 import { alignByEnsemble } from "../src/ensemble-aligner.js";
+import { alignByVocalGatedBoundaryDp, buildVocalGatedProfile } from "../src/vocal-gated-aligner.js";
 import { summarizeConsensus, buildConsensusTimeline } from "../src/consensus-aligner.js";
 
 test("LRC timestamps round to centiseconds", () => {
@@ -235,6 +236,16 @@ test("ensemble alignment returns monotonic consensus and review diagnostics", ()
   assert.ok(result.lines.every((line) => line.alignmentReview.failureCategory));
   const engineResult = synchronize({ engine: "ensemble-boundary", lyrics: lines, duration: 12, parameters: { profile, boundaryWeight: 0, minimumIntroFrames: profile.length + 1, windowFrames: 4 } });
   assert.equal(engineResult.lines[1].alignmentMethod, "ensemble_boundary_consensus");
+});
+
+test("vocal gating suppresses unvoiced energy peaks", () => {
+  const energy = [0.1, 0.1, 0.1, 0.1, 1, 0.1, 0.8, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 0.1, 0.8, 0.2, 0.1, 0.1, 0.1, 0.1];
+  const voicedness = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 0.1, 0.1, 0.1, 0.1, 0.1];
+  const gated = buildVocalGatedProfile(energy, voicedness);
+  assert.ok(gated.profile[6] > gated.profile[4]);
+  const result = alignByVocalGatedBoundaryDp(["a", "b", "c"], { energy, voicedness }, 12, { boundaryWeight: 1, minimumIntroFrames: energy.length + 1, minLength: 2, maxLength: 12 });
+  assert.equal(result.segments.length, 3);
+  assert.equal(result.method, "vocal_gated_boundary_dynamic_programming");
 });
 
 test("consensus layer returns a median timestamp and bounded confidence", () => {

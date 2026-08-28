@@ -28,6 +28,7 @@ they are generated artifacts; regenerate this report with
 | Text-weighted Boundary-DP | `text-weighted-boundary-synthetic-v1` | 2 | equal-duration 1.583 s MAE; text-weighted 0.317 s MAE; 100% within 1.00 s |
 | Boundary refinement | `boundary-refinement-synthetic-v1` | 2 | adaptive coarse 0.833 s MAE; refined 0.417 s MAE; 83% within 0.50 s |
 | Boundary ensemble | `ensemble-boundary-synthetic-v1` | 2 | adaptive 0.804 s MAE; refined 0.504 s MAE; consensus 0.587 s MAE; 83% within 1.00 s |
+| Vocal-gated Boundary-DP | `vocal-gated-boundary-synthetic-v1` | 2 | energy-only 0.583 s MAE; vocal-gated 0.417 s MAE; 83% within 0.50 s |
 | Offline pipeline smoke | `offline-pipeline-synthetic-v1` | 1 | 32,000 samples decoded; 64-frame profiles; multi-profile alignment 0.024 s MAE |
 
 ## Interpretation
@@ -113,6 +114,11 @@ reports their median with an agreement diagnostic. On the fixture, consensus
 reaches 0.587 s MAE and 83% within one second, but refinement alone is better
 (0.504 s). This supports using the ensemble primarily to identify uncertain
 lines for review, not to assume that averaging correlated errors is optimal.
+
+Experiment 20 gates energy with explainable voicedness to reduce instrumental
+decoys. On its two-case fixture, vocal gating improves MAE from 0.583 s to
+0.417 s and reaches 83% within 0.50 s. The remaining 2.5-second miss shows
+that pitch-like instrumentation or absent vocals still require review.
 
 ## Real-song status
 

@@ -32,6 +32,7 @@
     "experiment-text-weighted": "node scripts/run-text-weighted-experiment.mjs",
     "experiment-boundary-refinement": "node scripts/run-boundary-refinement-experiment.mjs",
     "experiment-ensemble": "node scripts/run-ensemble-experiment.mjs",
+    "experiment-vocal-gated": "node scripts/run-vocal-gated-experiment.mjs",
     "smoke-offline-pipeline": "node scripts/run-offline-pipeline-smoke.mjs",
     "validate-real-candidates": "node scripts/validate-real-candidates.mjs",
     "check-compatibility": "node scripts/check-compatibility.mjs",

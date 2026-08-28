@@ -30,6 +30,7 @@ const definitions = [
   ["Text-weighted Boundary-DP", "benchmarks/results/text-weighted-boundary-study.json", (data) => `equal-duration ${data.methods.boundaryDp.metrics.maeSeconds.toFixed(3)} s MAE; text-weighted ${data.methods.textWeightedBoundaryDp.metrics.maeSeconds.toFixed(3)} s MAE; ${(data.methods.textWeightedBoundaryDp.metrics.within100 * 100).toFixed(0)}% within 1.00 s`],
   ["Boundary refinement", "benchmarks/results/boundary-refinement-study.json", (data) => `adaptive coarse ${data.methods.adaptiveBoundaryDp.metrics.maeSeconds.toFixed(3)} s MAE; refined ${data.methods.refinedBoundaryDp.metrics.maeSeconds.toFixed(3)} s MAE; ${(data.methods.refinedBoundaryDp.metrics.within050 * 100).toFixed(0)}% within 0.50 s`],
   ["Boundary ensemble", "benchmarks/results/ensemble-boundary-study.json", (data) => `adaptive ${data.methods.adaptiveBoundaryDp.metrics.maeSeconds.toFixed(3)} s MAE; refined ${data.methods.refinedBoundaryDp.metrics.maeSeconds.toFixed(3)} s MAE; consensus ${data.methods.ensembleBoundary.metrics.maeSeconds.toFixed(3)} s MAE; ${(data.methods.ensembleBoundary.metrics.within100 * 100).toFixed(0)}% within 1.00 s`],
+  ["Vocal-gated Boundary-DP", "benchmarks/results/vocal-gated-boundary-study.json", (data) => `energy-only ${data.methods.energyAdaptiveBoundaryDp.metrics.maeSeconds.toFixed(3)} s MAE; vocal-gated ${data.methods.vocalGatedBoundaryDp.metrics.maeSeconds.toFixed(3)} s MAE; ${(data.methods.vocalGatedBoundaryDp.metrics.within050 * 100).toFixed(0)}% within 0.50 s`],
   ["Offline pipeline smoke", "benchmarks/results/offline-pipeline-smoke.json", (data) => `${data.metrics.maeSeconds.toFixed(3)} s MAE; ${data.decoder.samples} decoded samples; ${data.profiles.energyFrames} profile frames`],
   [
     "Common ablation",
@@ -78,6 +79,7 @@ const report = [
   "npm run experiment-text-weighted",
   "npm run experiment-boundary-refinement",
   "npm run experiment-ensemble",
+  "npm run experiment-vocal-gated",
   "npm run experiment-multi-profile",
   "npm run ablation-study",
   "npm run summarize-experiments",
