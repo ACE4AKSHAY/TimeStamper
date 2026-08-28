@@ -28,6 +28,7 @@ import { alignByEnsemble } from "../src/ensemble-aligner.js";
 import { alignByVocalGatedBoundaryDp, buildVocalGatedProfile } from "../src/vocal-gated-aligner.js";
 import { alignByAdaptiveVocalBoundaryDp, summarizeVoicedness } from "../src/adaptive-vocal-aligner.js";
 import { alignBySilenceAwareBoundaryDp } from "../src/silence-aware-aligner.js";
+import { buildEvaluationParameters, extractReferenceStarts } from "../src/evaluation.js";
 import { summarizeConsensus, buildConsensusTimeline } from "../src/consensus-aligner.js";
 
 test("LRC timestamps round to centiseconds", () => {
@@ -268,6 +269,12 @@ test("silence-aware Boundary-DP keeps boundaries ordered through pauses", () => 
   assert.equal(result.segments.length, 3);
   assert.ok(result.segments.every((segment, index) => index === 0 || segment.startFrame >= result.segments[index - 1].endFrame));
   assert.equal(result.method, "silence_aware_boundary_dynamic_programming");
+});
+
+test("real evaluation helpers require verified monotonic references", () => {
+  assert.deepEqual(extractReferenceStarts({ verified: true, lineStarts: [0, 1.5, 3] }), [0, 1.5, 3]);
+  assert.throws(() => extractReferenceStarts({ startTimes: [1, 0] }), /monotonic/u);
+  assert.deepEqual(Object.keys(buildEvaluationParameters("adaptive-vocal-boundary-dp", { energy: [1] }, [0.5])).sort(), ["profiles"]);
 });
 
 test("consensus layer returns a median timestamp and bounded confidence", () => {

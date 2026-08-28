@@ -107,3 +107,9 @@ Install or expose a local decoder (FFmpeg is the simplest option), then add a
 small PCM adapter that feeds real audio into the existing profile and engine
 APIs. Keep the decoder optional so browser playback and mobile ports remain
 modular. No songs, lyrics, or private manifests should ever be committed.
+
+Once 5–10 cases have been manually verified, place them in the folder layout
+described by [`REAL_CASE_EVALUATION.md`](./REAL_CASE_EVALUATION.md) and run the
+private batch evaluator. It compares the selectable engines using your
+reference timestamps and records the first real accuracy evidence without
+publishing the media.

@@ -191,6 +191,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 141 | Experiment 20 vocal-gated Boundary-DP | 🟡 | Energy is gated by explainable voicedness to suppress instrumental decoys; gate calibration on real songs remains pending. |
 | 142 | Experiment 21 adaptive vocal selector | 🟡 | Voicedness coverage now routes between vocal-gated and energy-only alignment with an explicit reason; real threshold calibration remains pending. |
 | 143 | Experiment 22 silence-aware Boundary-DP | 🟡 | Pause gaps, onset strength and following activity now contribute to an isolated selectable aligner; real pause calibration remains pending. |
+| 144 | Private real-case evaluation harness | 🟡 | Verified case folders can now be batch-decoded and scored across engines without copying audio or lyric text; real results await user-prepared references. |
 
 ## Recommended next steps
 
