@@ -183,6 +183,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 133 | Experiment 14 template tempo | 🟡 | MFCC-template DTW is tested under controlled 0.75x/1x/1.25x temporal scaling and multiple windows; real singer/recording variation remains unmeasured. |
 | 134 | Experiment 15 template noise | 🟡 | Template-DTW is tested with deterministic feature noise and 10% frame drops across multiple windows; real acoustic corruption remains unmeasured. |
 | 135 | Experiment 16 MFCC parameters | 🟡 | MFCC frame, hop and mel-band combinations are self-aligned through template-DTW; real-song parameter calibration remains unmeasured. |
+| 136 | Offline pipeline smoke | 🟡 | In-memory WAV decoding, feature extraction, pitch profiling and multi-profile alignment now run end-to-end without private media. |
 
 ## Recommended next steps
 

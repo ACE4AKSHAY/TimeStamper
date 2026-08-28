@@ -25,6 +25,7 @@ they are generated artifacts; regenerate this report with
 | Template-DTW tempo robustness | `template-tempo-synthetic-v1` | 6 | 0.020 s MAE for DTW windows 0, 1, and 2; 100% within 0.25 s |
 | Template-DTW noise robustness | `template-noise-synthetic-v1` | 16 | 0.013 s MAE for DTW windows 1–3; 100% within 0.25 s |
 | MFCC parameter sensitivity | `mfcc-parameter-synthetic-v1` | 18 | Best 0.008 s MAE; worst 0.128 s MAE across frame/hop/mel settings |
+| Offline pipeline smoke | `offline-pipeline-synthetic-v1` | 1 | 32,000 samples decoded; 64-frame profiles; multi-profile alignment 0.024 s MAE |
 
 ## Interpretation
 
@@ -81,6 +82,11 @@ across 18 settings. This is a useful stability range for implementation
 calibration, but it does not establish which configuration is best for real
 music.
 
+The offline pipeline smoke passed generated WAV bytes through the same decoder,
+feature extraction, pitch profiling, and reusable alignment stages used by
+the local workflow. It produced 0.024 s MAE on four synthetic tone boundaries;
+this validates integration, not real-song quality.
+
 The template-DTW noise sweep remained within 0.125 seconds even with the
 tested deterministic feature noise and 10% frame drops. Windows 1–3 tied at
 0.013 s MAE, while window 0 was slightly worse at 0.019 s. This is a useful
@@ -121,5 +127,6 @@ npm run experiment-consensus
 npm run experiment-template-tempo
 npm run experiment-template-noise
 npm run experiment-mfcc-parameters
+npm run smoke-offline-pipeline
 npm run summarize-experiments
 ```

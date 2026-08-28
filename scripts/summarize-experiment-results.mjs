@@ -27,6 +27,7 @@ const definitions = [
   ["Template-DTW tempo robustness", "benchmarks/results/template-tempo-study.json", (data) => Object.entries(data.results).map(([name, result]) => `${name}: ${result.metrics.maeSeconds.toFixed(3)} s MAE`).join("; ")],
   ["Template-DTW noise robustness", "benchmarks/results/template-noise-study.json", (data) => Object.entries(data.results).map(([name, result]) => `${name}: ${result.metrics.maeSeconds.toFixed(3)} s MAE`).join("; ")],
   ["MFCC parameter sensitivity", "benchmarks/results/mfcc-parameter-study.json", (data) => `best ${data.best.metrics.maeSeconds.toFixed(3)} s MAE; worst ${data.worst.metrics.maeSeconds.toFixed(3)} s MAE across ${data.candidateCount} settings`],
+  ["Offline pipeline smoke", "benchmarks/results/offline-pipeline-smoke.json", (data) => `${data.metrics.maeSeconds.toFixed(3)} s MAE; ${data.decoder.samples} decoded samples; ${data.profiles.energyFrames} profile frames`],
   [
     "Common ablation",
     "benchmarks/results/ablation-study.json",

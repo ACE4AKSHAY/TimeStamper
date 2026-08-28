@@ -29,6 +29,7 @@
     "experiment-template-tempo": "node scripts/run-template-tempo-experiment.mjs",
     "experiment-template-noise": "node scripts/run-template-noise-experiment.mjs",
     "experiment-mfcc-parameters": "node scripts/run-mfcc-parameter-experiment.mjs",
+    "smoke-offline-pipeline": "node scripts/run-offline-pipeline-smoke.mjs",
     "check-compatibility": "node scripts/check-compatibility.mjs",
     "benchmark-performance": "node scripts/run-performance-benchmark.mjs",
     "summarize-experiments": "node scripts/summarize-experiment-results.mjs",
