@@ -308,6 +308,13 @@ engine. The reference audio is supervision for timing only; lyric text is never
 converted into an invented acoustic signal. `benchmarks/REFERENCE_TEMPLATE_EXPERIMENT.md`
 documents the JSON shape, CLI, and failure cases.
 
+The checked-in [`benchmarks/RESULTS_SUMMARY.md`](benchmarks/RESULTS_SUMMARY.md)
+records the latest run of every current experiment. It is important that the
+summary calls the current numbers synthetic: the runners prove that the
+algorithms and metrics are wired together, but none of those numbers is a
+measurement on the user's private songs. Real-song scoring starts only after a
+vocal recording and its lyric line starts have been manually verified.
+
 ## 6. How the complete system links together
 
 ```text

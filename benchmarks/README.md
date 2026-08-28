@@ -11,6 +11,7 @@
 - [`ABLATION_EXPERIMENT.md`](./ABLATION_EXPERIMENT.md) — Common evidence runner comparing all current non-ML engines.
 - [`REAL_DATA_EVALUATION.md`](./REAL_DATA_EVALUATION.md) — Private-library preparation, decoder boundary, and exact human-review gate.
 - [`REFERENCE_TEMPLATE_EXPERIMENT.md`](./REFERENCE_TEMPLATE_EXPERIMENT.md) — Build MFCC templates from a verified reference timeline and align a target recording.
+- [`RESULTS_SUMMARY.md`](./RESULTS_SUMMARY.md) — Latest checked-in audit of synthetic experiment outputs and the current real-song evidence gap.
 
 The checked-in `example.synthetic.json` is only a deterministic smoke fixture; it contains no copyrighted audio. A research dataset is needed to answer whether the algorithm works. It should be kept outside Git unless every audio/lyric item is licensed for redistribution.
 
@@ -48,3 +49,7 @@ $env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
 ```
 
 The comparison consumes explicit `energy` and `spectralFlux` arrays, normalizes each to 0..1, fuses them using documented weights, and reports the same timestamp metrics for both methods. Results are generated under `benchmarks/results/`, which is ignored by Git. Synthetic results validate wiring only; real accuracy requires rights-cleared audio and manually checked line starts.
+
+After running the experiment commands, create the reproducible Markdown audit
+with `npm run summarize-experiments`. The report intentionally distinguishes
+synthetic fixture results from real-song accuracy.
