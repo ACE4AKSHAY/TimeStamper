@@ -25,6 +25,7 @@ const definitions = [
   ["Adaptive Boundary-DP", "benchmarks/results/adaptive-boundary-study.json", (data) => Object.entries(data.metrics).map(([name, metrics]) => `${name}: ${metrics.maeSeconds.toFixed(3)} s MAE`).join("; ")],
   ["Consensus confidence", "benchmarks/results/consensus-study.json", (data) => `${data.metrics.maeSeconds.toFixed(3)} s MAE; high ${data.confidenceBuckets.high}; medium ${data.confidenceBuckets.medium}; low ${data.confidenceBuckets.low}`],
   ["Template-DTW tempo robustness", "benchmarks/results/template-tempo-study.json", (data) => Object.entries(data.results).map(([name, result]) => `${name}: ${result.metrics.maeSeconds.toFixed(3)} s MAE`).join("; ")],
+  ["Template-DTW noise robustness", "benchmarks/results/template-noise-study.json", (data) => Object.entries(data.results).map(([name, result]) => `${name}: ${result.metrics.maeSeconds.toFixed(3)} s MAE`).join("; ")],
   [
     "Common ablation",
     "benchmarks/results/ablation-study.json",
