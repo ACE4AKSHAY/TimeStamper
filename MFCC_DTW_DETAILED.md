@@ -290,6 +290,13 @@ See `benchmarks/REAL_DATA_EVALUATION.md` for the exact NVM command, privacy
 guarantees, and the small manual gate required before treating results as
 ground truth.
 
+The next seam is now implemented in `src/audio-decoder.mjs`: WAV/PCM decoding
+is dependency-free, and a local FFmpeg process can be selected for compressed
+formats. `scripts/run-local-alignment.mjs` feeds decoded samples into the same
+profile and engine APIs used by synthetic experiments, writing only ignored
+local results. Decoder choice stays outside `src/engine.js`, which preserves
+future browser/mobile reuse.
+
 ## 6. How the complete system links together
 
 ```text

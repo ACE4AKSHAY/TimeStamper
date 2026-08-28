@@ -20,7 +20,9 @@ The command also reports whether `ffmpeg` and `ffprobe` are available. The
 current Node project has no decoder dependency and this machine does not expose
 those commands, so the Electron/Chromium player can play supported files but a
 future automated acoustic run needs a local PCM decoder. This is an explicit
-dependency boundary, not a hidden assumption.
+dependency boundary, not a hidden assumption. The new `src/audio-decoder.mjs`
+module supplies that boundary: PCM WAV works with no dependency, while MP3,
+M4A, FLAC and similar formats use an optional local FFmpeg executable.
 
 ## Run it with the requested NVM Node
 
@@ -58,6 +60,26 @@ recordings first:
 
 This is the only user interaction needed for evaluation. It is not required to
 use the editor or to continue algorithm implementation.
+
+## Run one local alignment job
+
+Once a decoder is available, the same platform-neutral engines can be invoked
+from the command line. The result is written to the ignored private directory:
+
+```powershell
+& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe' scripts/run-local-alignment.mjs `
+  'C:\path\to\song.wav' `
+  'C:\path\to\song.lrc' `
+  multi-profile-boundary-dp `
+  'benchmarks/private/local-alignment.json'
+```
+
+The command decodes to mono Float32 PCM, extracts RMS/spectral-flux/pitch
+profiles, calls `src/engine.js`, and records the generated editable timeline.
+Use `energy-baseline`, `combined-profile`, `boundary-dp`, or
+`multi-profile-boundary-dp` as the engine argument. If an MP3/M4A is selected
+without FFmpeg, the command stops with an actionable decoder message instead
+of silently producing bad data.
 
 ## Why this objective is technically achievable
 

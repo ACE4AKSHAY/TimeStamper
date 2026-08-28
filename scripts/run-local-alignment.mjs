@@ -1,0 +1,20 @@
+import { readFile, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { parseLyrics } from "../src/lyrics.js";
+import { extractExplainableProfiles } from "../src/audio-profiles.js";
+import { pitchVoicednessProfile, extractPitchProfile } from "../src/pitch-profile.js";
+import { synchronize } from "../src/engine.js";
+import { decodeAudioFile } from "../src/audio-decoder.mjs";
+
+const [audioPathArg, lyricPathArg, engine = "multi-profile-boundary-dp", outputArg = "benchmarks/private/local-alignment.json"] = process.argv.slice(2);
+if (!audioPathArg || !lyricPathArg) throw new Error("Usage: node scripts/run-local-alignment.mjs <audio-path> <lyric-path> [engine] [output-json]");
+const audioPath = resolve(audioPathArg), lyricPath = resolve(lyricPathArg), output = resolve(outputArg);
+const decoded = await decodeAudioFile(audioPath);
+const lyrics = parseLyrics(await readFile(lyricPath, "utf8"), "local_file");
+const profiles = extractExplainableProfiles(decoded.samples, { bins: 700 });
+const pitch = extractPitchProfile(decoded.samples, decoded.sampleRate);
+const engineParameters = engine === "multi-profile-boundary-dp" ? { profiles: { ...profiles, pitch: pitchVoicednessProfile(pitch) } } : engine === "combined-profile" ? { profiles } : {};
+const result = synchronize({ lyrics: lyrics.lines, duration: decoded.duration, energyProfile: profiles.energy, engine, parameters: engineParameters });
+const document = { schemaVersion: 1, generatedAt: new Date().toISOString(), privacy: "local paths and generated timeline only; source media and lyrics were not copied", audioPath, lyricPath, decoder: { format: decoded.format, sampleRate: decoded.sampleRate, duration: decoded.duration }, result };
+await writeFile(output, JSON.stringify(document, null, 2) + "\n", "utf8");
+console.log(JSON.stringify({ output, engine, lines: result.lines.length, duration: decoded.duration, decoder: decoded.format }, null, 2));
