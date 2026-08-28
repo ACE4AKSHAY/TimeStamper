@@ -18,6 +18,7 @@ const definitions = [
     (data) => `${data.metrics.voicedFrequencyMaeHz.toFixed(3)} Hz voiced MAE; ${(1 - data.metrics.silenceFalseVoicedRate) * 100}% silence specificity`,
   ],
   ["Multi-profile boundary DP", "benchmarks/results/multi-profile-boundary-dp.json", (data) => metricSummary(data.metrics)],
+  ["Robustness perturbation sweep", "benchmarks/results/robustness-study.json", (data) => Object.entries(data.metrics).map(([name, metrics]) => `${name}: ${metrics.maeSeconds.toFixed(3)} s MAE`).join("; ")],
   [
     "Common ablation",
     "benchmarks/results/ablation-study.json",
@@ -29,7 +30,7 @@ const rows = [];
 for (const [name, relativePath, summarize] of definitions) {
   try {
     const data = JSON.parse(await readFile(resolve(relativePath), "utf8"));
-    rows.push(`| ${name} | ${data.datasetVersion} | ${data.caseCount ?? "—"} | ${summarize(data)} |`);
+    rows.push(`| ${name} | ${data.datasetVersion} | ${data.caseCount ?? data.scenarios ?? "—"} | ${summarize(data)} |`);
   } catch (error) {
     rows.push(`| ${name} | — | — | Not generated (${error.code === "ENOENT" ? "run its experiment first" : "invalid JSON"}) |`);
   }

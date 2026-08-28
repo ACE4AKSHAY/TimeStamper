@@ -172,6 +172,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 122 | Local decoder adapter | 🟡 | Dependency-free PCM WAV decoding plus optional FFmpeg decoding and a CLI alignment runner now exist; this machine still needs FFmpeg for MP3/M4A real runs. |
 | 123 | Reference-template acquisition | 🟡 | Verified reference timestamps can now produce MFCC line templates and drive target template-DTW alignment; real recordings and confidence calibration remain. |
 | 124 | Results audit | 🟡 | All current synthetic runners were executed and their exact metrics are recorded in `benchmarks/RESULTS_SUMMARY.md`; real-song accuracy is intentionally still unmeasured. |
+| 125 | Experiment 08 robustness | 🟡 | Isolated deterministic stress runner covers noise, delayed onsets, long intros and uneven lines; results remain synthetic until real references are verified. |
 
 ## Recommended next steps
 

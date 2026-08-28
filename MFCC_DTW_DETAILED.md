@@ -315,6 +315,10 @@ algorithms and metrics are wired together, but none of those numbers is a
 measurement on the user's private songs. Real-song scoring starts only after a
 vocal recording and its lyric line starts have been manually verified.
 
+Experiment 08 (`benchmarks/ROBUSTNESS_EXPERIMENT.md`) extends this audit with
+deterministic perturbations. It is an isolated failure-mode study, not a new
+production engine and not a replacement for real recordings.
+
 ## 6. How the complete system links together
 
 ```text
