@@ -186,6 +186,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 136 | Offline pipeline smoke | 🟡 | In-memory WAV decoding, feature extraction, pitch profiling and multi-profile alignment now run end-to-end without private media. |
 | 137 | Real candidate validation | 🟡 | A private metadata-only scanner now checks MP3/LRC pairing, UTF-8 parsing, timestamp order, coverage and special-version hints before manual review. |
 | 138 | Experiment 17 text-weighted Boundary-DP | 🟡 | A Unicode-safe lyric-length prior now provides an isolated selectable engine; synthetic evidence and real-song evaluation are still pending. |
+| 139 | Experiment 18 boundary refinement | 🟡 | A bounded local onset search now refines coarse boundaries and reports margins as confidence; window calibration on real songs remains pending. |
 
 ## Recommended next steps
 

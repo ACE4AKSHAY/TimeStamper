@@ -7,7 +7,7 @@ const portableModules = [
   "domain.js", "lyrics.js", "lrc.js", "energy-aligner.js", "features.js", "dtw.js",
   "mfcc-dtw.js", "template-aligner.js", "template-builder.js", "profile-fusion.js",
   "audio-profiles.js", "pitch-profile.js", "combined-aligner.js", "boundary-dp-aligner.js",
-  "intro-aware-aligner.js", "adaptive-boundary-aligner.js", "text-weighted-aligner.js", "multi-profile-aligner.js", "consensus-aligner.js",
+  "intro-aware-aligner.js", "adaptive-boundary-aligner.js", "text-weighted-aligner.js", "boundary-refiner.js", "multi-profile-aligner.js", "consensus-aligner.js",
   "engine.js", "metrics.js",
 ];
 const forbiddenImport = /(?:from\s+["']node:|import\s*\(["']node:|require\s*\(["']node:)/u;

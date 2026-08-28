@@ -23,6 +23,7 @@ import { alignMultiProfile } from "../src/multi-profile-aligner.js";
 import { alignByIntroAwareBoundaryDp } from "../src/intro-aware-aligner.js";
 import { alignByAdaptiveBoundaryDp } from "../src/adaptive-boundary-aligner.js";
 import { alignByTextWeightedBoundaryDp, estimateTextWeights } from "../src/text-weighted-aligner.js";
+import { refineBoundarySegments } from "../src/boundary-refiner.js";
 import { summarizeConsensus, buildConsensusTimeline } from "../src/consensus-aligner.js";
 
 test("LRC timestamps round to centiseconds", () => {
@@ -213,6 +214,14 @@ test("text-weighted Boundary-DP handles Unicode line lengths", () => {
   assert.ok(result.segments[1].endFrame - result.segments[1].startFrame > result.segments[0].endFrame - result.segments[0].startFrame);
   const engineResult = synchronize({ engine: "text-weighted-boundary-dp", lyrics: lines, duration: 16, parameters: { profile: Array.from({ length: 32 }, () => 0.5), boundaryWeight: 0 } });
   assert.equal(engineResult.lines[0].alignmentMethod, "text_weighted_boundary_dynamic_programming");
+});
+
+test("local boundary refinement moves coarse boundaries toward onsets", () => {
+  const coarse = [{ lineIndex: 0, startFrame: 0, endFrame: 8 }, { lineIndex: 1, startFrame: 8, endFrame: 16 }, { lineIndex: 2, startFrame: 16, endFrame: 24 }];
+  const profile = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 0.2, 0.1, 0.1, 0.1, 0.1];
+  const result = refineBoundarySegments(coarse, profile, 12, { windowFrames: 4 });
+  assert.deepEqual(result.boundaries, [0, 6, 18, 24]);
+  assert.ok(result.decisions.every((decision) => decision.confidence >= 0));
 });
 
 test("consensus layer returns a median timestamp and bounded confidence", () => {

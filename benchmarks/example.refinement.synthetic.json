@@ -1,0 +1,22 @@
+{
+  "datasetVersion": "boundary-refinement-synthetic-v1",
+  "description": "Coarse equal-duration boundaries refined toward local onset peaks; no copyrighted audio.",
+  "cases": [
+    {
+      "id": "refinement-01",
+      "language": "mixed",
+      "duration": 12,
+      "lyrics": ["first line", "దీర్ఘమైన రెండవ పంక్తి", "last line"],
+      "profile": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 0.2, 0.1, 0.1, 0.1, 0.1],
+      "reference": [0, 3, 9]
+    },
+    {
+      "id": "refinement-02",
+      "language": "hi",
+      "duration": 10,
+      "lyrics": ["पहली पंक्ति", "दूसरी पंक्ति", "तीसरी पंक्ति"],
+      "profile": [0.2, 0.2, 0.2, 0.2, 0.2, 1, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 1, 0.2],
+      "reference": [0, 2.5, 9]
+    }
+  ]
+}

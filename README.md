@@ -96,6 +96,7 @@ The v0.1 browser UI is a thin client over reusable ES modules:
 - `src/template-builder.js` — MFCC line-template extraction from a verified reference timeline
 - `src/combined-aligner.js` — reusable combined-profile candidate generator
 - `src/text-weighted-aligner.js` — Unicode-safe lyric-length prior with a selectable Boundary-DP variant
+- `src/boundary-refiner.js` — bounded coarse-to-fine onset refinement with explainable confidence margins
 - `src/dtw.js` and `src/mfcc-dtw.js` — constrained DTW and MFCC sequence alignment
 
 MFCC and constrained DTW primitives are now present. They compare two feature sequences; they do not magically infer words from lyrics. The next research task is to define and validate how each known lyric line gets an acoustic/template representation, then use that representation to produce line timestamps. This keeps the research honest and prevents a generic DTW path from being mislabeled as lyric recognition.

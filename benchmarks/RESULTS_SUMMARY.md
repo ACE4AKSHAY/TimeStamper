@@ -26,6 +26,7 @@ they are generated artifacts; regenerate this report with
 | Template-DTW noise robustness | `template-noise-synthetic-v1` | 16 | 0.013 s MAE for DTW windows 1–3; 100% within 0.25 s |
 | MFCC parameter sensitivity | `mfcc-parameter-synthetic-v1` | 18 | Best 0.008 s MAE; worst 0.128 s MAE across frame/hop/mel settings |
 | Text-weighted Boundary-DP | `text-weighted-boundary-synthetic-v1` | 2 | equal-duration 1.583 s MAE; text-weighted 0.317 s MAE; 100% within 1.00 s |
+| Boundary refinement | `boundary-refinement-synthetic-v1` | 2 | adaptive coarse 0.833 s MAE; refined 0.417 s MAE; 83% within 0.50 s |
 | Offline pipeline smoke | `offline-pipeline-synthetic-v1` | 1 | 32,000 samples decoded; 64-frame profiles; multi-profile alignment 0.024 s MAE |
 
 ## Interpretation
@@ -99,6 +100,12 @@ line lengths (1.583 s to 0.317 s MAE). This is a targeted synthetic result:
 held notes, rapid syllables, repeated phrases, and instrumental gaps may break
 the correlation between written length and sung duration. The engine remains
 selectable and is not the default.
+
+Experiment 18 applies a bounded local onset search after coarse segmentation.
+On its two-case fixture it improves MAE from 0.833 s to 0.417 s and raises the
+within-0.50-second rate to 83%. One delayed/misleading case remains 2.5 seconds
+off, showing that refinement can correct nearby errors but cannot recover
+missing acoustic evidence.
 
 ## Real-song status
 

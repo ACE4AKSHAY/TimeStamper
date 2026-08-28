@@ -6,6 +6,7 @@ import { alignMultiProfile } from "./multi-profile-aligner.js";
 import { alignByIntroAwareBoundaryDp } from "./intro-aware-aligner.js";
 import { alignByAdaptiveBoundaryDp } from "./adaptive-boundary-aligner.js";
 import { alignByTextWeightedBoundaryDp } from "./text-weighted-aligner.js";
+import { refineBoundarySegments } from "./boundary-refiner.js";
 
 export const ENGINE_VERSION = "0.3.0";
 
@@ -40,6 +41,13 @@ export function synchronize({ lyrics, duration, energyProfile, engine = "energy-
     const alignment = alignByTextWeightedBoundaryDp(lines, parameters.profile || energyProfile || [], duration, parameters);
     const alignedLines = lines.map((line, index) => ({ ...line, startTime: alignment.segments[index].startTime, endTime: alignment.segments[index].endTime, alignmentMethod: alignment.method, confidence: null }));
     return { engine, engineVersion: ENGINE_VERSION, parameters: { ...parameters, profile: undefined }, alignment, lines: alignedLines, generatedAt: new Date().toISOString() };
+  }
+  if (engine === "refined-boundary-dp") {
+    const profile = parameters.profile || energyProfile || [];
+    const coarse = alignByAdaptiveBoundaryDp(lines, profile, duration, parameters);
+    const refinement = refineBoundarySegments(coarse.segments, profile, duration, parameters);
+    const alignedLines = lines.map((line, index) => ({ ...line, startTime: refinement.segments[index].startTime, endTime: refinement.segments[index].endTime, alignmentMethod: refinement.method, confidence: refinement.segments[index].refinement?.confidence ?? null }));
+    return { engine, engineVersion: ENGINE_VERSION, parameters: { ...parameters, profile: undefined }, coarseAlignment: coarse, alignment: refinement, lines: alignedLines, generatedAt: new Date().toISOString() };
   }
   if (engine === "multi-profile-boundary-dp") {
     const alignment = alignMultiProfile(lines, parameters.profiles || { energy: energyProfile || [] }, duration, parameters);
