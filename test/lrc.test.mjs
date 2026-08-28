@@ -27,6 +27,7 @@ import { refineBoundarySegments } from "../src/boundary-refiner.js";
 import { alignByEnsemble } from "../src/ensemble-aligner.js";
 import { alignByVocalGatedBoundaryDp, buildVocalGatedProfile } from "../src/vocal-gated-aligner.js";
 import { alignByAdaptiveVocalBoundaryDp, summarizeVoicedness } from "../src/adaptive-vocal-aligner.js";
+import { alignBySilenceAwareBoundaryDp } from "../src/silence-aware-aligner.js";
 import { summarizeConsensus, buildConsensusTimeline } from "../src/consensus-aligner.js";
 
 test("LRC timestamps round to centiseconds", () => {
@@ -259,6 +260,14 @@ test("adaptive vocal selector records why it gates or falls back", () => {
   assert.equal(gated.selectedEngine, "vocal-gated-boundary-dp");
   assert.equal(fallback.selectedEngine, "adaptive-boundary-dp");
   assert.equal(fallback.selection.reason, "voiced_coverage_insufficient");
+});
+
+test("silence-aware Boundary-DP keeps boundaries ordered through pauses", () => {
+  const profile = [0.1, 0.8, 0.8, 0.8, 0.2, 0.1, 0.1, 0.1, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.2, 0.1, 0.1, 0.1, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8];
+  const result = alignBySilenceAwareBoundaryDp(["a", "b", "c"], profile, 12, { boundaryWeight: 1.2, durationWeight: 0.4, minLength: 2, maxLength: 12 });
+  assert.equal(result.segments.length, 3);
+  assert.ok(result.segments.every((segment, index) => index === 0 || segment.startFrame >= result.segments[index - 1].endFrame));
+  assert.equal(result.method, "silence_aware_boundary_dynamic_programming");
 });
 
 test("consensus layer returns a median timestamp and bounded confidence", () => {

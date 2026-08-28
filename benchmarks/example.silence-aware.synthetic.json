@@ -1,0 +1,22 @@
+{
+  "datasetVersion": "silence-aware-boundary-synthetic-v1",
+  "description": "Pause-separated phrases test quiet-gap and following-activity evidence.",
+  "cases": [
+    {
+      "id": "silence-aware-01",
+      "language": "mixed",
+      "duration": 12,
+      "lyrics": ["first line", "దీర్ఘమైన రెండవ పంక్తి", "last line"],
+      "profile": [0.1, 0.8, 0.8, 0.8, 0.2, 0.1, 0.1, 0.1, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.2, 0.1, 0.1, 0.1, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8],
+      "reference": [0, 4, 9]
+    },
+    {
+      "id": "silence-aware-02",
+      "language": "hi",
+      "duration": 10,
+      "lyrics": ["पहली पंक्ति", "दूसरी पंक्ति", "तीसरी पंक्ति"],
+      "profile": [0.1, 0.8, 0.8, 0.8, 0.8, 0.8, 0.2, 0.1, 0.1, 0.1, 0.8, 0.8, 0.8, 0.8, 0.8, 0.2, 0.1, 0.1, 0.1, 0.8],
+      "reference": [0, 3, 7.5]
+    }
+  ]
+}

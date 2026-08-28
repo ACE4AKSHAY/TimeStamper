@@ -30,6 +30,7 @@ they are generated artifacts; regenerate this report with
 | Boundary ensemble | `ensemble-boundary-synthetic-v1` | 2 | adaptive 0.804 s MAE; refined 0.504 s MAE; consensus 0.587 s MAE; 83% within 1.00 s |
 | Vocal-gated Boundary-DP | `vocal-gated-boundary-synthetic-v1` | 2 | energy-only 0.583 s MAE; vocal-gated 0.417 s MAE; 83% within 0.50 s |
 | Adaptive vocal selector | `adaptive-vocal-boundary-synthetic-v1` | 2 | energy-only 0.583 s MAE; routed 0.417 s MAE; high coverage gates, low coverage falls back |
+| Silence-aware Boundary-DP | `silence-aware-boundary-synthetic-v1` | 2 | ordinary 0.417 s MAE; pause-aware 0.583 s MAE; 67% within 1.00 s |
 | Offline pipeline smoke | `offline-pipeline-synthetic-v1` | 1 | 32,000 samples decoded; 64-frame profiles; multi-profile alignment 0.024 s MAE |
 
 ## Interpretation
@@ -126,6 +127,11 @@ vocal gating, while the low-coverage fixture falls back to energy-only
 alignment. The routed result is 0.417 s MAE versus 0.583 s for energy-only on
 this fixture. The 20% coverage threshold is provisional and must be calibrated
 on verified recordings.
+
+Experiment 22 is negative evidence for the current pause heuristic: adding
+quiet-gap and following-activity terms worsens this fixture from 0.417 s to
+0.583 s MAE. The candidate remains preserved because real songs may behave
+differently, but it is not promoted and its weights require real calibration.
 
 ## Real-song status
 
