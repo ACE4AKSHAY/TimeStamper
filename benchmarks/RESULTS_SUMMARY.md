@@ -24,6 +24,7 @@ they are generated artifacts; regenerate this report with
 | Consensus confidence | `consensus-synthetic-v1` | 60 | Median of four engines: 1.324 s MAE; 60% within 1.00 s; agreement buckets high 186 / medium 49 / low 85 |
 | Template-DTW tempo robustness | `template-tempo-synthetic-v1` | 6 | 0.020 s MAE for DTW windows 0, 1, and 2; 100% within 0.25 s |
 | Template-DTW noise robustness | `template-noise-synthetic-v1` | 16 | 0.013 s MAE for DTW windows 1–3; 100% within 0.25 s |
+| MFCC parameter sensitivity | `mfcc-parameter-synthetic-v1` | 18 | Best 0.008 s MAE; worst 0.128 s MAE across frame/hop/mel settings |
 
 ## Interpretation
 
@@ -75,6 +76,11 @@ The template-DTW tempo sweep stayed at 0.020 s MAE across 0.75x, 1.00x, and
 DTW as a candidate for tempo variation, but does not test different singers or
 real acoustic recordings.
 
+The MFCC parameter sweep ranges from 0.008 s to 0.128 s self-alignment MAE
+across 18 settings. This is a useful stability range for implementation
+calibration, but it does not establish which configuration is best for real
+music.
+
 The template-DTW noise sweep remained within 0.125 seconds even with the
 tested deterministic feature noise and 10% frame drops. Windows 1–3 tied at
 0.013 s MAE, while window 0 was slightly worse at 0.019 s. This is a useful
@@ -114,5 +120,6 @@ npm run experiment-adaptive-boundary
 npm run experiment-consensus
 npm run experiment-template-tempo
 npm run experiment-template-noise
+npm run experiment-mfcc-parameters
 npm run summarize-experiments
 ```

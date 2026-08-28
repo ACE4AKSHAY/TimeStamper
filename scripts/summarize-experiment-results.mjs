@@ -26,6 +26,7 @@ const definitions = [
   ["Consensus confidence", "benchmarks/results/consensus-study.json", (data) => `${data.metrics.maeSeconds.toFixed(3)} s MAE; high ${data.confidenceBuckets.high}; medium ${data.confidenceBuckets.medium}; low ${data.confidenceBuckets.low}`],
   ["Template-DTW tempo robustness", "benchmarks/results/template-tempo-study.json", (data) => Object.entries(data.results).map(([name, result]) => `${name}: ${result.metrics.maeSeconds.toFixed(3)} s MAE`).join("; ")],
   ["Template-DTW noise robustness", "benchmarks/results/template-noise-study.json", (data) => Object.entries(data.results).map(([name, result]) => `${name}: ${result.metrics.maeSeconds.toFixed(3)} s MAE`).join("; ")],
+  ["MFCC parameter sensitivity", "benchmarks/results/mfcc-parameter-study.json", (data) => `best ${data.best.metrics.maeSeconds.toFixed(3)} s MAE; worst ${data.worst.metrics.maeSeconds.toFixed(3)} s MAE across ${data.candidateCount} settings`],
   [
     "Common ablation",
     "benchmarks/results/ablation-study.json",

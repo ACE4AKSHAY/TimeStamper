@@ -182,6 +182,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 132 | Experiment 13 consensus | 🟡 | Median aggregation and disagreement-derived uncertainty are implemented as a separate reusable layer; confidence remains uncalibrated until real references exist. |
 | 133 | Experiment 14 template tempo | 🟡 | MFCC-template DTW is tested under controlled 0.75x/1x/1.25x temporal scaling and multiple windows; real singer/recording variation remains unmeasured. |
 | 134 | Experiment 15 template noise | 🟡 | Template-DTW is tested with deterministic feature noise and 10% frame drops across multiple windows; real acoustic corruption remains unmeasured. |
+| 135 | Experiment 16 MFCC parameters | 🟡 | MFCC frame, hop and mel-band combinations are self-aligned through template-DTW; real-song parameter calibration remains unmeasured. |
 
 ## Recommended next steps
 
