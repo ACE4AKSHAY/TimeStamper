@@ -13,6 +13,7 @@
     "import-private-manifest": "node scripts/import-private-manifest.mjs",
     "prepare-local-evaluation": "node scripts/prepare-local-evaluation.mjs",
     "align-local": "node scripts/run-local-alignment.mjs",
+    "align-reference-template": "node scripts/run-reference-template-alignment.mjs",
     "compare-engines": "node scripts/run-engine-comparison.mjs",
     "experiment-template-dtw": "node scripts/run-template-dtw-experiment.mjs",
     "experiment-boundary-dp": "node scripts/run-boundary-dp-experiment.mjs",

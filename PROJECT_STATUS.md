@@ -170,15 +170,17 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 120 | Final vision | 🔭 | Reusable timestamped-text technology remains the long-term direction after core lyric alignment is proven. |
 | 121 | Real-data preparation | 🟡 | `scripts/prepare-local-evaluation.mjs` now creates ignored metadata-only stubs from the private collection; a local PCM decoder and manually verified references are still needed for trustworthy accuracy measurements. |
 | 122 | Local decoder adapter | 🟡 | Dependency-free PCM WAV decoding plus optional FFmpeg decoding and a CLI alignment runner now exist; this machine still needs FFmpeg for MP3/M4A real runs. |
+| 123 | Reference-template acquisition | 🟡 | Verified reference timestamps can now produce MFCC line templates and drive target template-DTW alignment; real recordings and confidence calibration remain. |
 
 ## Recommended next steps
 
 1. Run `scripts/prepare-local-evaluation.mjs` and follow `benchmarks/REAL_DATA_EVALUATION.md`.
 2. Manually verify 5–10 clear vocal pairs from the private queue; downloaded LRC timestamps remain suggestions.
 3. Expose FFmpeg (or provide WAV files) and run `scripts/run-local-alignment.mjs` on verified references.
-4. Connect MFCC/DTW to a line-level acoustic-template strategy, then compare it with the profile engines.
-5. Integrate a modular local vocal separator and compare full-mix versus vocal-assisted results.
-6. Add packaging/release automation only after the desktop workflow is stable.
+4. Use `scripts/run-reference-template-alignment.mjs` with a verified reference timeline and compare template-DTW with profile engines.
+5. Add confidence margins and failure categories from real recordings.
+6. Integrate a modular local vocal separator and compare full-mix versus vocal-assisted results.
+7. Add packaging/release automation only after the desktop workflow is stable.
 
 ## Version-history rule
 

@@ -297,6 +297,17 @@ profile and engine APIs used by synthetic experiments, writing only ignored
 local results. Decoder choice stays outside `src/engine.js`, which preserves
 future browser/mobile reuse.
 
+### 5.21 Reference-template acquisition
+
+`src/template-builder.js` closes the previously explicit template gap. Given a
+manually verified reference recording and monotonic line start times, it slices
+each line interval and extracts MFCC frames with a shared parameter set. The
+new `scripts/run-reference-template-alignment.mjs` extracts matching MFCC
+frames from a target recording and calls the existing `template-mfcc-dtw`
+engine. The reference audio is supervision for timing only; lyric text is never
+converted into an invented acoustic signal. `benchmarks/REFERENCE_TEMPLATE_EXPERIMENT.md`
+documents the JSON shape, CLI, and failure cases.
+
 ## 6. How the complete system links together
 
 ```text

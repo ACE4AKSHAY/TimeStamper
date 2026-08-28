@@ -1,0 +1,22 @@
+import { readFile, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { decodeAudioFile } from "../src/audio-decoder.mjs";
+import { extractMfcc } from "../src/features.js";
+import { parseLyrics } from "../src/lyrics.js";
+import { synchronize } from "../src/engine.js";
+import { buildMfccLineTemplates } from "../src/template-builder.js";
+
+const [targetAudioArg, referenceAudioArg, referenceJsonArg, lyricPathArg, outputArg = "benchmarks/private/reference-template-alignment.json"] = process.argv.slice(2);
+if (!targetAudioArg || !referenceAudioArg || !referenceJsonArg || !lyricPathArg) throw new Error("Usage: node scripts/run-reference-template-alignment.mjs <target-audio> <reference-audio> <reference-json> <lyrics> [output-json]");
+const targetAudioPath = resolve(targetAudioArg), referenceAudioPath = resolve(referenceAudioArg), referenceJsonPath = resolve(referenceJsonArg), lyricPath = resolve(lyricPathArg), output = resolve(outputArg);
+const [target, reference, referenceDocument, lyricsText] = await Promise.all([decodeAudioFile(targetAudioPath), decodeAudioFile(referenceAudioPath), readFile(referenceJsonPath, "utf8").then(JSON.parse), readFile(lyricPath, "utf8")]);
+const starts = Array.isArray(referenceDocument) ? referenceDocument : referenceDocument.startTimes || (referenceDocument.lines || []).map((line) => line.startTime);
+const templates = buildMfccLineTemplates(reference.samples, reference.sampleRate, starts, reference.duration, { frameSize: 512, hopSize: 256, melBands: 26, coefficients: 13 });
+const targetMfcc = extractMfcc(target.samples, target.sampleRate, templates);
+const lines = parseLyrics(lyricsText, "local_file").lines;
+if (lines.length !== templates.templates.length) throw new Error(`Lyrics contain ${lines.length} lines but reference timestamps contain ${templates.templates.length}.`);
+const maxTemplate = Math.max(...templates.templates.map((item) => item.length));
+const result = synchronize({ lyrics: lines, engine: "template-mfcc-dtw", parameters: { audioFrames: targetMfcc.frames, lineTemplates: templates.templates, frameRate: targetMfcc.frameRate, minLength: 1, maxLength: Math.max(2, Math.ceil(maxTemplate * 2.5)), window: 8 } });
+const document = { schemaVersion: 1, generatedAt: new Date().toISOString(), privacy: "local paths and generated timeline only; source media and lyrics were not copied", targetAudioPath, referenceAudioPath, referenceJsonPath, lyricPath, reference: { duration: reference.duration, sampleRate: reference.sampleRate, lineCount: starts.length }, target: { duration: target.duration, sampleRate: target.sampleRate, lineCount: lines.length }, result };
+await writeFile(output, JSON.stringify(document, null, 2) + "\n", "utf8");
+console.log(JSON.stringify({ output, engine: result.engine, lines: result.lines.length, targetDuration: target.duration, referenceDuration: reference.duration }, null, 2));

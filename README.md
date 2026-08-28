@@ -93,6 +93,7 @@ The v0.1 browser UI is a thin client over reusable ES modules:
 - `src/audio-profiles.js` and `src/profile-fusion.js` — explainable RMS/spectral-flux extraction and weighted profile fusion
 - `src/pitch-profile.js` — bounded autocorrelation pitch and voicedness extraction
 - `src/audio-decoder.mjs` — dependency-free WAV decoding with optional local FFmpeg for compressed audio
+- `src/template-builder.js` — MFCC line-template extraction from a verified reference timeline
 - `src/combined-aligner.js` — reusable combined-profile candidate generator
 - `src/dtw.js` and `src/mfcc-dtw.js` — constrained DTW and MFCC sequence alignment
 
@@ -101,6 +102,8 @@ MFCC and constrained DTW primitives are now present. They compare two feature se
 Run `npm run compare-engines` to compare the energy baseline and combined profile on the checked-in synthetic fixture. The output is a wiring smoke test, not evidence of real-song accuracy.
 
 For a local decoded-file run, use `npm run align-local -- <audio-path> <lyric-path> [engine] [output-json]`. WAV/PCM works without extra packages; MP3/M4A/FLAC require an available local FFmpeg executable. See `benchmarks/REAL_DATA_EVALUATION.md` for the privacy boundary and example.
+
+For reference-assisted MFCC/DTW, use `npm run align-reference-template -- <target-audio> <reference-audio> <reference-json> <lyrics>`. The reference JSON supplies manually verified line starts; the generated target timeline remains editable and is written only to the ignored private output path.
 
 The platform-neutral core can be reused by a future mobile client or a native frontend on another operating system. The project can technically meet its
 objective as a line-level offline synchronizer: the remaining work is measured
