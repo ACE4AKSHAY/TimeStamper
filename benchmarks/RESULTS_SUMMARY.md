@@ -18,6 +18,7 @@ they are generated artifacts; regenerate this report with
 | Common ablation | `multi-profile-synthetic-v1` | 2 | energy 0.984 s; combined 1.638 s; boundary 0.400 s; multi-profile 0.400 s MAE |
 | Robustness perturbation sweep | `robustness-synthetic-v1` | 5 | energyBaseline: 0.635 s; combinedProfile: 0.286 s; boundaryDp: 0.360 s; multi-profile 0.360 s MAE |
 | Parameter sensitivity sweep | `parameter-sweep-synthetic-v1` | 2 | boundary-DP: 0.000 s; combined profile: 1.638 s; multi-profile boundary-DP: 0.400 s best MAE |
+| Seeded generalization corpus | `generalization-synthetic-v1` | 60 | energyBaseline: 1.233 s; combinedProfile: 0.935 s; boundaryDp: 1.669 s; multi-profile 1.697 s MAE |
 
 ## Interpretation
 
@@ -42,6 +43,12 @@ The parameter sweep found that many boundary-DP settings tie at 0.000 s on
 the uniform synthetic fixture, while all tested combined-profile weight pairs
 tie at 1.638 s. This means the fixture cannot identify trustworthy defaults;
 no synthetic winner is promoted automatically.
+
+The 60-case seeded corpus contains 320 line starts and produces a more sober
+picture: combined profile is best at 0.935 s MAE, but only 65% of starts are
+within one second; Boundary-DP reaches 1.669 s MAE. This spread confirms that
+hand-designed fixture scores were optimistic and that real recordings remain
+the decisive test.
 
 ## Real-song status
 
@@ -71,5 +78,6 @@ npm run experiment-multi-profile
 npm run ablation-study
 npm run experiment-robustness
 npm run experiment-parameter-sweep
+npm run experiment-generalization
 npm run summarize-experiments
 ```

@@ -22,6 +22,7 @@
     "ablation-study": "node scripts/run-ablation-study.mjs",
     "experiment-robustness": "node scripts/run-robustness-experiment.mjs",
     "experiment-parameter-sweep": "node scripts/run-parameter-sweep-experiment.mjs",
+    "experiment-generalization": "node scripts/run-generalization-experiment.mjs",
     "summarize-experiments": "node scripts/summarize-experiment-results.mjs",
     "test": "node --test"
   },

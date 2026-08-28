@@ -174,6 +174,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 124 | Results audit | 🟡 | All current synthetic runners were executed and their exact metrics are recorded in `benchmarks/RESULTS_SUMMARY.md`; real-song accuracy is intentionally still unmeasured. |
 | 125 | Experiment 08 robustness | 🟡 | Isolated deterministic stress runner covers noise, delayed onsets, long intros and uneven lines; results remain synthetic until real references are verified. |
 | 126 | Experiment 09 parameter sweep | 🟡 | Boundary, combined-profile and multi-profile weights are swept on the synthetic fixture; no parameter is promoted without real-data evidence. |
+| 127 | Experiment 10 generalization | 🟡 | A seeded 60-case synthetic corpus varies lines, durations, intros, noise and onset delay; real-song evidence remains separate. |
 
 ## Recommended next steps
 

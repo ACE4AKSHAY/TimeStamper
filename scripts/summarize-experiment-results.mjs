@@ -20,6 +20,7 @@ const definitions = [
   ["Multi-profile boundary DP", "benchmarks/results/multi-profile-boundary-dp.json", (data) => metricSummary(data.metrics)],
   ["Robustness perturbation sweep", "benchmarks/results/robustness-study.json", (data) => Object.entries(data.metrics).map(([name, metrics]) => `${name}: ${metrics.maeSeconds.toFixed(3)} s MAE`).join("; ")],
   ["Parameter sensitivity sweep", "benchmarks/results/parameter-sweep.json", (data) => Object.entries(data.results).map(([name, result]) => `${name}: ${result.best.metrics.maeSeconds.toFixed(3)} s best MAE`).join("; ")],
+  ["Seeded generalization corpus", "benchmarks/results/generalization-study.json", (data) => Object.entries(data.metrics).map(([name, metrics]) => `${name}: ${metrics.maeSeconds.toFixed(3)} s MAE`).join("; ")],
   [
     "Common ablation",
     "benchmarks/results/ablation-study.json",

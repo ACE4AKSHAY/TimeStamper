@@ -323,6 +323,10 @@ Experiment 09 (`benchmarks/PARAMETER_SWEEP_EXPERIMENT.md`) sweeps nearby engine
 weights and ranks them by line-start error. Its output is diagnostic only:
 synthetic winners are not silently made into application defaults.
 
+Experiment 10 (`benchmarks/GENERALIZATION_EXPERIMENT.md`) repeats the comparison
+over a seeded randomized corpus. The fixed seed makes changes attributable to
+code or algorithm changes rather than a newly sampled fixture.
+
 ## 6. How the complete system links together
 
 ```text
