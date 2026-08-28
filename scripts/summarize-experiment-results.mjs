@@ -23,6 +23,7 @@ const definitions = [
   ["Seeded generalization corpus", "benchmarks/results/generalization-study.json", (data) => Object.entries(data.metrics).map(([name, metrics]) => `${name}: ${metrics.maeSeconds.toFixed(3)} s MAE`).join("; ")],
   ["Intro-aware Boundary-DP", "benchmarks/results/intro-aware-study.json", (data) => Object.entries(data.metrics).map(([name, metrics]) => `${name}: ${metrics.maeSeconds.toFixed(3)} s MAE`).join("; ")],
   ["Adaptive Boundary-DP", "benchmarks/results/adaptive-boundary-study.json", (data) => Object.entries(data.metrics).map(([name, metrics]) => `${name}: ${metrics.maeSeconds.toFixed(3)} s MAE`).join("; ")],
+  ["Consensus confidence", "benchmarks/results/consensus-study.json", (data) => `${data.metrics.maeSeconds.toFixed(3)} s MAE; high ${data.confidenceBuckets.high}; medium ${data.confidenceBuckets.medium}; low ${data.confidenceBuckets.low}`],
   [
     "Common ablation",
     "benchmarks/results/ablation-study.json",
