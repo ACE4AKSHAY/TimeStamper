@@ -21,6 +21,7 @@ they are generated artifacts; regenerate this report with
 | Seeded generalization corpus | `generalization-synthetic-v1` | 60 | energyBaseline: 1.233 s; combinedProfile: 0.935 s; boundaryDp: 1.669 s; multi-profile 1.697 s MAE |
 | Intro-aware Boundary-DP | `intro-aware-synthetic-v1` | 5 | existing boundary-DP: 0.360 s; intro-aware variant: 0.200 s MAE; 100% within 1.00 s |
 | Adaptive Boundary-DP | `adaptive-boundary-synthetic-v1` | 5 | existing: 0.360 s; intro-aware: 0.200 s; adaptive selector: 0.180 s MAE; 100% within 1.00 s |
+| Consensus confidence | `consensus-synthetic-v1` | 60 | Median of four engines: 1.324 s MAE; 60% within 1.00 s; agreement buckets high 186 / medium 49 / low 85 |
 
 ## Interpretation
 
@@ -62,6 +63,11 @@ intro-aware handling only for the detected long intro and retaining the
 original engine elsewhere. This is a targeted synthetic result, not proof that
 the three-frame rule is correct for real songs.
 
+The consensus median is worse than the combined-profile result on the seeded
+corpus (1.324 s versus 0.935 s MAE). Its value is diagnostic: 85 of 320 lines
+were low-agreement and can be prioritized for future review. Consensus is not
+promoted as the default aligner.
+
 ## Real-song status
 
 No real-song accuracy result exists yet. The private collection has not been
@@ -93,5 +99,6 @@ npm run experiment-parameter-sweep
 npm run experiment-generalization
 npm run experiment-intro-aware
 npm run experiment-adaptive-boundary
+npm run experiment-consensus
 npm run summarize-experiments
 ```

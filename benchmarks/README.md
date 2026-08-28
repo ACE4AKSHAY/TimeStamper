@@ -17,6 +17,7 @@
 - [`GENERALIZATION_EXPERIMENT.md`](./GENERALIZATION_EXPERIMENT.md) — Experiment 10, seeded randomized synthetic cases for broader behavior coverage.
 - [`INTRO_AWARE_EXPERIMENT.md`](./INTRO_AWARE_EXPERIMENT.md) — Experiment 11, an isolated leading-intro-aware Boundary-DP variant.
 - [`ADAPTIVE_BOUNDARY_EXPERIMENT.md`](./ADAPTIVE_BOUNDARY_EXPERIMENT.md) — Experiment 12, a thresholded selector between original and intro-aware Boundary-DP.
+- [`CONSENSUS_CONFIDENCE_EXPERIMENT.md`](./CONSENSUS_CONFIDENCE_EXPERIMENT.md) — Experiment 13, explainable candidate aggregation and uncertainty buckets.
 - [`COMPATIBILITY.md`](./COMPATIBILITY.md) — Runtime boundary and optimization checks for reusable modules.
 - [`PERFORMANCE_BENCHMARK.md`](./PERFORMANCE_BENCHMARK.md) — Runtime and heap benchmark protocol for all alignment engines.
 

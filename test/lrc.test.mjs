@@ -22,6 +22,7 @@ import { extractPitchProfile, pitchVoicednessProfile } from "../src/pitch-profil
 import { alignMultiProfile } from "../src/multi-profile-aligner.js";
 import { alignByIntroAwareBoundaryDp } from "../src/intro-aware-aligner.js";
 import { alignByAdaptiveBoundaryDp } from "../src/adaptive-boundary-aligner.js";
+import { summarizeConsensus, buildConsensusTimeline } from "../src/consensus-aligner.js";
 
 test("LRC timestamps round to centiseconds", () => {
   assert.equal(secondsToLrc(12.426), "[00:12.43]");
@@ -198,6 +199,14 @@ test("adaptive boundary DP selects intro handling only above its threshold", () 
   const result = alignByAdaptiveBoundaryDp(lines, profile, 12, { minLength: 2, maxLength: 6, minimumIntroFrames: 3 });
   assert.equal(result.selectedEngine, "intro-aware-boundary-dp");
   assert.equal(result.segments[0].startFrame, 3);
+});
+
+test("consensus layer returns a median timestamp and bounded confidence", () => {
+  const summary = summarizeConsensus([1, 1.2, 0.8], { confidenceScale: 1 });
+  assert.equal(summary.startTime, 1);
+  assert.ok(summary.confidence > 0 && summary.confidence <= 1);
+  const lines = buildConsensusTimeline([{ id: "a", originalText: "a" }], [[1], [1.2], [0.8]]);
+  assert.equal(lines[0].startTime, 1);
 });
 
 test("autocorrelation pitch profile detects a bounded voiced tone", () => {
