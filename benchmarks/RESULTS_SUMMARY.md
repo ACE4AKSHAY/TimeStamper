@@ -22,6 +22,7 @@ they are generated artifacts; regenerate this report with
 | Intro-aware Boundary-DP | `intro-aware-synthetic-v1` | 5 | existing boundary-DP: 0.360 s; intro-aware variant: 0.200 s MAE; 100% within 1.00 s |
 | Adaptive Boundary-DP | `adaptive-boundary-synthetic-v1` | 5 | existing: 0.360 s; intro-aware: 0.200 s; adaptive selector: 0.180 s MAE; 100% within 1.00 s |
 | Consensus confidence | `consensus-synthetic-v1` | 60 | Median of four engines: 1.324 s MAE; 60% within 1.00 s; agreement buckets high 186 / medium 49 / low 85 |
+| Template-DTW tempo robustness | `template-tempo-synthetic-v1` | 6 | 0.020 s MAE for DTW windows 0, 1, and 2; 100% within 0.25 s |
 
 ## Interpretation
 
@@ -68,6 +69,11 @@ corpus (1.324 s versus 0.935 s MAE). Its value is diagnostic: 85 of 320 lines
 were low-agreement and can be prioritized for future review. Consensus is not
 promoted as the default aligner.
 
+The template-DTW tempo sweep stayed at 0.020 s MAE across 0.75x, 1.00x, and
+1.25x synthetic time scales for all tested DTW windows. This supports keeping
+DTW as a candidate for tempo variation, but does not test different singers or
+real acoustic recordings.
+
 ## Real-song status
 
 No real-song accuracy result exists yet. The private collection has not been
@@ -100,5 +106,6 @@ npm run experiment-generalization
 npm run experiment-intro-aware
 npm run experiment-adaptive-boundary
 npm run experiment-consensus
+npm run experiment-template-tempo
 npm run summarize-experiments
 ```

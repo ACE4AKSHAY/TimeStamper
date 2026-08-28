@@ -12,7 +12,7 @@ function candidateCost(audioFrames, template, start, end, window) {
  */
 export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
   if (!Array.isArray(audioFrames) || !audioFrames.length || !Array.isArray(lineTemplates) || !lineTemplates.length) throw new Error("Template alignment requires audio frames and at least one line template.");
-  const frameRate = options.frameRate || 1, minLength = Math.max(1, options.minLength || 1), slack = Math.max(0, options.slack ?? 2), maxLength = options.maxLength || Math.max(minLength, Math.max(...lineTemplates.map((template) => template.length)) + slack), window = options.window;
+  const frameRate = options.frameRate || 1, minLength = Math.max(1, options.minLength || 1), slack = Math.max(0, options.slack ?? 2), largestTemplate = lineTemplates.reduce((largest, template) => Math.max(largest, template.length), 0), maxLength = options.maxLength || Math.max(minLength, largestTemplate + slack), window = options.window;
   const lineCount = lineTemplates.length, frameCount = audioFrames.length;
   const costs = Array.from({ length: lineCount + 1 }, () => new Float64Array(frameCount + 1).fill(Infinity)); const parents = Array.from({ length: lineCount + 1 }, () => new Int32Array(frameCount + 1).fill(-1)); costs[0][0] = 0;
   for (let line = 1; line <= lineCount; line++) {
