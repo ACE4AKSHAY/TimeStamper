@@ -208,6 +208,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 158 | Alternate-duration anchor scaling | 🟡 | Reference-template alignment now supports an opt-in duration-ratio scale for slowed, sped-up, remix, or alternate-length targets; default behavior remains unchanged and real calibration is pending. |
 | 159 | Reference/target preflight validation | 🟡 | Alternate pair runs now reject malformed timestamp structures early and flag large duration differences for review before expensive MFCC/DTW processing; warnings remain non-blocking for legitimate covers/remixes. |
 | 160 | Alternate-pair handoff layout | 🟡 | Added an exact private folder/template convention separating reference audio, held-out target audio, lyrics, and two independently verified timestamp documents; no user files are copied or committed. |
+| 161 | MFCC template boundary refinement | 🟡 | Added an opt-in local adjacent-line DTW boundary search with cost-improvement diagnostics; default radius is zero until alternate-recording accuracy validates it. |
 
 ## Recommended next steps
 

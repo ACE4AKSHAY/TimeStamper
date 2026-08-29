@@ -154,6 +154,10 @@ Reference-assisted alignment can also call a separator adapter directly through
 `alignWithSeparatedReferenceTarget`; this is the integration seam for a future
 local Demucs/Spleeter/native implementation.
 
+The reference-template engine also supports an opt-in
+`templateBoundaryRadius` local refinement experiment; see
+[`TEMPLATE_BOUNDARY_REFINEMENT_EXPERIMENT.md`](benchmarks/TEMPLATE_BOUNDARY_REFINEMENT_EXPERIMENT.md).
+
 Template and MFCC sequence alignment accept `dtwImplementation: "banded"` as
 an opt-in memory-efficient implementation. The full-matrix implementation
 remains the reference until longer real-recording comparisons are complete.

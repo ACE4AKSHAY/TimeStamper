@@ -121,6 +121,21 @@ test("reference-template adapter aligns a target recording and preserves line me
   });
   assert.deepEqual(fromFrames.lines.map((line) => line.startTime), result.lines.map((line) => line.startTime));
 
+  const refined = await alignWithReferenceTemplates({
+    referenceSamples: samples,
+    referenceSampleRate: sampleRate,
+    referenceStarts: [0, 0.2],
+    referenceDuration: 0.4,
+    targetSamples: samples,
+    targetSampleRate: sampleRate,
+    targetDuration: 0.4,
+    lyrics: lines,
+    options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, templateBoundaryRadius: 1 },
+  });
+  assert.equal(refined.parameters.templateBoundaryRadius, 1);
+  assert.equal(refined.alignment.templateBoundaryRefinement.length, 1);
+  assert.ok(refined.lines[1].startTime >= refined.lines[0].startTime);
+
   const separated = await alignWithSeparatedReferenceTarget({
     separator: createPassthroughSeparator(),
     targetInput: { samples, sampleRate },

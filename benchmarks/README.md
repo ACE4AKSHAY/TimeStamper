@@ -33,6 +33,7 @@
 - [`CONFIDENCE_CALIBRATION_EXPERIMENT.md`](./CONFIDENCE_CALIBRATION_EXPERIMENT.md) — confidence buckets and failure-review diagnostics.
 - [`REFERENCE_TARGET_PREFLIGHT.md`](./REFERENCE_TARGET_PREFLIGHT.md) — cheap structural checks before expensive pair alignment.
 - [`REFERENCE_PAIR_LAYOUT.md`](./REFERENCE_PAIR_LAYOUT.md) — private folder layout for alternate-recording evaluation.
+- [`TEMPLATE_BOUNDARY_REFINEMENT_EXPERIMENT.md`](./TEMPLATE_BOUNDARY_REFINEMENT_EXPERIMENT.md) — opt-in local MFCC boundary refinement.
 - [`FULL_ENGINE_COMPARISON.md`](./FULL_ENGINE_COMPARISON.md) — Experiment 24, seeded broad comparison across all current engines.
 - [`SILENCE_AWARE_EXPERIMENT.md`](./SILENCE_AWARE_EXPERIMENT.md) — Experiment 22, pause-aware boundary evidence for phrase gaps.
 - [`TEXT_UNIT_EXPERIMENT.md`](./TEXT_UNIT_EXPERIMENT.md) — Experiment 25, Unicode grapheme versus codepoint duration priors.
