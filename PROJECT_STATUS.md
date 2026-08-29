@@ -201,7 +201,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 151 | Reference-template engine integration | 🟡 | The assisted MFCC/DTW adapter is now exposed through the platform-neutral `synchronize()` API as an explicit opt-in engine; PCM inputs are kept out of serializable parameter snapshots and the path is covered by tests. Interactive UI integration remains intentionally deferred until alternate-recording accuracy and async runtime are measured. |
 | 152 | Vocal-separation comparison contract | 🟡 | Added a model-agnostic separator interface and full-mix versus separated-vocal comparison runner; actual Demucs/Spleeter/native results remain pending because no separator model is bundled or required. |
 | 153 | Alternate-recording reference evaluator | 🟡 | Added a private pair-folder evaluator requiring independently verified reference and target timestamps; it is ready for cover/live/remix/alternate-mix measurements but has no cases until a second recording is supplied. |
-| 154 | MFCC cache optimization | 🟡 | Whole-recording MFCC frames can now be cached and reused when building reference templates or evaluating pairs; accuracy is unchanged and a cold/warm runtime measurement on alternate recordings remains pending. |
+| 154 | MFCC cache optimization | 🟡 | Whole-recording MFCC frames can now be cached and reused when building reference templates or evaluating pairs; a bounded two-case run saved 6.10 seconds (25.00s cold to 18.89s warm) with identical 19.5ms MAE. Alternate-recording runtime remains pending. |
 
 ## Recommended next steps
 

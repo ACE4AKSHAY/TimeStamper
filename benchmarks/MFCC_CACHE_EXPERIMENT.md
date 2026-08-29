@@ -28,3 +28,18 @@ alignment algorithm and parameters are unchanged. A meaningful speed benchmark
 should be measured on the same machine before and after the first cold run and
 the second warm run; real-folder alternate-recording cases are still needed to
 decide whether the method is accurate enough for interactive use.
+
+## Bounded real-data measurement (2026-08-29)
+
+Using two locally reviewed recordings (64 lyric lines total), banded
+reference-template self-alignment produced identical metrics on cold and warm
+runs:
+
+| Run | Wall time | MAE |
+| --- | ---: | ---: |
+| Cold cache | 25.00 s | 19.5 ms |
+| Warm cache | 18.89 s | 19.5 ms |
+
+The warm run saved 6.10 seconds (approximately 24%). This measures cache
+reuse on the current machine; it is not a general performance guarantee, and
+the self-reference setup still does not test alternate-recording accuracy.

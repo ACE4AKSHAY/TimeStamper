@@ -36,6 +36,7 @@ they are generated artifacts; regenerate this report with
 | Offline pipeline smoke | `offline-pipeline-synthetic-v1` | 1 | 32,000 samples decoded; 64-frame profiles; multi-profile alignment 0.024 s MAE |
 | Unicode text-unit prior | `text-weighted-synthetic-v1` | 2 | codepoint 0.317 s MAE; grapheme 0.450 s MAE; no default promoted |
 | Rolling-cost DTW | `dtw-memory-optimization-synthetic-v1` | 3 | exact path/cost equivalence at 64/128/256 frames; approximately 2–5x faster in fixture |
+| MFCC cache warm run | reviewed local self-reference subset | 2 recordings / 64 lines | 25.00 s cold; 18.89 s warm; 6.10 s (24%) saved with identical 19.5 ms MAE |
 
 ## Interpretation
 
