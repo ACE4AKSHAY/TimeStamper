@@ -31,6 +31,7 @@
 - [`REFERENCE_TEMPLATE_ALIGNMENT.md`](./REFERENCE_TEMPLATE_ALIGNMENT.md) — reference-assisted MFCC/DTW and alternate-recording evaluation.
 - [`MFCC_CACHE_EXPERIMENT.md`](./MFCC_CACHE_EXPERIMENT.md) — repeatable whole-recording MFCC cache optimization.
 - [`CONFIDENCE_CALIBRATION_EXPERIMENT.md`](./CONFIDENCE_CALIBRATION_EXPERIMENT.md) — confidence buckets and failure-review diagnostics.
+- [`REFERENCE_TARGET_PREFLIGHT.md`](./REFERENCE_TARGET_PREFLIGHT.md) — cheap structural checks before expensive pair alignment.
 - [`FULL_ENGINE_COMPARISON.md`](./FULL_ENGINE_COMPARISON.md) — Experiment 24, seeded broad comparison across all current engines.
 - [`SILENCE_AWARE_EXPERIMENT.md`](./SILENCE_AWARE_EXPERIMENT.md) — Experiment 22, pause-aware boundary evidence for phrase gaps.
 - [`TEXT_UNIT_EXPERIMENT.md`](./TEXT_UNIT_EXPERIMENT.md) — Experiment 25, Unicode grapheme versus codepoint duration priors.

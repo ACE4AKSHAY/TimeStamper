@@ -206,6 +206,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 156 | Separator-to-aligner integration | 🟡 | Optional separator adapters can now feed validated mono PCM directly into reference-assisted MFCC/DTW; a real separator model and measured full-mix versus vocal-only result remain pending. |
 | 157 | Explainable line failure categories | 🟡 | Template alignment now labels each line as stable, high-relative-cost, unstable-boundary, or both; evaluators persist category counts so future manual review can target the actual failure mode. |
 | 158 | Alternate-duration anchor scaling | 🟡 | Reference-template alignment now supports an opt-in duration-ratio scale for slowed, sped-up, remix, or alternate-length targets; default behavior remains unchanged and real calibration is pending. |
+| 159 | Reference/target preflight validation | 🟡 | Alternate pair runs now reject malformed timestamp structures early and flag large duration differences for review before expensive MFCC/DTW processing; warnings remain non-blocking for legitimate covers/remixes. |
 
 ## Recommended next steps
 

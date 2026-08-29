@@ -6,6 +6,7 @@ import { extractReferenceStarts } from "../src/evaluation.js";
 import { parseLyrics } from "../src/lyrics.js";
 import { alignWithReferenceTemplates } from "../src/reference-template-aligner.js";
 import { scoreTimestamps, summarizeConfidence } from "../src/metrics.js";
+import { validateReferenceTargetPair } from "../src/reference-target-validation.js";
 import { FeatureCache } from "../src/feature-cache.mjs";
 import { loadOrExtractMfcc } from "../src/mfcc-feature-cache.mjs";
 
@@ -53,13 +54,15 @@ async function evaluateCase(caseRoot, id) {
     const lyrics = parseLyrics(lyricsText, "reference_template_pair_evaluation");
     const referenceStarts = extractReferenceStarts(referenceDocument), targetStarts = extractReferenceStarts(targetDocument);
     if (referenceStarts.length !== lyrics.lines.length || targetStarts.length !== lyrics.lines.length) return { id, status: "failed", reason: "reference_or_target_line_count_does_not_match_lyrics" };
+    const preflight = validateReferenceTargetPair({ referenceDuration: reference.duration, targetDuration: target.duration, referenceStarts, targetStarts, lineCount: lyrics.lines.length });
+    if (preflight.status === "invalid") return { id, status: "failed", reason: "reference_target_preflight_failed", preflight };
     const referenceMfcc = await loadOrExtractMfcc({ audioPath: join(caseRoot, referenceAudio.name), decoded: reference, cache: featureCache, enabled: process.env.LYRICSYNC_DISABLE_FEATURE_CACHE !== "1" });
     const targetMfcc = await loadOrExtractMfcc({ audioPath: join(caseRoot, targetAudio.name), decoded: target, cache: featureCache, enabled: process.env.LYRICSYNC_DISABLE_FEATURE_CACHE !== "1" });
     const started = performance.now();
     const result = alignWithReferenceTemplates({ referenceSamples: reference.samples, referenceSampleRate: reference.sampleRate, referenceStarts, referenceDuration: reference.duration, targetSamples: target.samples, targetSampleRate: target.sampleRate, targetDuration: target.duration, lyrics: lyrics.lines, options: { ...options, referenceMfcc, targetMfcc } });
     const predicted = result.lines.map((line) => line.startTime);
     const metrics = scoreTimestamps(predicted, targetStarts);
-    return { id, status: "evaluated", referenceAudioPath: join(caseRoot, referenceAudio.name), targetAudioPath: join(caseRoot, targetAudio.name), lyricPath: join(caseRoot, lyric.name), lineCount: targetStarts.length, runtimeMs: performance.now() - started, metrics, confidence: { mean: result.lines.reduce((sum, line) => sum + (line.confidence || 0), 0) / result.lines.length, reviewRequired: result.lines.filter((line) => line.reviewRequired).length, failureCategories: countFailureCategories(result.lines), calibration: summarizeConfidence(predicted, targetStarts, result.lines.map((line) => line.confidence)) }, diagnostics: result.alignment.diagnostics };
+    return { id, status: "evaluated", referenceAudioPath: join(caseRoot, referenceAudio.name), targetAudioPath: join(caseRoot, targetAudio.name), lyricPath: join(caseRoot, lyric.name), lineCount: targetStarts.length, preflight, runtimeMs: performance.now() - started, metrics, confidence: { mean: result.lines.reduce((sum, line) => sum + (line.confidence || 0), 0) / result.lines.length, reviewRequired: result.lines.filter((line) => line.reviewRequired).length, failureCategories: countFailureCategories(result.lines), calibration: summarizeConfidence(predicted, targetStarts, result.lines.map((line) => line.confidence)) }, diagnostics: result.alignment.diagnostics };
   } catch (error) { return { id, status: "failed", reason: error.code || error.message || "pair_evaluation_failed" }; }
 }
 

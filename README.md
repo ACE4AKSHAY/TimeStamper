@@ -164,6 +164,10 @@ Reference-template evaluation also reports high/medium/low confidence error
 buckets. These are review-prioritization diagnostics, not calibrated
 probabilities; see [`CONFIDENCE_CALIBRATION_EXPERIMENT.md`](benchmarks/CONFIDENCE_CALIBRATION_EXPERIMENT.md).
 
+Alternate-recording evaluation performs a language-neutral preflight for
+durations, line counts, timestamp order, and large duration differences before
+MFCC/DTW begins. See [`REFERENCE_TARGET_PREFLIGHT.md`](benchmarks/REFERENCE_TARGET_PREFLIGHT.md).
+
 The platform-neutral core can be reused by a future mobile client or a native frontend on another operating system. The project can technically meet its
 objective as a line-level offline synchronizer: the remaining work is measured
 real-recording validation, confidence/fallback handling, and optional decoder

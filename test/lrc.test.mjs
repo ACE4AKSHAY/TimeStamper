@@ -30,6 +30,7 @@ import { alignByVocalGatedBoundaryDp, buildVocalGatedProfile } from "../src/voca
 import { alignByAdaptiveVocalBoundaryDp, summarizeVoicedness } from "../src/adaptive-vocal-aligner.js";
 import { alignBySilenceAwareBoundaryDp } from "../src/silence-aware-aligner.js";
 import { summarizeConfidence } from "../src/metrics.js";
+import { validateReferenceTargetPair } from "../src/reference-target-validation.js";
 
 test("editor time parser accepts precise editor forms without swapping units", () => {
   assert.equal(parseEditorTime("01:23.456"), 83.456);
@@ -349,4 +350,14 @@ test("confidence summary reports bounded triage buckets without claiming probabi
   assert.equal(summary.buckets.low.within100, 0);
   assert.equal(summary.ordering.highMaeNotWorseThanLow, true);
   assert.throws(() => summarizeConfidence([0], [0], [1.2]), /between 0 and 1/u);
+});
+
+test("reference-target preflight distinguishes invalid pairs from review warnings", () => {
+  const review = validateReferenceTargetPair({ referenceDuration: 100, targetDuration: 140, referenceStarts: [2, 20], targetStarts: [3, 30], lineCount: 2 });
+  assert.equal(review.status, "review");
+  assert.deepEqual(review.warnings, ["large_duration_ratio"]);
+  assert.equal(review.durationRatio, 1.4);
+  const invalid = validateReferenceTargetPair({ referenceDuration: 100, targetDuration: 80, referenceStarts: [20, 10], targetStarts: [1, 2], lineCount: 2 });
+  assert.equal(invalid.status, "invalid");
+  assert.ok(invalid.errors.includes("reference_timestamps_not_monotonic"));
 });
