@@ -34,7 +34,13 @@ console.log(JSON.stringify({ output, summary: document.summary, aggregate }, nul
 async function evaluateCase(caseRoot, id) {
   const files = await readdir(caseRoot, { withFileTypes: true });
   const audio = files.find((entry) => entry.isFile() && audioExtensions.has(extname(entry.name).toLowerCase()));
-  const lyric = files.find((entry) => entry.isFile() && lyricExtensions.has(extname(entry.name).toLowerCase()));
+  const lyricCandidates = files
+    .filter((entry) => entry.isFile() && lyricExtensions.has(extname(entry.name).toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  // Prefer the conventional name, then use a stable alphabetical order. This
+  // keeps private benchmark runs reproducible when a folder contains a
+  // duplicate export such as both "lyrics.lrc" and a song-named .lrc file.
+  const lyric = lyricCandidates.find((entry) => entry.name.toLowerCase() === "lyrics.lrc") || lyricCandidates[0];
   const referencePath = join(caseRoot, "reference.json");
   if (!audio || !lyric) return { id, status: "skipped", reason: "case_requires_one_audio_file_and_one_lrc_or_txt_file" };
   let reference;
@@ -57,7 +63,7 @@ async function evaluateCase(caseRoot, id) {
       const predicted = result.lines.map((line) => line.startTime);
       enginesOutput[engine] = { metrics: scoreTimestamps(predicted, starts), predicted, runtimeMs: performance.now() - started };
     }
-    return { id, status: "evaluated", audioPath, lyricPath, decoder: { format: decoded.format, sampleRate: decoded.sampleRate, duration: decoded.duration }, lyricLines: lyrics.lines.length, referenceLines: starts.length, engines: enginesOutput };
+    return { id, status: "evaluated", audioPath, lyricPath, lyricCandidates: lyricCandidates.map((entry) => entry.name), decoder: { format: decoded.format, sampleRate: decoded.sampleRate, duration: decoded.duration }, lyricLines: lyrics.lines.length, referenceLines: starts.length, engines: enginesOutput };
   } catch (error) {
     return { id, status: "failed", reason: error.code || error.message || "evaluation_failed" };
   }

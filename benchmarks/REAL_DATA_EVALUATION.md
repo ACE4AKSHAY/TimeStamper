@@ -101,15 +101,53 @@ recording-specific failures. This project remains valuable because it is
 offline, explainable, reusable, and can improve on the user’s own verified
 collection without a machine-learning model.
 
+## Manual-review benchmark result (2026-08-29)
+
+The user manually listened to every audio/LRC pair in the private review
+folder and confirmed that the displayed line timings were good. Those reviewed
+timestamps were written beside each case as `reference.json`; these files hold
+numeric timestamps and review status only. The source media and lyric text stay
+outside the repository. The duplicate `lyrics.lrc` in the Baitikochi Chuste
+case was removed; the original song-named `Baitikochi Chuste.lrc` was retained.
+
+The batch evaluator decoded all 17 MP3 files locally and compared six
+audio-only engines against the reviewed timestamps (951 lyric lines total):
+
+| Engine | Mean absolute error | Median absolute error | Lines within 1 s |
+| --- | ---: | ---: | ---: |
+| Text-weighted Boundary-DP | 7.99 s | 5.54 s | 9.5% |
+| Ensemble Boundary | 8.99 s | 6.74 s | 6.4% |
+| Adaptive Boundary-DP | 9.00 s | 6.74 s | 6.1% |
+| Refined Boundary-DP | 9.07 s | 6.85 s | 6.2% |
+| Vocal-gated Boundary-DP | 9.26 s | 7.10 s | 6.6% |
+| Adaptive-vocal Boundary-DP | 9.26 s | 7.10 s | 6.6% |
+
+This is the first real-recording result, not a synthetic smoke test. It shows
+that the current energy/boundary features are useful for producing an editable
+starting timeline, but are not yet a reliable automatic lyric synchronizer.
+The large error is expected from an audio-only model that does not know which
+spoken/sung words correspond to each lyric line. The next algorithm work should
+focus on reference-assisted acoustic templates, stronger vocal/phoneme evidence,
+and confidence-based fallback while retaining the manual editor.
+
+The metadata-only report is written to the ignored path
+`benchmarks/private/real-case-evaluation.json` by:
+
+```powershell
+$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
+& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' run evaluate-real -- 'C:\path\to\TimeStamper_Manual_Review_2026-08-29'
+```
+
+Why both kinds of testing matter: the user’s listening review establishes the
+semantic ground truth for each recording; automated evaluation checks that the
+parser, decoder, feature extraction, and engine reproduce measurable results
+across all cases. It does not override the user’s musical judgment.
+
 ## Next engineering step
 
-Install or expose a local decoder (FFmpeg is the simplest option), then add a
-small PCM adapter that feeds real audio into the existing profile and engine
-APIs. Keep the decoder optional so browser playback and mobile ports remain
-modular. No songs, lyrics, or private manifests should ever be committed.
-
-Once 5–10 cases have been manually verified, place them in the folder layout
-described by [`REAL_CASE_EVALUATION.md`](./REAL_CASE_EVALUATION.md) and run the
-private batch evaluator. It compares the selectable engines using your
-reference timestamps and records the first real accuracy evidence without
-publishing the media.
+The decoder/profile adapter is now exercised against real MP3 files. The next
+research step is to build and measure reference-assisted acoustic line
+templates (MFCC/constrained-DTW) and stronger vocal evidence, then compare them
+against the baseline above. Keep the decoder optional so browser playback and
+future mobile ports remain modular. No songs, lyrics, or private manifests
+should ever be committed.
