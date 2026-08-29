@@ -357,7 +357,9 @@ test("reference-target preflight distinguishes invalid pairs from review warning
   assert.equal(review.status, "review");
   assert.deepEqual(review.warnings, ["large_duration_ratio"]);
   assert.equal(review.durationRatio, 1.4);
+  assert.equal(review.recommendedAnchorScale, "duration-ratio");
   const invalid = validateReferenceTargetPair({ referenceDuration: 100, targetDuration: 80, referenceStarts: [20, 10], targetStarts: [1, 2], lineCount: 2 });
   assert.equal(invalid.status, "invalid");
   assert.ok(invalid.errors.includes("reference_timestamps_not_monotonic"));
+  assert.equal(invalid.recommendedAnchorScale, "none");
 });

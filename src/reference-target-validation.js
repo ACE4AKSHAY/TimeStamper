@@ -18,7 +18,7 @@ export function validateReferenceTargetPair({ referenceDuration, targetDuration,
     if (ratio < 0.75 || ratio > 1.25) warnings.push("large_duration_ratio");
     if (referenceStarts.at(-1) >= referenceDuration) warnings.push("reference_last_line_at_or_after_end");
     if (targetStarts?.length && targetStarts.at(-1) >= targetDuration) warnings.push("target_last_line_at_or_after_end");
-    return { status: warnings.length ? "review" : "ready", errors, warnings, durationRatio: ratio };
+    return { status: warnings.length ? "review" : "ready", errors, warnings, durationRatio: ratio, recommendedAnchorScale: warnings.includes("large_duration_ratio") ? "duration-ratio" : "none" };
   }
-  return { status: "invalid", errors, warnings, durationRatio: Number.isFinite(referenceDuration) && referenceDuration > 0 && Number.isFinite(targetDuration) ? targetDuration / referenceDuration : null };
+  return { status: "invalid", errors, warnings, durationRatio: Number.isFinite(referenceDuration) && referenceDuration > 0 && Number.isFinite(targetDuration) ? targetDuration / referenceDuration : null, recommendedAnchorScale: "none" };
 }
