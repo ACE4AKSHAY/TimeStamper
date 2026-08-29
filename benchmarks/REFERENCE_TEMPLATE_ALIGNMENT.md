@@ -78,6 +78,9 @@ MFCC/DTW candidate scoring remains CPU-heavy on a 216-second MP3. The harness
 therefore supports a case limit for safe experiments. This is a performance
 finding, not an accuracy result; the next optimization is coarse MFCC
 downsampling and tighter candidate pruning before running the whole collection.
+The follow-up anchored pilot reduced the search region and memory pressure but
+was still too slow for this pure-JavaScript implementation. A coarse segment
+descriptor or native/WASM DTW kernel is now the preferred performance path.
 
 ## Search bounds
 
