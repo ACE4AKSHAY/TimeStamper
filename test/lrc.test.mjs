@@ -152,6 +152,15 @@ test("engine exposes template MFCC-DTW line timestamps", () => {
   assert.equal(result.lines[1].alignmentMethod, "template_mfcc_dtw");
 });
 
+test("template alignment supports a leading offset and duration bands", () => {
+  const result = alignLineTemplates([[-1], [-1], [0], [0.1], [1], [1.1]], [[[0], [0.1]], [[1], [1.1]]], {
+    frameRate: 10, initialFrame: 2, expectedLengths: [2, 2], lengthTolerance: 0.5, minLength: 1, maxLength: 4, window: 2,
+  });
+  assert.equal(result.segments[0].startFrame, 2);
+  assert.equal(result.diagnostics.initialFrame, 2);
+  assert.deepEqual(result.diagnostics.expectedLengths, [2, 2]);
+});
+
 test("profile fusion normalizes and resamples explainable signals", () => {
   assert.deepEqual(resampleProfile([0, 10], 3), [0, 5, 10]);
   assert.deepEqual(normalizeProfile([2, 4, 6]), [0, 0.5, 1]);

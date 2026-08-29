@@ -18,12 +18,24 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
   if (!Array.isArray(audioFrames) || !audioFrames.length || !Array.isArray(lineTemplates) || !lineTemplates.length) throw new Error("Template alignment requires audio frames and at least one line template.");
   const frameRate = options.frameRate || 1, minLength = Math.max(1, options.minLength || 1), slack = Math.max(0, options.slack ?? 2), largestTemplate = lineTemplates.reduce((largest, template) => Math.max(largest, template.length), 0), maxLength = options.maxLength || Math.max(minLength, largestTemplate + slack), window = options.window;
   const lineCount = lineTemplates.length, frameCount = audioFrames.length;
-  const costs = Array.from({ length: lineCount + 1 }, () => new Float64Array(frameCount + 1).fill(Infinity)); const parents = Array.from({ length: lineCount + 1 }, () => new Int32Array(frameCount + 1).fill(-1)); costs[0][0] = 0;
+  const searchStride = Math.max(1, Math.floor(options.searchStride ?? 1));
+  const expectedLengths = options.expectedLengths == null ? null : options.expectedLengths.map(Number);
+  if (expectedLengths && (expectedLengths.length !== lineCount || expectedLengths.some((value) => !Number.isFinite(value) || value <= 0))) throw new Error("Expected template lengths must contain one positive value per lyric line.");
+  const lengthTolerance = Math.min(10, Math.max(0, Number.isFinite(options.lengthTolerance) ? options.lengthTolerance : 0.75));
+  const lineMinLengths = lineTemplates.map((template, index) => expectedLengths ? Math.max(minLength, Math.floor(expectedLengths[index] * Math.max(0.01, 1 - lengthTolerance))) : minLength);
+  const lineMaxLengths = lineTemplates.map((template, index) => expectedLengths ? Math.max(lineMinLengths[index], Math.min(maxLength, Math.ceil(expectedLengths[index] * (1 + lengthTolerance)))) : maxLength);
+  const prefixMinimums = [0];
+  for (let index = 0; index < lineCount; index++) prefixMinimums.push(prefixMinimums[index] + lineMinLengths[index]);
+  const initialFrame = Math.min(frameCount - 1, Math.max(0, Math.floor(options.initialFrame ?? 0)));
+  const costs = Array.from({ length: lineCount + 1 }, () => new Float64Array(frameCount + 1).fill(Infinity)); const parents = Array.from({ length: lineCount + 1 }, () => new Int32Array(frameCount + 1).fill(-1)); costs[0][initialFrame] = 0;
   for (let line = 1; line <= lineCount; line++) {
-    for (let end = line * minLength; end <= frameCount; end++) {
-      const firstStart = Math.max((line - 1) * minLength, end - maxLength);
-      const lastStart = end - minLength;
+    const minimumEnd = Math.max(initialFrame + prefixMinimums[line], line * minLength);
+    for (let end = minimumEnd; end <= frameCount; end++) {
+      if (end !== frameCount && end % searchStride !== 0) continue;
+      const firstStart = Math.max(initialFrame + prefixMinimums[line - 1], end - lineMaxLengths[line - 1]);
+      const lastStart = end - lineMinLengths[line - 1];
       for (let start = firstStart; start <= lastStart; start++) {
+        if (start !== initialFrame && start % searchStride !== 0) continue;
         if (!Number.isFinite(costs[line - 1][start])) continue;
         const cost = costs[line - 1][start] + candidateCost(audioFrames, lineTemplates[line - 1], start, end, window);
         if (cost < costs[line][end]) { costs[line][end] = cost; parents[line][end] = start; }
@@ -72,5 +84,5 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
     return { lineIndex: segment.lineIndex, cost, relativeCost, confidence, reviewRequired: confidence < reviewThreshold || unstableBoundary, startBoundary: boundary.startBoundary || null, endBoundary: boundary.endBoundary || null };
   });
   segments = segments.map((segment, index) => ({ ...segment, ...diagnostics[index] }));
-  return { segments, cost: costs[lineCount][frameCount], frameRate, method: "template_mfcc_dtw", diagnostics: { medianCost, baseline, reviewThreshold, marginFrames, boundaryMarginThreshold, boundaries: boundaryDiagnostics } };
+  return { segments, cost: costs[lineCount][frameCount], frameRate, method: "template_mfcc_dtw", diagnostics: { medianCost, baseline, reviewThreshold, marginFrames, boundaryMarginThreshold, searchStride, initialFrame, expectedLengths, lengthTolerance, boundaries: boundaryDiagnostics } };
 }

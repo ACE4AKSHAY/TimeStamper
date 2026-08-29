@@ -23,6 +23,9 @@ lyrics recognizer.
 - `src/reference-template-aligner.js` connects those pieces, validates line
   counts, handles different sample rates, and returns editable lines plus
   target/reference diagnostics.
+- `src/template-aligner.js` accepts optional per-line duration bands, a leading
+  offset for intros, and a coarse frame stride so long recordings do not need
+  an unrestricted quadratic search.
 - `src/template-aligner.js` also returns relative per-line cost, bounded
   confidence, boundary-stability margins, and `reviewRequired` diagnostics.
 - `scripts/run-reference-template-alignment.mjs` is the local file runner. It
@@ -50,6 +53,16 @@ $env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
 
 MP3/M4A decoding uses a local FFmpeg executable; WAV/PCM decoding is built in.
 No network service or dataset upload is involved.
+
+## Search bounds
+
+The assisted adapter derives an expected target length for each line from the
+reference start intervals. By default it allows a broad 75% duration tolerance,
+preserves the reference's leading intro offset, and uses a four-frame search
+stride only for very large MFCC sequences. The general aligner keeps stride 1
+and unrestricted durations unless these options are supplied, so existing
+audio-only engines retain their behavior. Bounds are performance controls, not
+proof that the target recording has identical timing.
 
 ## Limitations and next measurement
 
