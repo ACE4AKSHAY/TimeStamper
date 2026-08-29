@@ -15,7 +15,14 @@ const output = resolve(process.argv[3] || "benchmarks/private/reference-template
 const limit = Number.isFinite(Number(process.argv[4])) && Number(process.argv[4]) > 0 ? Math.floor(Number(process.argv[4])) : Infinity;
 const audioExtensions = new Set([".mp3", ".m4a", ".wav", ".wave", ".flac", ".ogg", ".opus", ".aac"]);
 const lyricExtensions = new Set([".lrc", ".txt"]);
-const options = { dtwImplementation: process.env.LYRICSYNC_DTW_IMPLEMENTATION === "banded" ? "banded" : undefined, useReferenceAnchors: process.env.LYRICSYNC_REFERENCE_ANCHORS !== "0", anchorScale: process.env.LYRICSYNC_REFERENCE_ANCHOR_SCALE === "duration-ratio" ? "duration-ratio" : undefined };
+const options = {
+  dtwImplementation: process.env.LYRICSYNC_DTW_IMPLEMENTATION === "banded" ? "banded" : undefined,
+  useReferenceAnchors: process.env.LYRICSYNC_REFERENCE_ANCHORS !== "0",
+  anchorScale: process.env.LYRICSYNC_REFERENCE_ANCHOR_SCALE === "duration-ratio" ? "duration-ratio" : undefined,
+  templateBoundaryRadius: finiteEnvNumber("LYRICSYNC_TEMPLATE_BOUNDARY_RADIUS", 0, (value) => Math.max(0, Math.floor(value))),
+  templateBoundaryMinImprovementRatio: finiteEnvNumber("LYRICSYNC_TEMPLATE_BOUNDARY_MIN_IMPROVEMENT_RATIO", 0, (value) => Math.max(0, value)),
+  featureNormalization: process.env.LYRICSYNC_FEATURE_NORMALIZATION === "global-zscore" ? "global-zscore" : "none",
+};
 const featureCache = new FeatureCache(process.env.LYRICSYNC_FEATURE_CACHE_DIR || "cache/features");
 let entries = [];
 try { entries = (await readdir(root, { withFileTypes: true })).filter((entry) => entry.isDirectory()).sort((a, b) => a.name.localeCompare(b.name)).slice(0, limit); } catch { entries = []; }
@@ -62,11 +69,22 @@ async function evaluateCase(caseRoot, id) {
     const result = alignWithReferenceTemplates({ referenceSamples: reference.samples, referenceSampleRate: reference.sampleRate, referenceStarts, referenceDuration: reference.duration, targetSamples: target.samples, targetSampleRate: target.sampleRate, targetDuration: target.duration, lyrics: lyrics.lines, options: { ...options, referenceMfcc, targetMfcc } });
     const predicted = result.lines.map((line) => line.startTime);
     const metrics = scoreTimestamps(predicted, targetStarts);
-    return { id, status: "evaluated", referenceAudioPath: join(caseRoot, referenceAudio.name), targetAudioPath: join(caseRoot, targetAudio.name), lyricPath: join(caseRoot, lyric.name), lineCount: targetStarts.length, preflight, runtimeMs: performance.now() - started, metrics, confidence: { mean: result.lines.reduce((sum, line) => sum + (line.confidence || 0), 0) / result.lines.length, reviewRequired: result.lines.filter((line) => line.reviewRequired).length, failureCategories: countFailureCategories(result.lines), calibration: summarizeConfidence(predicted, targetStarts, result.lines.map((line) => line.confidence)) }, diagnostics: result.alignment.diagnostics };
+    return { id, status: "evaluated", referenceAudioPath: join(caseRoot, referenceAudio.name), targetAudioPath: join(caseRoot, targetAudio.name), lyricPath: join(caseRoot, lyric.name), lineCount: targetStarts.length, preflight, runtimeMs: performance.now() - started, metrics, confidence: { mean: result.lines.reduce((sum, line) => sum + (line.confidence || 0), 0) / result.lines.length, reviewRequired: result.lines.filter((line) => line.reviewRequired).length, failureCategories: countFailureCategories(result.lines), calibration: summarizeConfidence(predicted, targetStarts, result.lines.map((line) => line.confidence)) }, refinement: summarizeRefinement(result.alignment.templateBoundaryRefinement), diagnostics: result.alignment.diagnostics };
   } catch (error) { return { id, status: "failed", reason: error.code || error.message || "pair_evaluation_failed" }; }
 }
 
 function countFailureCategories(lines) { return lines.reduce((counts, line) => { const category = line.failureCategory || "unknown"; counts[category] = (counts[category] || 0) + 1; return counts; }, {}); }
+
+function summarizeRefinement(diagnostics) {
+  if (!Array.isArray(diagnostics)) return { boundaryCount: 0, changedCount: 0, totalShiftFrames: 0, meanImprovement: 0 };
+  const changed = diagnostics.filter((item) => item.changed);
+  return { boundaryCount: diagnostics.length, changedCount: changed.length, totalShiftFrames: changed.reduce((sum, item) => sum + Math.abs(Number(item.shiftFrames) || 0), 0), meanImprovement: diagnostics.length ? diagnostics.reduce((sum, item) => sum + (Number(item.improvement) || 0), 0) / diagnostics.length : 0 };
+}
+
+function finiteEnvNumber(name, fallback, transform) {
+  const value = Number(process.env[name]);
+  return Number.isFinite(value) ? transform(value) : fallback;
+}
 
 function findNamed(files, stems) { return files.filter((file) => stems.includes(file.name.slice(0, file.name.lastIndexOf(".")).toLowerCase())).sort((a, b) => a.name.localeCompare(b.name))[0]; }
 async function readJson(path) { return JSON.parse(await readFile(path, "utf8")); }
