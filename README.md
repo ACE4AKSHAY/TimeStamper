@@ -169,6 +169,9 @@ for median consensus and disagreement review; see
 [`REFERENCE_TEMPLATE_ENSEMBLE.md`](benchmarks/REFERENCE_TEMPLATE_ENSEMBLE.md).
 Its optional `ensembleOptions.weightByConfidence` mode is documented in
 [`REFERENCE_TEMPLATE_WEIGHTED_CONSENSUS.md`](benchmarks/REFERENCE_TEMPLATE_WEIGHTED_CONSENSUS.md).
+For multimodal disagreements, `ensembleOptions.clusterToleranceSeconds`
+selects the strongest nearby hypothesis; see
+[`REFERENCE_TEMPLATE_CLUSTERED_CONSENSUS.md`](benchmarks/REFERENCE_TEMPLATE_CLUSTERED_CONSENSUS.md).
 
 Template and MFCC sequence alignment accept `dtwImplementation: "banded"` as
 an opt-in memory-efficient implementation. The full-matrix implementation

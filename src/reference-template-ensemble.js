@@ -1,5 +1,5 @@
 import { alignWithReferenceTemplates } from "./reference-template-aligner.js";
-import { summarizeConsensus, summarizeWeightedConsensus } from "./consensus-aligner.js";
+import { summarizeClusteredConsensus, summarizeConsensus, summarizeWeightedConsensus } from "./consensus-aligner.js";
 
 /**
  * Run multiple deterministic reference-template configurations and expose
@@ -18,16 +18,17 @@ export function alignWithReferenceTemplateEnsemble({ variants, lyrics, duration,
   const agreementThreshold = Number.isFinite(alignmentInput.ensembleOptions?.agreementThreshold) ? Math.max(0, Math.min(1, alignmentInput.ensembleOptions.agreementThreshold)) : 0.6;
   const maxSpreadSeconds = Number.isFinite(alignmentInput.ensembleOptions?.maxSpreadSeconds) && alignmentInput.ensembleOptions.maxSpreadSeconds >= 0 ? alignmentInput.ensembleOptions.maxSpreadSeconds : 1;
   const weightByConfidence = alignmentInput.ensembleOptions?.weightByConfidence === true;
+  const clusterToleranceSeconds = Number.isFinite(alignmentInput.ensembleOptions?.clusterToleranceSeconds) ? Math.max(0, alignmentInput.ensembleOptions.clusterToleranceSeconds) : 0;
   const consensus = lines.map((_, index) => {
     const starts = candidates.map((candidate) => candidate.alignment.lines[index]?.startTime);
-    return weightByConfidence
-      ? summarizeWeightedConsensus(starts, candidates.map((candidate) => candidate.alignment.lines[index]?.confidence), { confidenceScale })
-      : summarizeConsensus(starts, { confidenceScale });
+    const weights = weightByConfidence ? candidates.map((candidate) => candidate.alignment.lines[index]?.confidence) : starts.map(() => 1);
+    if (clusterToleranceSeconds > 0) return summarizeClusteredConsensus(starts, weights, { confidenceScale, clusterToleranceSeconds });
+    return weightByConfidence ? summarizeWeightedConsensus(starts, weights, { confidenceScale }) : summarizeConsensus(starts, { confidenceScale });
   });
   const starts = consensus.map((item) => item.startTime);
   const alignedLines = lines.map((line, index) => {
     const summary = consensus[index];
-    const failureCategory = summary.confidence < agreementThreshold ? "low_agreement" : summary.spread > maxSpreadSeconds ? "wide_spread" : "stable";
+    const failureCategory = summary.confidence < agreementThreshold ? "low_agreement" : summary.outlierCount > 0 ? "cluster_outliers" : summary.spread > maxSpreadSeconds ? "wide_spread" : "stable";
     return { ...line, startTime: summary.startTime, endTime: index + 1 < lines.length ? starts[index + 1] : (Number.isFinite(duration) && duration > 0 ? duration : alignmentInput.targetDuration), alignmentMethod: "reference_template_ensemble", confidence: summary.confidence, reviewRequired: failureCategory !== "stable", alignmentReview: { ...summary, failureCategory } };
   });
   return {
@@ -37,6 +38,7 @@ export function alignWithReferenceTemplateEnsemble({ variants, lyrics, duration,
     consensus,
     confidenceScale,
     weightByConfidence,
+    clusterToleranceSeconds,
     agreementThreshold,
     maxSpreadSeconds,
   };

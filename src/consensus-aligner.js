@@ -31,6 +31,31 @@ export function summarizeWeightedConsensus(candidates, weights, options = {}) {
   return { startTime: median, medianAbsoluteDeviation: mad, spread, confidence: Math.max(0, Math.min(1, 1 - mad / scale)), candidateCount: pairs.length, totalWeight };
 }
 
+/**
+ * Select the highest-weight group of nearby candidates before taking its
+ * weighted median. This prevents a multimodal set of starts from producing a
+ * timestamp between two competing acoustic hypotheses.
+ */
+export function summarizeClusteredConsensus(candidates, weights, options = {}) {
+  const tolerance = Number.isFinite(options.clusterToleranceSeconds) && options.clusterToleranceSeconds > 0 ? options.clusterToleranceSeconds : 0;
+  if (!tolerance) return summarizeWeightedConsensus(candidates, weights, options);
+  const pairs = Array.from(candidates || [], Number).map((value, index) => ({ value, weight: Math.max(0, Number(weights?.[index]) || 0) })).filter((pair) => Number.isFinite(pair.value) && pair.weight > 0).sort((left, right) => left.value - right.value);
+  if (!pairs.length) return summarizeWeightedConsensus(candidates, weights, options);
+  const clusters = [];
+  for (const pair of pairs) {
+    const current = clusters[clusters.length - 1];
+    if (!current || pair.value - current[current.length - 1].value > tolerance) clusters.push([pair]);
+    else current.push(pair);
+  }
+  const selected = clusters.reduce((best, cluster) => {
+    const weight = cluster.reduce((sum, pair) => sum + pair.weight, 0);
+    const bestWeight = best ? best.reduce((sum, pair) => sum + pair.weight, 0) : -1;
+    return weight > bestWeight ? cluster : best;
+  }, null);
+  const summary = summarizeWeightedConsensus(selected.map((pair) => pair.value), selected.map((pair) => pair.weight), options);
+  return { ...summary, clusterCount: clusters.length, selectedClusterWeight: selected.reduce((sum, pair) => sum + pair.weight, 0), totalCandidateCount: pairs.length, outlierCount: pairs.length - selected.length, clusterToleranceSeconds: tolerance };
+}
+
 function weightedQuantile(pairs, targetWeight) {
   let cumulative = 0;
   for (const pair of pairs) {

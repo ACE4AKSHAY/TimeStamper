@@ -6,6 +6,7 @@ import { createPassthroughSeparator, createVocalSeparator, validateSeparatedAudi
 import { extractMfcc } from "../src/features.js";
 import { fitFeatureNormalization, transformFeatureFrames } from "../src/feature-normalizer.js";
 import { alignWithReferenceTemplateEnsemble } from "../src/reference-template-ensemble.js";
+import { summarizeClusteredConsensus } from "../src/consensus-aligner.js";
 
 test("feature normalization is deterministic and keeps disabled mode lossless", () => {
   const frames = [[1, 2], [3, 4], [5, 6]];
@@ -15,6 +16,13 @@ test("feature normalization is deterministic and keeps disabled mode lossless", 
   assert.ok(Math.abs(normalized.reduce((sum, frame) => sum + frame[0], 0)) < 1e-12);
   assert.ok(normalized.flat().every(Number.isFinite));
   assert.deepEqual(transformFeatureFrames(frames, fitFeatureNormalization([frames])), frames);
+});
+
+test("clustered consensus keeps a selected timing hypothesis away from outliers", () => {
+  const summary = summarizeClusteredConsensus([1, 1.04, 2.0], [1, 1, 1], { clusterToleranceSeconds: 0.1 });
+  assert.equal(summary.startTime, 1);
+  assert.equal(summary.clusterCount, 2);
+  assert.equal(summary.outlierCount, 1);
 });
 
 test("vocal separator contract validates PCM and preserves a deterministic passthrough", async () => {
@@ -107,6 +115,22 @@ test("reference-template adapter aligns a target recording and preserves line me
   });
   assert.equal(weightedEnsemble.weightByConfidence, true);
   assert.ok(weightedEnsemble.lines.every((line) => Number.isFinite(line.startTime)));
+  const clusteredEnsemble = alignWithReferenceTemplateEnsemble({
+    variants: [
+      { name: "a", options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 } },
+    ],
+    referenceSamples: samples,
+    referenceSampleRate: sampleRate,
+    referenceStarts: [0, 0.2],
+    referenceDuration: 0.4,
+    targetSamples: samples,
+    targetSampleRate: sampleRate,
+    targetDuration: 0.4,
+    lyrics: lines,
+    duration: 0.4,
+    ensembleOptions: { clusterToleranceSeconds: 0.1 },
+  });
+  assert.equal(clusteredEnsemble.clusterToleranceSeconds, 0.1);
   const ensembleEngine = synchronize({
     lyrics: lines,
     duration: 0.4,
