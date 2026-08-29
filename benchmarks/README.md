@@ -31,6 +31,7 @@
 - [`REFERENCE_TEMPLATE_ALIGNMENT.md`](./REFERENCE_TEMPLATE_ALIGNMENT.md) — reference-assisted MFCC/DTW and alternate-recording evaluation.
 - [`MFCC_CACHE_EXPERIMENT.md`](./MFCC_CACHE_EXPERIMENT.md) — repeatable whole-recording MFCC cache optimization.
 - [`CONFIDENCE_CALIBRATION_EXPERIMENT.md`](./CONFIDENCE_CALIBRATION_EXPERIMENT.md) — confidence buckets and failure-review diagnostics.
+- [`TEMPLATE_BOUNDARY_REFINEMENT_RESULTS.md`](./TEMPLATE_BOUNDARY_REFINEMENT_RESULTS.md) — radius-1 self-reference result and promotion limits.
 - [`REFERENCE_TARGET_PREFLIGHT.md`](./REFERENCE_TARGET_PREFLIGHT.md) — cheap structural checks before expensive pair alignment.
 - [`REFERENCE_PAIR_LAYOUT.md`](./REFERENCE_PAIR_LAYOUT.md) — private folder layout for alternate-recording evaluation.
 - [`TEMPLATE_BOUNDARY_REFINEMENT_EXPERIMENT.md`](./TEMPLATE_BOUNDARY_REFINEMENT_EXPERIMENT.md) — opt-in local MFCC boundary refinement.
