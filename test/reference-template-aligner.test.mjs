@@ -5,6 +5,7 @@ import { synchronize } from "../src/engine.js";
 import { createPassthroughSeparator, createVocalSeparator, validateSeparatedAudio } from "../src/vocal-separator.js";
 import { extractMfcc } from "../src/features.js";
 import { fitFeatureNormalization, transformFeatureFrames } from "../src/feature-normalizer.js";
+import { alignWithReferenceTemplateEnsemble } from "../src/reference-template-ensemble.js";
 
 test("feature normalization is deterministic and keeps disabled mode lossless", () => {
   const frames = [[1, 2], [3, 4], [5, 6]];
@@ -69,6 +70,42 @@ test("reference-template adapter aligns a target recording and preserves line me
   });
   assert.equal(normalized.parameters.featureNormalization, "global-zscore");
   assert.ok(normalized.lines.every((line) => Number.isFinite(line.startTime)));
+  const ensemble = alignWithReferenceTemplateEnsemble({
+    variants: [
+      { name: "anchored", options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 } },
+      { name: "anchor-free", options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, useReferenceAnchors: false } },
+    ],
+    referenceSamples: samples,
+    referenceSampleRate: sampleRate,
+    referenceStarts: [0, 0.2],
+    referenceDuration: 0.4,
+    targetSamples: samples,
+    targetSampleRate: sampleRate,
+    targetDuration: 0.4,
+    lyrics: lines,
+    duration: 0.4,
+  });
+  assert.equal(ensemble.method, "reference_template_ensemble");
+  assert.equal(ensemble.candidates.length, 2);
+  assert.ok(ensemble.lines.every((line, index) => index === 0 || line.startTime >= ensemble.lines[index - 1].startTime));
+  assert.ok(ensemble.lines.every((line) => line.alignmentReview.candidateCount >= 1));
+  const ensembleEngine = synchronize({
+    lyrics: lines,
+    duration: 0.4,
+    engine: "reference-template-ensemble",
+    parameters: {
+      referenceSamples: samples,
+      referenceSampleRate: sampleRate,
+      referenceStarts: [0, 0.2],
+      referenceDuration: 0.4,
+      targetSamples: samples,
+      targetSampleRate: sampleRate,
+      targetDuration: 0.4,
+      variants: [{ name: "default", options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 } }],
+    },
+  });
+  assert.equal(ensembleEngine.engine, "reference-template-ensemble");
+  assert.equal(ensembleEngine.lines.length, lines.length);
   const banded = alignWithReferenceTemplates({
     referenceSamples: samples,
     referenceSampleRate: sampleRate,

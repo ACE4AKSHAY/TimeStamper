@@ -12,6 +12,7 @@ import { alignByVocalGatedBoundaryDp } from "./vocal-gated-aligner.js";
 import { alignByAdaptiveVocalBoundaryDp } from "./adaptive-vocal-aligner.js";
 import { alignBySilenceAwareBoundaryDp } from "./silence-aware-aligner.js";
 import { alignWithReferenceTemplates } from "./reference-template-aligner.js";
+import { alignWithReferenceTemplateEnsemble } from "./reference-template-ensemble.js";
 
 export const ENGINE_VERSION = "0.3.0";
 
@@ -111,6 +112,22 @@ export function synchronize({ lyrics, duration, energyProfile, engine = "energy-
       target: alignment.target,
       generatedAt: new Date().toISOString(),
     };
+  }
+  if (engine === "reference-template-ensemble") {
+    const alignment = alignWithReferenceTemplateEnsemble({
+      variants: parameters.variants,
+      lyrics: lines,
+      duration: parameters.targetDuration ?? duration,
+      referenceSamples: parameters.referenceSamples,
+      referenceSampleRate: parameters.referenceSampleRate,
+      referenceStarts: parameters.referenceStarts,
+      referenceDuration: parameters.referenceDuration,
+      targetSamples: parameters.targetSamples,
+      targetSampleRate: parameters.targetSampleRate,
+      targetDuration: parameters.targetDuration ?? duration,
+      ensembleOptions: parameters.ensembleOptions,
+    });
+    return { engine, engineVersion: ENGINE_VERSION, parameters: { variants: parameters.variants, ensembleOptions: parameters.ensembleOptions || {}, referenceSamples: undefined, targetSamples: undefined, referenceStarts: undefined }, lines: alignment.lines, alignment, generatedAt: new Date().toISOString() };
   }
   if (engine !== "energy-baseline") throw new Error(`Unknown synchronization engine: ${engine}`);
   const alignedLines = createEnergyInitialTimeline(lines, energyProfile || [], duration);

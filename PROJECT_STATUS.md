@@ -214,6 +214,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 164 | Post-refinement diagnostics refresh | 🟡 | Recomputes line DTW costs, boundary margins, confidence and failure categories after an opt-in boundary move; this fixes metadata consistency without changing default alignment behavior. |
 | 165 | Global MFCC feature normalization | 🟡 | Added an isolated shared z-score transform; a five-case self-reference run worsened MAE from 17.66 ms to 32.74 ms, so it remains disabled by default pending independent recordings. |
 | 166 | Alternate-pair variant evaluator | 🟡 | The held-out pair runner now accepts DTW, anchor, duration-scale, boundary-refinement, margin-gate and normalization options through environment variables and records the effective configuration for future verified pairs. |
+| 167 | Reference-template ensemble consensus | 🟡 | Added an opt-in reusable engine that runs named deterministic template variants, takes median line starts, and marks disagreement for review; independent-pair calibration is still required. |
 
 ## Recommended next steps
 

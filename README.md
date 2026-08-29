@@ -164,6 +164,9 @@ cost improvements; its threshold sweep is documented in
 An isolated `featureNormalization: "global-zscore"` option is also available
 for research comparisons; its self-reference result is recorded in
 [`FEATURE_NORMALIZATION_EXPERIMENT.md`](benchmarks/FEATURE_NORMALIZATION_EXPERIMENT.md).
+The reusable API also exposes an opt-in `reference-template-ensemble` engine
+for median consensus and disagreement review; see
+[`REFERENCE_TEMPLATE_ENSEMBLE.md`](benchmarks/REFERENCE_TEMPLATE_ENSEMBLE.md).
 
 Template and MFCC sequence alignment accept `dtwImplementation: "banded"` as
 an opt-in memory-efficient implementation. The full-matrix implementation

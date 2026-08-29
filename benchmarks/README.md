@@ -36,6 +36,7 @@
 - [`TEMPLATE_DIAGNOSTICS_REFRESH.md`](./TEMPLATE_DIAGNOSTICS_REFRESH.md) — keeps costs and confidence metadata consistent after boundary changes.
 - [`FEATURE_NORMALIZATION_EXPERIMENT.md`](./FEATURE_NORMALIZATION_EXPERIMENT.md) — opt-in global MFCC normalization and its bounded negative result.
 - [`REFERENCE_PAIR_VARIANT_EVALUATION.md`](./REFERENCE_PAIR_VARIANT_EVALUATION.md) — compare current experimental options on verified alternate recordings.
+- [`REFERENCE_TEMPLATE_ENSEMBLE.md`](./REFERENCE_TEMPLATE_ENSEMBLE.md) — opt-in consensus over multiple reference-template configurations.
 - [`REFERENCE_TARGET_PREFLIGHT.md`](./REFERENCE_TARGET_PREFLIGHT.md) — cheap structural checks before expensive pair alignment.
 - [`REFERENCE_PAIR_LAYOUT.md`](./REFERENCE_PAIR_LAYOUT.md) — private folder layout for alternate-recording evaluation.
 - [`TEMPLATE_BOUNDARY_REFINEMENT_EXPERIMENT.md`](./TEMPLATE_BOUNDARY_REFINEMENT_EXPERIMENT.md) — opt-in local MFCC boundary refinement.
