@@ -30,3 +30,14 @@ If low-confidence lines have a lower MAE than high-confidence lines, the
 confidence signal is not useful for automatic review prioritization and must be
 reworked. Until that comparison is measured on held-out recordings, the UI
 should keep every generated timestamp editable.
+
+## Bounded real-data check (2026-08-29)
+
+The two reviewed self-reference cases contained 64 lines. All 64 lines fell
+into the high-confidence bucket, with aggregate MAE 19.5 ms. No medium or low
+bucket was populated, so this run cannot test whether confidence predicts
+error. Separately, 50 lines were marked `reviewRequired` because their local
+boundary-stability diagnostic was cautious even when relative DTW cost was
+low. This shows that boundary review and acoustic confidence are different
+signals; the thresholds remain provisional until alternate target recordings
+are scored.
