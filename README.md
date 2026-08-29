@@ -74,6 +74,8 @@ Run the tests with:
 node --test
 ```
 
+For the current human-review gate, follow [`MANUAL_REVIEW_CHECKLIST.md`](MANUAL_REVIEW_CHECKLIST.md). It includes the NVM launch command, exact UI/algorithm checks, and the small report format needed for the next algorithm decision.
+
 ## Architecture
 
 The v0.1 browser UI is a thin client over reusable ES modules:
