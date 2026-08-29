@@ -212,6 +212,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 162 | Template-boundary refinement self-evaluation | 🟡 | A 20-case/1,114-line self-reference run lowered MAE from 29.2 ms to 23.8 ms but slightly reduced 250/500 ms coverage; this is implementation evidence only and remains opt-in pending alternate recordings. |
 | 163 | Template-boundary margin gate | 🟡 | Added an optional normalized improvement threshold and bounded five-case sweep; it controls aggressiveness but does not yet justify a production threshold, so radius and gate remain opt-in. |
 | 164 | Post-refinement diagnostics refresh | 🟡 | Recomputes line DTW costs, boundary margins, confidence and failure categories after an opt-in boundary move; this fixes metadata consistency without changing default alignment behavior. |
+| 165 | Global MFCC feature normalization | 🟡 | Added an isolated shared z-score transform; a five-case self-reference run worsened MAE from 17.66 ms to 32.74 ms, so it remains disabled by default pending independent recordings. |
 
 ## Recommended next steps
 

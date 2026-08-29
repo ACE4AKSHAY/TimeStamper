@@ -161,6 +161,9 @@ The reference-template engine also supports an opt-in
 The related `templateBoundaryMinImprovementRatio` option rejects small local
 cost improvements; its threshold sweep is documented in
 [`TEMPLATE_BOUNDARY_MARGIN_GATE_EXPERIMENT.md`](benchmarks/TEMPLATE_BOUNDARY_MARGIN_GATE_EXPERIMENT.md).
+An isolated `featureNormalization: "global-zscore"` option is also available
+for research comparisons; its self-reference result is recorded in
+[`FEATURE_NORMALIZATION_EXPERIMENT.md`](benchmarks/FEATURE_NORMALIZATION_EXPERIMENT.md).
 
 Template and MFCC sequence alignment accept `dtwImplementation: "banded"` as
 an opt-in memory-efficient implementation. The full-matrix implementation

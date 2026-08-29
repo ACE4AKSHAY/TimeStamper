@@ -4,6 +4,17 @@ import { alignWithReferenceTemplates, alignWithSeparatedReferenceTarget } from "
 import { synchronize } from "../src/engine.js";
 import { createPassthroughSeparator, createVocalSeparator, validateSeparatedAudio } from "../src/vocal-separator.js";
 import { extractMfcc } from "../src/features.js";
+import { fitFeatureNormalization, transformFeatureFrames } from "../src/feature-normalizer.js";
+
+test("feature normalization is deterministic and keeps disabled mode lossless", () => {
+  const frames = [[1, 2], [3, 4], [5, 6]];
+  const stats = fitFeatureNormalization([frames], { mode: "global-zscore" });
+  const normalized = transformFeatureFrames(frames, stats);
+  assert.equal(stats.mode, "global-zscore");
+  assert.ok(Math.abs(normalized.reduce((sum, frame) => sum + frame[0], 0)) < 1e-12);
+  assert.ok(normalized.flat().every(Number.isFinite));
+  assert.deepEqual(transformFeatureFrames(frames, fitFeatureNormalization([frames])), frames);
+});
 
 test("vocal separator contract validates PCM and preserves a deterministic passthrough", async () => {
   const input = { samples: [0, 0.25, -0.25], sampleRate: 8000 };
@@ -45,6 +56,19 @@ test("reference-template adapter aligns a target recording and preserves line me
   assert.ok(result.lines.every((line) => ["stable", "high_relative_cost", "unstable_boundary", "high_relative_cost_and_unstable_boundary"].includes(line.failureCategory)));
   assert.equal(result.alignment.diagnostics.reviewThreshold, 0.5);
   assert.equal(result.reference.lineCount, 2);
+  const normalized = await alignWithReferenceTemplates({
+    referenceSamples: samples,
+    referenceSampleRate: sampleRate,
+    referenceStarts: [0, 0.2],
+    referenceDuration: 0.4,
+    targetSamples: samples,
+    targetSampleRate: sampleRate,
+    targetDuration: 0.4,
+    lyrics: lines,
+    options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, featureNormalization: "global-zscore" },
+  });
+  assert.equal(normalized.parameters.featureNormalization, "global-zscore");
+  assert.ok(normalized.lines.every((line) => Number.isFinite(line.startTime)));
   const banded = alignWithReferenceTemplates({
     referenceSamples: samples,
     referenceSampleRate: sampleRate,

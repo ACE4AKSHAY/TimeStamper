@@ -21,6 +21,7 @@ const templateBoundaryRadius = Number.isFinite(Number(process.env.LYRICSYNC_TEMP
 const templateBoundaryMinImprovementRatio = Number.isFinite(Number(process.env.LYRICSYNC_TEMPLATE_BOUNDARY_MIN_IMPROVEMENT_RATIO))
   ? Math.max(0, Number(process.env.LYRICSYNC_TEMPLATE_BOUNDARY_MIN_IMPROVEMENT_RATIO))
   : 0;
+const featureNormalization = process.env.LYRICSYNC_FEATURE_NORMALIZATION === "global-zscore" ? "global-zscore" : "none";
 const featureCache = new FeatureCache(process.env.LYRICSYNC_FEATURE_CACHE_DIR || "cache/features");
 const entries = (await readdir(root, { withFileTypes: true })).filter((entry) => entry.isDirectory()).sort((a, b) => a.name.localeCompare(b.name)).slice(0, limit);
 const cases = [];
@@ -32,7 +33,7 @@ const document = {
   generatedAt: new Date().toISOString(),
   purpose: "real-recording implementation sanity check using each reviewed recording as both reference and target",
   limitation: "self-reference does not measure alternate-recording generalization; use a separate target recording for that claim",
-  configuration: { dtwImplementation: dtwImplementation || "full-matrix", useReferenceAnchors, templateBoundaryRadius, templateBoundaryMinImprovementRatio },
+  configuration: { dtwImplementation: dtwImplementation || "full-matrix", useReferenceAnchors, templateBoundaryRadius, templateBoundaryMinImprovementRatio, featureNormalization },
   privacy: "metadata, local paths and generated timestamps/metrics only; source media and lyric text were not copied",
   root,
   summary: { discoveredCases: cases.length, evaluatedCases: evaluated.length, failedCases: cases.filter((item) => item.status === "failed").length },
@@ -57,7 +58,7 @@ async function evaluateCase(caseRoot, id) {
     if (starts.length !== lyrics.lines.length) return { id, status: "failed", reason: "reference_line_count_does_not_match_lyrics" };
     const mfcc = await loadOrExtractMfcc({ audioPath: join(caseRoot, audio.name), decoded, cache: featureCache, enabled: process.env.LYRICSYNC_DISABLE_FEATURE_CACHE !== "1" });
     const started = performance.now();
-    const result = alignWithReferenceTemplates({ referenceSamples: decoded.samples, referenceSampleRate: decoded.sampleRate, referenceStarts: starts, referenceDuration: decoded.duration, targetSamples: decoded.samples, targetSampleRate: decoded.sampleRate, targetDuration: decoded.duration, lyrics: lyrics.lines, options: { dtwImplementation, useReferenceAnchors, templateBoundaryRadius, templateBoundaryMinImprovementRatio, referenceMfcc: mfcc, targetMfcc: mfcc } });
+    const result = alignWithReferenceTemplates({ referenceSamples: decoded.samples, referenceSampleRate: decoded.sampleRate, referenceStarts: starts, referenceDuration: decoded.duration, targetSamples: decoded.samples, targetSampleRate: decoded.sampleRate, targetDuration: decoded.duration, lyrics: lyrics.lines, options: { dtwImplementation, useReferenceAnchors, templateBoundaryRadius, templateBoundaryMinImprovementRatio, featureNormalization, referenceMfcc: mfcc, targetMfcc: mfcc } });
     const predicted = result.lines.map((line) => line.startTime);
     const metrics = scoreTimestamps(predicted, starts);
     return { id, status: "evaluated", audioPath: join(caseRoot, audio.name), lyricPath: join(caseRoot, lyric.name), lineCount: starts.length, runtimeMs: performance.now() - started, metrics, confidence: { mean: result.lines.reduce((sum, line) => sum + (line.confidence || 0), 0) / result.lines.length, reviewRequired: result.lines.filter((line) => line.reviewRequired).length, failureCategories: countFailureCategories(result.lines), calibration: summarizeConfidence(predicted, starts, result.lines.map((line) => line.confidence)) }, refinement: summarizeRefinement(result.alignment.templateBoundaryRefinement), diagnostics: result.alignment.diagnostics };
