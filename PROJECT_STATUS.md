@@ -79,10 +79,10 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 29 | Dynamic Time Warping | 🟡 | Constrained DTW and MFCC sequence adapter are implemented and tested; lyric-line mapping still needs acoustic templates/features. |
 | 30 | Dynamic programming | 🟡 | Independent duration/onset boundary-DP engine, fixture, runner and dedicated document are implemented; real-data tuning is next. |
 | 31 | Structure-aware alignment | 🔭 | Later research phase. |
-| 32 | Lyric-aware constraints | 🟡 | Template alignment preserves global lyric order and monotonic segments; template creation/validation is next. |
+| 32 | Lyric-aware constraints | 🟡 | Template alignment preserves global lyric order and monotonic segments; reference-template creation and line-count validation are implemented. |
 | 33 | Timestamp generation | 🟡 | Manual, energy, combined-profile, boundary-DP and template-MFCC-DTW line timestamps work under their documented inputs. |
-| 34 | Timestamp refinement | 🟡 | Template DTW supplies segment costs; confidence/margin refinement is next. |
-| 35 | Confidence | 🟡 | Baseline records low confidence; algorithmic confidence model is pending. |
+| 34 | Timestamp refinement | 🟡 | Template DTW supplies per-line costs and bounded relative confidence; cross-recording calibration is next. |
+| 35 | Confidence | 🟡 | Reference-template alignment exposes explainable confidence and `reviewRequired` flags; values are not yet calibrated across songs. |
 | 36 | Human review | ✅ | Playback, waveform, timeline selection, click-to-seek, autoscroll and direct timestamp editing work. |
 | 37 | Fast correction | 🟡 | Exact time entry, custom adjustment, insert/duplicate, ordering guard and dynamic shortcuts work; undo/redo is next. |
 | 38 | Visualization | 🟡 | Waveform is done; research plots are later. |
