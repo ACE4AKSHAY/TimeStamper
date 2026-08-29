@@ -203,6 +203,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 153 | Alternate-recording reference evaluator | 🟡 | Added a private pair-folder evaluator requiring independently verified reference and target timestamps; it is ready for cover/live/remix/alternate-mix measurements but has no cases until a second recording is supplied. |
 | 154 | MFCC cache optimization | 🟡 | Whole-recording MFCC frames can now be cached and reused when building reference templates or evaluating pairs; a bounded two-case run saved 6.10 seconds (25.00s cold to 18.89s warm) with identical 19.5ms MAE. Alternate-recording runtime remains pending. |
 | 155 | Confidence calibration diagnostics | 🟡 | Scored reference-template runs now group line errors by high/medium/low confidence and report review-prioritization metrics; independent target references are still needed before calibrating thresholds. |
+| 156 | Separator-to-aligner integration | 🟡 | Optional separator adapters can now feed validated mono PCM directly into reference-assisted MFCC/DTW; a real separator model and measured full-mix versus vocal-only result remain pending. |
 
 ## Recommended next steps
 

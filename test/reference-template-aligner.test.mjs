@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { alignWithReferenceTemplates } from "../src/reference-template-aligner.js";
+import { alignWithReferenceTemplates, alignWithSeparatedReferenceTarget } from "../src/reference-template-aligner.js";
 import { synchronize } from "../src/engine.js";
 import { createPassthroughSeparator, createVocalSeparator, validateSeparatedAudio } from "../src/vocal-separator.js";
 import { extractMfcc } from "../src/features.js";
@@ -106,6 +106,18 @@ test("reference-template adapter aligns a target recording and preserves line me
     options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, referenceMfcc: cachedFrames, targetMfcc: cachedFrames },
   });
   assert.deepEqual(fromFrames.lines.map((line) => line.startTime), result.lines.map((line) => line.startTime));
+
+  const separated = await alignWithSeparatedReferenceTarget({
+    separator: createPassthroughSeparator(),
+    targetInput: { samples, sampleRate },
+    referenceSamples: samples,
+    referenceSampleRate: sampleRate,
+    referenceStarts: [0, 0.2],
+    referenceDuration: 0.4,
+    lyrics: lines,
+    options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 },
+  });
+  assert.deepEqual(separated.lines.map((line) => line.startTime), result.lines.map((line) => line.startTime));
 });
 
 test("reference-template adapter rejects a lyric/reference line mismatch", () => {

@@ -148,6 +148,10 @@ target timeline cannot be inferred from the reference recording.
 To compare a locally produced vocal stem with its original full mix, use
 `npm run compare-vocal-separation -- <full-mix> <vocal-file> <lyrics> <reference-json>`. See [`benchmarks/VOCAL_SEPARATION_EXPERIMENT.md`](benchmarks/VOCAL_SEPARATION_EXPERIMENT.md). This is an optional measurement path; it does not add a network or model dependency to the app.
 
+Reference-assisted alignment can also call a separator adapter directly through
+`alignWithSeparatedReferenceTarget`; this is the integration seam for a future
+local Demucs/Spleeter/native implementation.
+
 Template and MFCC sequence alignment accept `dtwImplementation: "banded"` as
 an opt-in memory-efficient implementation. The full-matrix implementation
 remains the reference until longer real-recording comparisons are complete.

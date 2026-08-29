@@ -17,6 +17,11 @@ Both runs are scored against the same manually verified `reference.json`.
 This isolates whether removing accompaniment improves line timing rather than
 changing the algorithm and the input at the same time.
 
+`alignWithSeparatedReferenceTarget` in `src/reference-template-aligner.js`
+also connects any separator adapter directly to reference-assisted MFCC/DTW.
+The alignment core receives only validated mono PCM, so a model can be added
+later without changing the DTW implementation.
+
 ## Important distinctions
 
 - A separated vocal file is a preprocessing variant of one recording, not a

@@ -1,6 +1,7 @@
 import { extractMfcc } from "./features.js";
 import { buildMfccLineTemplates, buildMfccLineTemplatesFromFrames } from "./template-builder.js";
 import { alignLineTemplates } from "./template-aligner.js";
+import { validateSeparatedAudio } from "./vocal-separator.js";
 
 /**
  * Align a target recording using MFCC line templates cut from a manually
@@ -77,4 +78,15 @@ export function alignWithReferenceTemplates({
     target: { duration, sampleRate: targetSampleRate, frameCount: targetMfcc.frames.length, frameRate: targetMfcc.frameRate },
     parameters: { mfcc: mfccOptions, minLength, maxLength, expectedLengths, lengthTolerance: options.lengthTolerance ?? 0.75, searchStride, featureStride, descriptorTopK, descriptorDimensions: options.descriptorDimensions ?? 6, useReferenceAnchors, initialFrame, expectedStarts, anchorToleranceSeconds, anchorToleranceFrames, slack: options.slack ?? 2, window: options.window ?? 8, dtwImplementation: options.dtwImplementation === "banded" ? "banded" : "full-matrix" },
   };
+}
+
+/**
+ * Run an optional separator before aligning a target. The separator can be a
+ * local model, native adapter, or deterministic passthrough; the alignment
+ * core only receives validated mono PCM and remains model-agnostic.
+ */
+export async function alignWithSeparatedReferenceTarget({ separator, targetInput, ...alignmentInput }) {
+  if (!separator || typeof separator.separate !== "function") throw new Error("Separated reference alignment requires a separator adapter.");
+  const separated = validateSeparatedAudio(await separator.separate(targetInput));
+  return alignWithReferenceTemplates({ ...alignmentInput, targetSamples: separated.samples, targetSampleRate: separated.sampleRate, targetDuration: separated.duration });
 }
