@@ -5,7 +5,7 @@ import { pathToFileURL } from "node:url";
 const packageJson = JSON.parse(await readFile(resolve("package.json"), "utf8"));
 const portableModules = [
   "domain.js", "lyrics.js", "lrc.js", "energy-aligner.js", "features.js", "dtw.js",
-  "mfcc-dtw.js", "dtw-banded.js", "template-aligner.js", "template-builder.js", "template-boundary-refiner.js", "reference-template-aligner.js", "reference-target-validation.js", "mfcc-feature-cache.mjs", "vocal-separator.js", "profile-fusion.js",
+  "mfcc-dtw.js", "dtw-banded.js", "template-aligner.js", "template-builder.js", "template-boundary-refiner.js", "template-diagnostics.js", "reference-template-aligner.js", "reference-target-validation.js", "mfcc-feature-cache.mjs", "vocal-separator.js", "profile-fusion.js",
   "audio-profiles.js", "pitch-profile.js", "run-config.mjs", "combined-aligner.js", "boundary-dp-aligner.js",
   "intro-aware-aligner.js", "adaptive-boundary-aligner.js", "text-weighted-aligner.js", "boundary-refiner.js", "ensemble-aligner.js", "vocal-gated-aligner.js", "adaptive-vocal-aligner.js", "silence-aware-aligner.js", "evaluation.js", "multi-profile-aligner.js", "consensus-aligner.js",
   "engine.js", "metrics.js",

@@ -136,6 +136,8 @@ test("reference-template adapter aligns a target recording and preserves line me
   assert.equal(refined.parameters.templateBoundaryMinImprovementRatio, 0);
   assert.equal(refined.alignment.templateBoundaryRefinement.length, 1);
   assert.equal(typeof refined.alignment.templateBoundaryRefinement[0].accepted, "boolean");
+  assert.ok(refined.alignment.segments.every((segment) => Number.isFinite(segment.cost)));
+  assert.ok(refined.alignment.segments.every((segment) => segment.failureCategory));
   assert.ok(refined.lines[1].startTime >= refined.lines[0].startTime);
 
   const gated = await alignWithReferenceTemplates({

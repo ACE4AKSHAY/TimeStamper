@@ -3,6 +3,7 @@ import { buildMfccLineTemplates, buildMfccLineTemplatesFromFrames } from "./temp
 import { alignLineTemplates } from "./template-aligner.js";
 import { validateSeparatedAudio } from "./vocal-separator.js";
 import { refineTemplateBoundaries } from "./template-boundary-refiner.js";
+import { recomputeTemplateDiagnostics } from "./template-diagnostics.js";
 
 /**
  * Align a target recording using MFCC line templates cut from a manually
@@ -70,7 +71,8 @@ export function alignWithReferenceTemplates({
     : 0;
   if (refinementRadius > 0) {
     const refinement = refineTemplateBoundaries(targetMfcc.frames, templates.templates, alignment.segments, { radius: refinementRadius, frameRate: targetMfcc.frameRate, minLength, window: options.window ?? 8, dtwImplementation: options.dtwImplementation, minImprovementRatio: refinementMinImprovementRatio });
-    alignment = { ...alignment, segments: refinement.segments, templateBoundaryRefinement: refinement.diagnostics, refinementMethod: refinement.method };
+    const refreshed = recomputeTemplateDiagnostics(targetMfcc.frames, templates.templates, refinement.segments, { minLength, window: options.window ?? 8, dtwImplementation: options.dtwImplementation, featureStride, confidenceScale: options.confidenceScale, reviewThreshold: options.reviewThreshold, marginFrames: options.marginFrames, boundaryMarginThreshold: options.boundaryMarginThreshold });
+    alignment = { ...alignment, segments: refreshed.segments, diagnostics: { ...alignment.diagnostics, ...refreshed.diagnostics }, templateBoundaryRefinement: refinement.diagnostics, refinementMethod: refinement.method };
   }
   const alignedLines = lines.map((line, index) => ({
     ...line,

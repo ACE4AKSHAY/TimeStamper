@@ -33,6 +33,7 @@
 - [`CONFIDENCE_CALIBRATION_EXPERIMENT.md`](./CONFIDENCE_CALIBRATION_EXPERIMENT.md) — confidence buckets and failure-review diagnostics.
 - [`TEMPLATE_BOUNDARY_REFINEMENT_RESULTS.md`](./TEMPLATE_BOUNDARY_REFINEMENT_RESULTS.md) — radius-1 self-reference result and promotion limits.
 - [`TEMPLATE_BOUNDARY_MARGIN_GATE_EXPERIMENT.md`](./TEMPLATE_BOUNDARY_MARGIN_GATE_EXPERIMENT.md) — optional normalized improvement gate and bounded threshold sweep.
+- [`TEMPLATE_DIAGNOSTICS_REFRESH.md`](./TEMPLATE_DIAGNOSTICS_REFRESH.md) — keeps costs and confidence metadata consistent after boundary changes.
 - [`REFERENCE_TARGET_PREFLIGHT.md`](./REFERENCE_TARGET_PREFLIGHT.md) — cheap structural checks before expensive pair alignment.
 - [`REFERENCE_PAIR_LAYOUT.md`](./REFERENCE_PAIR_LAYOUT.md) — private folder layout for alternate-recording evaluation.
 - [`TEMPLATE_BOUNDARY_REFINEMENT_EXPERIMENT.md`](./TEMPLATE_BOUNDARY_REFINEMENT_EXPERIMENT.md) — opt-in local MFCC boundary refinement.
