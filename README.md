@@ -94,6 +94,7 @@ The v0.1 browser UI is a thin client over reusable ES modules:
 - `src/pitch-profile.js` — bounded autocorrelation pitch and voicedness extraction
 - `src/audio-decoder.mjs` — dependency-free WAV decoding with optional local FFmpeg for compressed audio
 - `src/template-builder.js` — MFCC line-template extraction from a verified reference timeline
+- `src/reference-template-aligner.js` — reusable reference-assisted MFCC/constrained-DTW pipeline for aligning a target recording
 - `src/combined-aligner.js` — reusable combined-profile candidate generator
 - `src/text-weighted-aligner.js` — Unicode-safe lyric-length prior with a selectable Boundary-DP variant
 - `src/boundary-refiner.js` — bounded coarse-to-fine onset refinement with explainable confidence margins
