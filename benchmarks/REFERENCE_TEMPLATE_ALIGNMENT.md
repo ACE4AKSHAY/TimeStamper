@@ -84,6 +84,14 @@ $env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
 The final argument limits the number of cases; omit it to process every case.
 The output remains ignored and contains no lyric text or audio bytes.
 
+For a true alternate-recording measurement, use
+`npm run evaluate-reference-template-pairs -- <pair-root>`. Each private case
+must contain `reference.mp3` (or WAV), `target.mp3` (or WAV), `lyrics.lrc`,
+`reference.json`, and `target-reference.json`; both JSON files must be marked
+`verified: true`. The reference file teaches the acoustic templates, while the
+target file is used only for scoring. A cover/live/remix is a valid target, but
+its timestamps should be checked independently because its phrasing may differ.
+
 The first full-song pilot showed that even with duration bands, unrestricted
 MFCC/DTW candidate scoring remains CPU-heavy on a 216-second MP3. The harness
 therefore supports a case limit for safe experiments. This is a performance

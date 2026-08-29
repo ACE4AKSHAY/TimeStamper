@@ -15,6 +15,7 @@
     "align-local": "node scripts/run-local-alignment.mjs",
     "evaluate-real": "node scripts/evaluate-real-cases.mjs",
     "evaluate-reference-template": "node scripts/evaluate-reference-template-cases.mjs",
+    "evaluate-reference-template-pairs": "node scripts/evaluate-reference-template-pairs.mjs",
     "align-reference-template": "node scripts/run-reference-template-alignment.mjs",
     "compare-vocal-separation": "node scripts/run-separation-comparison.mjs",
     "compare-engines": "node scripts/run-engine-comparison.mjs",

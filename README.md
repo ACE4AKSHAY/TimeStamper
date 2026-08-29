@@ -138,6 +138,11 @@ For a local implementation sanity check across reviewed recordings, set
 `benchmarks/REFERENCE_TEMPLATE_SELF_EVALUATION.md`. Identical reference/target
 results validate the pipeline but do not measure alternate-recording accuracy.
 
+For held-out covers, live versions, remixes, or alternate official mixes, use
+`npm run evaluate-reference-template-pairs -- <pair-root>`. Each private pair
+needs independently verified `reference.json` and `target-reference.json`; the
+target timeline cannot be inferred from the reference recording.
+
 To compare a locally produced vocal stem with its original full mix, use
 `npm run compare-vocal-separation -- <full-mix> <vocal-file> <lyrics> <reference-json>`. See [`benchmarks/VOCAL_SEPARATION_EXPERIMENT.md`](benchmarks/VOCAL_SEPARATION_EXPERIMENT.md). This is an optional measurement path; it does not add a network or model dependency to the app.
 

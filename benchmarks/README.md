@@ -27,6 +27,8 @@
 - [`VOCAL_GATED_EXPERIMENT.md`](./VOCAL_GATED_EXPERIMENT.md) — Experiment 20, voicedness-gated boundary detection for instrumental decoys.
 - [`ADAPTIVE_VOCAL_EXPERIMENT.md`](./ADAPTIVE_VOCAL_EXPERIMENT.md) — Experiment 21, coverage-based routing between vocal-gated and energy-only alignment.
 - [`ADAPTIVE_VOCAL_SWEEP_EXPERIMENT.md`](./ADAPTIVE_VOCAL_SWEEP_EXPERIMENT.md) — Experiment 23, sensitivity of vocal-gate routing thresholds.
+- [`VOCAL_SEPARATION_EXPERIMENT.md`](./VOCAL_SEPARATION_EXPERIMENT.md) — optional full-mix versus separated-vocal comparison.
+- [`REFERENCE_TEMPLATE_ALIGNMENT.md`](./REFERENCE_TEMPLATE_ALIGNMENT.md) — reference-assisted MFCC/DTW and alternate-recording evaluation.
 - [`FULL_ENGINE_COMPARISON.md`](./FULL_ENGINE_COMPARISON.md) — Experiment 24, seeded broad comparison across all current engines.
 - [`SILENCE_AWARE_EXPERIMENT.md`](./SILENCE_AWARE_EXPERIMENT.md) — Experiment 22, pause-aware boundary evidence for phrase gaps.
 - [`TEXT_UNIT_EXPERIMENT.md`](./TEXT_UNIT_EXPERIMENT.md) — Experiment 25, Unicode grapheme versus codepoint duration priors.
