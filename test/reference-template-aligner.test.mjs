@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { alignWithReferenceTemplates } from "../src/reference-template-aligner.js";
+import { synchronize } from "../src/engine.js";
 
 test("reference-template adapter aligns a target recording and preserves line metadata", () => {
   const sampleRate = 8000;
@@ -58,6 +59,27 @@ test("reference-template adapter aligns a target recording and preserves line me
   assert.equal(anchorFree.parameters.useReferenceAnchors, false);
   assert.equal(anchorFree.parameters.expectedStarts, null);
   assert.ok(anchorFree.lines.every((line) => Number.isFinite(line.startTime)));
+
+  const throughEngine = synchronize({
+    lyrics: lines,
+    duration: 0.4,
+    engine: "reference-template-mfcc-dtw",
+    parameters: {
+      referenceSamples: samples,
+      referenceSampleRate: sampleRate,
+      referenceStarts: [0, 0.2],
+      referenceDuration: 0.4,
+      targetSamples: samples,
+      targetSampleRate: sampleRate,
+      targetDuration: 0.4,
+      options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, dtwImplementation: "banded" },
+    },
+  });
+  assert.equal(throughEngine.engine, "reference-template-mfcc-dtw");
+  assert.equal(throughEngine.lines.length, lines.length);
+  assert.equal(throughEngine.parameters.dtwImplementation, "banded");
+  assert.equal(throughEngine.parameters.referenceSamples, undefined);
+  assert.ok(throughEngine.lines.every((line) => Number.isFinite(line.startTime)));
 });
 
 test("reference-template adapter rejects a lyric/reference line mismatch", () => {

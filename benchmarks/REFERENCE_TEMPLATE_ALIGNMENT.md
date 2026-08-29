@@ -23,6 +23,10 @@ lyrics recognizer.
 - `src/reference-template-aligner.js` connects those pieces, validates line
   counts, handles different sample rates, and returns editable lines plus
   target/reference diagnostics.
+- `src/engine.js` exposes the adapter as the opt-in
+  `reference-template-mfcc-dtw` engine. The engine returns the same normalized
+  line shape as the other engines while omitting PCM arrays from its persisted
+  parameter snapshot.
 - `src/template-aligner.js` accepts optional per-line duration bands, a leading
   offset for intros, and a coarse frame stride so long recordings do not need
   an unrestricted quadratic search.

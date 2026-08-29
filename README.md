@@ -18,6 +18,7 @@ Online lyrics/LRC discovery is deliberately a future **optional connector**, not
 - Transport includes hold-to-rewind and hold-to-fast-forward controls, a separate reset-to-start control, and a stop button that preserves the current position.
 - The next research layer is available as **Initial timing**: a local RMS-energy baseline that distributes existing lyric lines through active audio. It is intentionally labelled as a low-confidence editable estimate—not lyric recognition—and should be reviewed line by line.
 - The reusable engine also exposes a deterministic **combined-profile** experiment that fuses normalized RMS energy and spectral flux with explicit weights. It is isolated from the UI and contains no AI/ML model or network dependency.
+- The reusable engine exposes an opt-in **reference-template-mfcc-dtw** mode for aligning a target recording from a manually verified reference recording. It is kept separate from the instant audio-only estimate because it is CPU-heavy and needs a second recording.
 - Export valid centisecond LRC, including optional title, artist, album and language metadata.
 - Save/reopen a human-readable `.lyricsync.json` project. Audio is deliberately only referenced by name; reselect it after reopening so the application does not copy large private media files.
 - Human-readable activity log download.
@@ -127,6 +128,8 @@ is still an experiment, not a claim of syllable or word recognition.
 For a local decoded-file run, use `npm run align-local -- <audio-path> <lyric-path> [engine] [output-json]`. WAV/PCM works without extra packages; MP3/M4A/FLAC require an available local FFmpeg executable. The command reuses derived profiles from the ignored `cache/features` directory; set `LYRICSYNC_DISABLE_FEATURE_CACHE=1` to disable it or `LYRICSYNC_FEATURE_CACHE_DIR=<folder>` to choose another cache location. See `benchmarks/REAL_DATA_EVALUATION.md` and `benchmarks/FEATURE_CACHE_INTEGRATION.md` for the privacy boundary and cache details.
 
 For reference-assisted MFCC/DTW, use `npm run align-reference-template -- <target-audio> <reference-audio> <reference-json> <lyrics>`. The reference JSON supplies manually verified line starts; the generated target timeline remains editable and is written only to the ignored private output path.
+
+The same assisted path is available through the platform-neutral `synchronize()` API as `engine: "reference-template-mfcc-dtw"`. Pass the decoded PCM and verified reference starts in `parameters`; large sample arrays are intentionally removed from the returned serializable `parameters` object. This keeps the algorithm reusable for a future mobile/native front end without coupling it to Electron.
 
 For a local implementation sanity check across reviewed recordings, set
 `LYRICSYNC_DTW_IMPLEMENTATION=banded` and run
