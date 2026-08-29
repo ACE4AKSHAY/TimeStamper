@@ -33,6 +33,7 @@ const definitions = [
   ["Vocal-gated Boundary-DP", "benchmarks/results/vocal-gated-boundary-study.json", (data) => `energy-only ${data.methods.energyAdaptiveBoundaryDp.metrics.maeSeconds.toFixed(3)} s MAE; vocal-gated ${data.methods.vocalGatedBoundaryDp.metrics.maeSeconds.toFixed(3)} s MAE; ${(data.methods.vocalGatedBoundaryDp.metrics.within050 * 100).toFixed(0)}% within 0.50 s`],
   ["Adaptive vocal selector", "benchmarks/results/adaptive-vocal-boundary-study.json", (data) => `energy-only ${data.methods.energyAdaptiveBoundaryDp.metrics.maeSeconds.toFixed(3)} s MAE; routed ${data.methods.adaptiveVocalBoundaryDp.metrics.maeSeconds.toFixed(3)} s MAE; coverage-based gate/fallback`],
   ["Silence-aware Boundary-DP", "benchmarks/results/silence-aware-boundary-study.json", (data) => `ordinary ${data.methods.adaptiveBoundaryDp.metrics.maeSeconds.toFixed(3)} s MAE; pause-aware ${data.methods.silenceAwareBoundaryDp.metrics.maeSeconds.toFixed(3)} s MAE; ${(data.methods.silenceAwareBoundaryDp.metrics.within100 * 100).toFixed(0)}% within 1.00 s`],
+  ["Adaptive vocal threshold sweep", "benchmarks/results/adaptive-vocal-sweep.json", (data) => `all ${data.candidateCount} combinations tied at ${data.best.metrics.maeSeconds.toFixed(3)} s MAE; no synthetic winner`],
   ["Offline pipeline smoke", "benchmarks/results/offline-pipeline-smoke.json", (data) => `${data.metrics.maeSeconds.toFixed(3)} s MAE; ${data.decoder.samples} decoded samples; ${data.profiles.energyFrames} profile frames`],
   [
     "Common ablation",
@@ -84,6 +85,7 @@ const report = [
   "npm run experiment-vocal-gated",
   "npm run experiment-adaptive-vocal",
   "npm run experiment-silence-aware",
+  "npm run experiment-adaptive-vocal-sweep",
   "npm run experiment-multi-profile",
   "npm run ablation-study",
   "npm run summarize-experiments",

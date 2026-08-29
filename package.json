@@ -35,6 +35,7 @@
     "experiment-ensemble": "node scripts/run-ensemble-experiment.mjs",
     "experiment-vocal-gated": "node scripts/run-vocal-gated-experiment.mjs",
     "experiment-adaptive-vocal": "node scripts/run-adaptive-vocal-experiment.mjs",
+    "experiment-adaptive-vocal-sweep": "node scripts/run-adaptive-vocal-sweep.mjs",
     "experiment-silence-aware": "node scripts/run-silence-aware-experiment.mjs",
     "smoke-offline-pipeline": "node scripts/run-offline-pipeline-smoke.mjs",
     "validate-real-candidates": "node scripts/validate-real-candidates.mjs",

@@ -31,6 +31,7 @@ they are generated artifacts; regenerate this report with
 | Vocal-gated Boundary-DP | `vocal-gated-boundary-synthetic-v1` | 2 | energy-only 0.583 s MAE; vocal-gated 0.417 s MAE; 83% within 0.50 s |
 | Adaptive vocal selector | `adaptive-vocal-boundary-synthetic-v1` | 2 | energy-only 0.583 s MAE; routed 0.417 s MAE; high coverage gates, low coverage falls back |
 | Silence-aware Boundary-DP | `silence-aware-boundary-synthetic-v1` | 2 | ordinary 0.417 s MAE; pause-aware 0.583 s MAE; 67% within 1.00 s |
+| Adaptive vocal threshold sweep | `adaptive-vocal-threshold-sweep-v1` | 12 | all tested combinations tied at 0.417 s MAE; no synthetic winner identified |
 | Offline pipeline smoke | `offline-pipeline-synthetic-v1` | 1 | 32,000 samples decoded; 64-frame profiles; multi-profile alignment 0.024 s MAE |
 
 ## Interpretation
@@ -132,6 +133,11 @@ Experiment 22 is negative evidence for the current pause heuristic: adding
 quiet-gap and following-activity terms worsens this fixture from 0.417 s to
 0.583 s MAE. The candidate remains preserved because real songs may behave
 differently, but it is not promoted and its weights require real calibration.
+
+Experiment 23 swept 12 vocal-routing threshold combinations. Every candidate
+tied at 0.417 s MAE because the fixture contains clearly high and clearly low
+voicedness coverage. This cannot identify a production threshold; borderline
+real recordings are required for that calibration.
 
 ## Real-song status
 
