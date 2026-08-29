@@ -144,6 +144,8 @@ For held-out covers, live versions, remixes, or alternate official mixes, use
 `npm run evaluate-reference-template-pairs -- <pair-root>`. Each private pair
 needs independently verified `reference.json` and `target-reference.json`; the
 target timeline cannot be inferred from the reference recording.
+The required private folder layout is documented in
+[`REFERENCE_PAIR_LAYOUT.md`](benchmarks/REFERENCE_PAIR_LAYOUT.md).
 
 To compare a locally produced vocal stem with its original full mix, use
 `npm run compare-vocal-separation -- <full-mix> <vocal-file> <lyrics> <reference-json>`. See [`benchmarks/VOCAL_SEPARATION_EXPERIMENT.md`](benchmarks/VOCAL_SEPARATION_EXPERIMENT.md). This is an optional measurement path; it does not add a network or model dependency to the app.

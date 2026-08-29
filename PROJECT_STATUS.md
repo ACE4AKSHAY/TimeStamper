@@ -207,6 +207,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 157 | Explainable line failure categories | 🟡 | Template alignment now labels each line as stable, high-relative-cost, unstable-boundary, or both; evaluators persist category counts so future manual review can target the actual failure mode. |
 | 158 | Alternate-duration anchor scaling | 🟡 | Reference-template alignment now supports an opt-in duration-ratio scale for slowed, sped-up, remix, or alternate-length targets; default behavior remains unchanged and real calibration is pending. |
 | 159 | Reference/target preflight validation | 🟡 | Alternate pair runs now reject malformed timestamp structures early and flag large duration differences for review before expensive MFCC/DTW processing; warnings remain non-blocking for legitimate covers/remixes. |
+| 160 | Alternate-pair handoff layout | 🟡 | Added an exact private folder/template convention separating reference audio, held-out target audio, lyrics, and two independently verified timestamp documents; no user files are copied or committed. |
 
 ## Recommended next steps
 
