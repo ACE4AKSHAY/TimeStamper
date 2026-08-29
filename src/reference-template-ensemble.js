@@ -1,5 +1,5 @@
 import { alignWithReferenceTemplates } from "./reference-template-aligner.js";
-import { summarizeConsensus } from "./consensus-aligner.js";
+import { summarizeConsensus, summarizeWeightedConsensus } from "./consensus-aligner.js";
 
 /**
  * Run multiple deterministic reference-template configurations and expose
@@ -17,7 +17,13 @@ export function alignWithReferenceTemplateEnsemble({ variants, lyrics, duration,
   const confidenceScale = Number.isFinite(alignmentInput.ensembleOptions?.confidenceScale) && alignmentInput.ensembleOptions.confidenceScale > 0 ? alignmentInput.ensembleOptions.confidenceScale : 0.5;
   const agreementThreshold = Number.isFinite(alignmentInput.ensembleOptions?.agreementThreshold) ? Math.max(0, Math.min(1, alignmentInput.ensembleOptions.agreementThreshold)) : 0.6;
   const maxSpreadSeconds = Number.isFinite(alignmentInput.ensembleOptions?.maxSpreadSeconds) && alignmentInput.ensembleOptions.maxSpreadSeconds >= 0 ? alignmentInput.ensembleOptions.maxSpreadSeconds : 1;
-  const consensus = lines.map((_, index) => summarizeConsensus(candidates.map((candidate) => candidate.alignment.lines[index]?.startTime), { confidenceScale }));
+  const weightByConfidence = alignmentInput.ensembleOptions?.weightByConfidence === true;
+  const consensus = lines.map((_, index) => {
+    const starts = candidates.map((candidate) => candidate.alignment.lines[index]?.startTime);
+    return weightByConfidence
+      ? summarizeWeightedConsensus(starts, candidates.map((candidate) => candidate.alignment.lines[index]?.confidence), { confidenceScale })
+      : summarizeConsensus(starts, { confidenceScale });
+  });
   const starts = consensus.map((item) => item.startTime);
   const alignedLines = lines.map((line, index) => {
     const summary = consensus[index];
@@ -30,6 +36,7 @@ export function alignWithReferenceTemplateEnsemble({ variants, lyrics, duration,
     candidates: candidates.map((candidate) => ({ name: candidate.name, method: candidate.alignment.method, starts: candidate.alignment.lines.map((line) => line.startTime), confidence: candidate.alignment.lines.map((line) => line.confidence) })),
     consensus,
     confidenceScale,
+    weightByConfidence,
     agreementThreshold,
     maxSpreadSeconds,
   };

@@ -167,6 +167,8 @@ for research comparisons; its self-reference result is recorded in
 The reusable API also exposes an opt-in `reference-template-ensemble` engine
 for median consensus and disagreement review; see
 [`REFERENCE_TEMPLATE_ENSEMBLE.md`](benchmarks/REFERENCE_TEMPLATE_ENSEMBLE.md).
+Its optional `ensembleOptions.weightByConfidence` mode is documented in
+[`REFERENCE_TEMPLATE_WEIGHTED_CONSENSUS.md`](benchmarks/REFERENCE_TEMPLATE_WEIGHTED_CONSENSUS.md).
 
 Template and MFCC sequence alignment accept `dtwImplementation: "banded"` as
 an opt-in memory-efficient implementation. The full-matrix implementation
