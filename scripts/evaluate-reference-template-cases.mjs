@@ -54,8 +54,10 @@ async function evaluateCase(caseRoot, id) {
     const result = alignWithReferenceTemplates({ referenceSamples: decoded.samples, referenceSampleRate: decoded.sampleRate, referenceStarts: starts, referenceDuration: decoded.duration, targetSamples: decoded.samples, targetSampleRate: decoded.sampleRate, targetDuration: decoded.duration, lyrics: lyrics.lines, options: { dtwImplementation, useReferenceAnchors, referenceMfcc: mfcc, targetMfcc: mfcc } });
     const predicted = result.lines.map((line) => line.startTime);
     const metrics = scoreTimestamps(predicted, starts);
-    return { id, status: "evaluated", audioPath: join(caseRoot, audio.name), lyricPath: join(caseRoot, lyric.name), lineCount: starts.length, runtimeMs: performance.now() - started, metrics, confidence: { mean: result.lines.reduce((sum, line) => sum + (line.confidence || 0), 0) / result.lines.length, reviewRequired: result.lines.filter((line) => line.reviewRequired).length, calibration: summarizeConfidence(predicted, starts, result.lines.map((line) => line.confidence)) }, diagnostics: result.alignment.diagnostics };
+    return { id, status: "evaluated", audioPath: join(caseRoot, audio.name), lyricPath: join(caseRoot, lyric.name), lineCount: starts.length, runtimeMs: performance.now() - started, metrics, confidence: { mean: result.lines.reduce((sum, line) => sum + (line.confidence || 0), 0) / result.lines.length, reviewRequired: result.lines.filter((line) => line.reviewRequired).length, failureCategories: countFailureCategories(result.lines), calibration: summarizeConfidence(predicted, starts, result.lines.map((line) => line.confidence)) }, diagnostics: result.alignment.diagnostics };
   } catch (error) {
     return { id, status: "failed", reason: error.code || error.message || "evaluation_failed" };
   }
 }
+
+function countFailureCategories(lines) { return lines.reduce((counts, line) => { const category = line.failureCategory || "unknown"; counts[category] = (counts[category] || 0) + 1; return counts; }, {}); }

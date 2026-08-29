@@ -69,6 +69,7 @@ export function alignWithReferenceTemplates({
     alignmentMethod: "reference_template_mfcc_dtw",
     confidence: alignment.segments[index].confidence,
     reviewRequired: alignment.segments[index].reviewRequired,
+    failureCategory: alignment.segments[index].failureCategory,
   }));
   return {
     method: "reference_template_mfcc_dtw",

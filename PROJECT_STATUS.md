@@ -204,6 +204,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 154 | MFCC cache optimization | 🟡 | Whole-recording MFCC frames can now be cached and reused when building reference templates or evaluating pairs; a bounded two-case run saved 6.10 seconds (25.00s cold to 18.89s warm) with identical 19.5ms MAE. Alternate-recording runtime remains pending. |
 | 155 | Confidence calibration diagnostics | 🟡 | Scored reference-template runs now group line errors by high/medium/low confidence and report review-prioritization metrics; a 64-line self-reference check populated only the high bucket (19.5ms MAE) and cannot calibrate thresholds. |
 | 156 | Separator-to-aligner integration | 🟡 | Optional separator adapters can now feed validated mono PCM directly into reference-assisted MFCC/DTW; a real separator model and measured full-mix versus vocal-only result remain pending. |
+| 157 | Explainable line failure categories | 🟡 | Template alignment now labels each line as stable, high-relative-cost, unstable-boundary, or both; evaluators persist category counts so future manual review can target the actual failure mode. |
 
 ## Recommended next steps
 

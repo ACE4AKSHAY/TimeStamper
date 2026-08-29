@@ -59,9 +59,11 @@ async function evaluateCase(caseRoot, id) {
     const result = alignWithReferenceTemplates({ referenceSamples: reference.samples, referenceSampleRate: reference.sampleRate, referenceStarts, referenceDuration: reference.duration, targetSamples: target.samples, targetSampleRate: target.sampleRate, targetDuration: target.duration, lyrics: lyrics.lines, options: { ...options, referenceMfcc, targetMfcc } });
     const predicted = result.lines.map((line) => line.startTime);
     const metrics = scoreTimestamps(predicted, targetStarts);
-    return { id, status: "evaluated", referenceAudioPath: join(caseRoot, referenceAudio.name), targetAudioPath: join(caseRoot, targetAudio.name), lyricPath: join(caseRoot, lyric.name), lineCount: targetStarts.length, runtimeMs: performance.now() - started, metrics, confidence: { mean: result.lines.reduce((sum, line) => sum + (line.confidence || 0), 0) / result.lines.length, reviewRequired: result.lines.filter((line) => line.reviewRequired).length, calibration: summarizeConfidence(predicted, targetStarts, result.lines.map((line) => line.confidence)) }, diagnostics: result.alignment.diagnostics };
+    return { id, status: "evaluated", referenceAudioPath: join(caseRoot, referenceAudio.name), targetAudioPath: join(caseRoot, targetAudio.name), lyricPath: join(caseRoot, lyric.name), lineCount: targetStarts.length, runtimeMs: performance.now() - started, metrics, confidence: { mean: result.lines.reduce((sum, line) => sum + (line.confidence || 0), 0) / result.lines.length, reviewRequired: result.lines.filter((line) => line.reviewRequired).length, failureCategories: countFailureCategories(result.lines), calibration: summarizeConfidence(predicted, targetStarts, result.lines.map((line) => line.confidence)) }, diagnostics: result.alignment.diagnostics };
   } catch (error) { return { id, status: "failed", reason: error.code || error.message || "pair_evaluation_failed" }; }
 }
+
+function countFailureCategories(lines) { return lines.reduce((counts, line) => { const category = line.failureCategory || "unknown"; counts[category] = (counts[category] || 0) + 1; return counts; }, {}); }
 
 function findNamed(files, stems) { return files.filter((file) => stems.includes(file.name.slice(0, file.name.lastIndexOf(".")).toLowerCase())).sort((a, b) => a.name.localeCompare(b.name))[0]; }
 async function readJson(path) { return JSON.parse(await readFile(path, "utf8")); }

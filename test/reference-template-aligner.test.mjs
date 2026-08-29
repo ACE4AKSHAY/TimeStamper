@@ -42,6 +42,7 @@ test("reference-template adapter aligns a target recording and preserves line me
   assert.ok(result.lines[1].startTime >= result.lines[0].startTime);
   assert.ok(Number.isFinite(result.alignment.cost));
   assert.ok(result.lines.every((line) => Number.isFinite(line.confidence) && line.confidence >= 0 && line.confidence <= 1));
+  assert.ok(result.lines.every((line) => ["stable", "high_relative_cost", "unstable_boundary", "high_relative_cost_and_unstable_boundary"].includes(line.failureCategory)));
   assert.equal(result.alignment.diagnostics.reviewThreshold, 0.5);
   assert.equal(result.reference.lineCount, 2);
   const banded = alignWithReferenceTemplates({

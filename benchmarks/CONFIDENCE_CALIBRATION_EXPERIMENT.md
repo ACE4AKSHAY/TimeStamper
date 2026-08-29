@@ -9,6 +9,11 @@ unstable. `summarizeConfidence` in `src/metrics.js` now groups scored lines
 into high, medium, and low confidence buckets and reports each bucket's count,
 MAE, and within-one-second rate.
 
+Each template-aligned line also carries a failure category: `stable`,
+`high_relative_cost`, `unstable_boundary`, or
+`high_relative_cost_and_unstable_boundary`. This separates an acoustically
+unlike phrase from a boundary that could move with nearly the same DTW cost.
+
 This is a triage aid, not a probability model. A group can be confidently wrong
 when the audio is an instrumental, the lyrics are mismatched, or two phrases
 sound alike. Calibration becomes meaningful only when target timestamps are

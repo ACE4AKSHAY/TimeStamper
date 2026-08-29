@@ -132,7 +132,9 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
     const confidence = Math.min(1, baseline / Math.max(cost, 1e-9));
     const boundary = boundaryByLine.get(index) || {};
     const unstableBoundary = boundary.startBoundary?.stable === false || boundary.endBoundary?.stable === false;
-    return { lineIndex: segment.lineIndex, cost, relativeCost, confidence, reviewRequired: confidence < reviewThreshold || unstableBoundary, startBoundary: boundary.startBoundary || null, endBoundary: boundary.endBoundary || null };
+    const highRelativeCost = confidence < reviewThreshold;
+    const failureCategory = highRelativeCost && unstableBoundary ? "high_relative_cost_and_unstable_boundary" : highRelativeCost ? "high_relative_cost" : unstableBoundary ? "unstable_boundary" : "stable";
+    return { lineIndex: segment.lineIndex, cost, relativeCost, confidence, reviewRequired: highRelativeCost || unstableBoundary, failureCategory, startBoundary: boundary.startBoundary || null, endBoundary: boundary.endBoundary || null };
   });
   segments = segments.map((segment, index) => ({ ...segment, ...diagnostics[index] }));
   return { segments, cost: costs[lineCount][frameCount], frameRate, method: "template_mfcc_dtw", diagnostics: { medianCost, baseline, reviewThreshold, marginFrames, boundaryMarginThreshold, searchStride, featureStride, dtwImplementation, dtwWindow, descriptorTopK, descriptorDimensions, initialFrame, expectedStarts, anchorToleranceFrames, expectedLengths, lengthTolerance, boundaries: boundaryDiagnostics } };
