@@ -88,7 +88,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 38 | Visualization | 🟡 | Waveform is done; research plots are later. |
 | 39 | Local project storage | 🟡 | Browser download and Node `ProjectStore` structured directory are present; file-backed feature caching is now available. |
 | 40 | Storage principle | ✅ | Original audio is referenced, not copied into project JSON. |
-| 41 | Cache design | 🟡 | `FeatureCache` stores derived features under ignored, identity/config-keyed JSON entries; engine integration is next. |
+| 41 | Cache design | 🟡 | `FeatureCache` stores derived features under ignored, identity/config-keyed JSON entries; local alignment and private evaluation now reuse cached profiles/pitch, with an opt-out environment flag. |
 | 42 | Reproducibility | 🟡 | Method/confidence fields are saved; full run configuration record is next. |
 | 43 | Human-readable logging | ✅ | Local downloadable activity log is implemented. |
 | 44 | Log levels | 🟡 | INFO/WARNING/ERROR are used; DEBUG preference is pending. |

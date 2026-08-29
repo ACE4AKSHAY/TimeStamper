@@ -89,6 +89,7 @@ The v0.1 browser UI is a thin client over reusable ES modules:
 - `src/engine.js` — platform-neutral `synchronize()` entry point for reusable alignment engines
 - `src/project-store.mjs` — structured local project directory storage for desktop/CLI workflows
 - `src/feature-cache.mjs` — file-backed, content-identity/config-keyed cache for reusable decoded features and alignment inputs
+- `src/audio-feature-cache.mjs` — optional cache-aware profile/pitch extraction used by local alignment and private evaluation scripts
 - `src/metrics.js` and `scripts/run-benchmark.mjs` — accuracy and resource measurement for experiments
 - `src/features.js` — configurable pure-JavaScript MFCC extraction
 - `src/audio-profiles.js` and `src/profile-fusion.js` — explainable RMS/spectral-flux extraction and weighted profile fusion
@@ -115,7 +116,7 @@ with the isolated text-weighted prior. The prior is useful for testing uneven
 lyric line lengths but is not selected as the production default without
 real-song evidence.
 
-For a local decoded-file run, use `npm run align-local -- <audio-path> <lyric-path> [engine] [output-json]`. WAV/PCM works without extra packages; MP3/M4A/FLAC require an available local FFmpeg executable. See `benchmarks/REAL_DATA_EVALUATION.md` for the privacy boundary and example.
+For a local decoded-file run, use `npm run align-local -- <audio-path> <lyric-path> [engine] [output-json]`. WAV/PCM works without extra packages; MP3/M4A/FLAC require an available local FFmpeg executable. The command reuses derived profiles from the ignored `cache/features` directory; set `LYRICSYNC_DISABLE_FEATURE_CACHE=1` to disable it or `LYRICSYNC_FEATURE_CACHE_DIR=<folder>` to choose another cache location. See `benchmarks/REAL_DATA_EVALUATION.md` and `benchmarks/FEATURE_CACHE_INTEGRATION.md` for the privacy boundary and cache details.
 
 For reference-assisted MFCC/DTW, use `npm run align-reference-template -- <target-audio> <reference-audio> <reference-json> <lyrics>`. The reference JSON supplies manually verified line starts; the generated target timeline remains editable and is written only to the ignored private output path.
 

@@ -4,6 +4,7 @@ import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createAudioFeatureCacheKey, createFeatureCacheKey, FeatureCache } from "../src/feature-cache.mjs";
+import { loadOrExtractAudioFeatures } from "../src/audio-feature-cache.mjs";
 
 test("feature cache round-trips derived values and replaces entries", async () => {
   const root = await mkdtemp(join(tmpdir(), "lyricsync-cache-"));
@@ -31,4 +32,22 @@ test("audio cache key changes when extraction settings or file identity changes"
 test("feature cache rejects non-SHA keys", async () => {
   const cache = new FeatureCache(await mkdtemp(join(tmpdir(), "lyricsync-cache-invalid-")));
   await assert.rejects(() => cache.get("not-a-key"), /SHA-256/u);
+});
+
+test("audio feature extraction reuses a cached profile and supports opt-out", async () => {
+  const root = await mkdtemp(join(tmpdir(), "lyricsync-feature-cache-"));
+  const audioPath = join(root, "fixture.wav");
+  await writeFile(audioPath, "fixture");
+  const cache = new FeatureCache(join(root, "cache"));
+  const decoded = { samples: Float64Array.from({ length: 4096 }, (_, index) => Math.sin(index / 11)), sampleRate: 8000, duration: 4096 / 8000 };
+  const first = await loadOrExtractAudioFeatures({ audioPath, decoded, cache });
+  const second = await loadOrExtractAudioFeatures({ audioPath, decoded, cache });
+  const uncached = await loadOrExtractAudioFeatures({ audioPath, decoded, cache, enabled: false });
+  assert.equal(first.cache.hit, false);
+  assert.equal(second.cache.hit, true);
+  assert.equal(second.cache.key, first.cache.key);
+  assert.equal(uncached.cache.enabled, false);
+  assert.equal(uncached.cache.key, null);
+  assert.deepEqual(second.profiles, first.profiles);
+  assert.deepEqual(second.voicedness, first.voicedness);
 });

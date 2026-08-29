@@ -1,11 +1,11 @@
-import { readdir, readFile, stat, writeFile } from "node:fs/promises";
+import { readdir, readFile, writeFile } from "node:fs/promises";
 import { extname, join, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
-import { extractExplainableProfiles } from "../src/audio-profiles.js";
 import { decodeAudioFile } from "../src/audio-decoder.mjs";
 import { buildEvaluationParameters, DEFAULT_EVALUATION_ENGINES, extractReferenceStarts } from "../src/evaluation.js";
 import { synchronize } from "../src/engine.js";
-import { pitchVoicednessProfile, extractPitchProfile } from "../src/pitch-profile.js";
+import { loadOrExtractAudioFeatures } from "../src/audio-feature-cache.mjs";
+import { FeatureCache } from "../src/feature-cache.mjs";
 import { parseLyrics } from "../src/lyrics.js";
 import { scoreTimestamps } from "../src/metrics.js";
 
@@ -14,6 +14,8 @@ const output = resolve(process.argv[3] || "benchmarks/private/real-case-evaluati
 const engines = (process.argv[4] ? process.argv[4].split(",").map((value) => value.trim()).filter(Boolean) : DEFAULT_EVALUATION_ENGINES);
 const audioExtensions = new Set([".mp3", ".m4a", ".wav", ".wave", ".flac", ".ogg", ".opus", ".aac"]);
 const lyricExtensions = new Set([".lrc", ".txt"]);
+const cacheEnabled = process.env.LYRICSYNC_DISABLE_FEATURE_CACHE !== "1";
+const featureCache = new FeatureCache(process.env.LYRICSYNC_FEATURE_CACHE_DIR || "cache/features");
 const cases = [];
 let entries = [];
 try { entries = await readdir(root, { withFileTypes: true }); } catch { entries = []; }
@@ -53,9 +55,9 @@ async function evaluateCase(caseRoot, id) {
     const starts = extractReferenceStarts(reference);
     if (starts.length !== lyrics.lines.length) return { id, status: "failed", reason: "reference_line_count_does_not_match_lyrics", lyricLines: lyrics.lines.length, referenceLines: starts.length };
     if (starts.at(-1) > decoded.duration) return { id, status: "failed", reason: "reference_timestamp_exceeds_audio_duration" };
-    const profiles = extractExplainableProfiles(decoded.samples, { bins: 700 });
-    const pitch = extractPitchProfile(decoded.samples, decoded.sampleRate);
-    const voicedness = pitchVoicednessProfile(pitch);
+    const features = await loadOrExtractAudioFeatures({ audioPath, decoded, cache: featureCache, enabled: cacheEnabled });
+    const { profiles } = features;
+    const voicedness = features.voicedness;
     const enginesOutput = {};
     for (const engine of engines) {
       const started = performance.now();
@@ -63,7 +65,7 @@ async function evaluateCase(caseRoot, id) {
       const predicted = result.lines.map((line) => line.startTime);
       enginesOutput[engine] = { metrics: scoreTimestamps(predicted, starts), predicted, runtimeMs: performance.now() - started };
     }
-    return { id, status: "evaluated", audioPath, lyricPath, lyricCandidates: lyricCandidates.map((entry) => entry.name), decoder: { format: decoded.format, sampleRate: decoded.sampleRate, duration: decoded.duration }, lyricLines: lyrics.lines.length, referenceLines: starts.length, engines: enginesOutput };
+    return { id, status: "evaluated", audioPath, lyricPath, lyricCandidates: lyricCandidates.map((entry) => entry.name), decoder: { format: decoded.format, sampleRate: decoded.sampleRate, duration: decoded.duration }, featureCache: features.cache, lyricLines: lyrics.lines.length, referenceLines: starts.length, engines: enginesOutput };
   } catch (error) {
     return { id, status: "failed", reason: error.code || error.message || "evaluation_failed" };
   }
