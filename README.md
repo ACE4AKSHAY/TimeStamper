@@ -158,6 +158,10 @@ The reference-template engine also supports an opt-in
 `templateBoundaryRadius` local refinement experiment; see
 [`TEMPLATE_BOUNDARY_REFINEMENT_EXPERIMENT.md`](benchmarks/TEMPLATE_BOUNDARY_REFINEMENT_EXPERIMENT.md).
 
+The related `templateBoundaryMinImprovementRatio` option rejects small local
+cost improvements; its threshold sweep is documented in
+[`TEMPLATE_BOUNDARY_MARGIN_GATE_EXPERIMENT.md`](benchmarks/TEMPLATE_BOUNDARY_MARGIN_GATE_EXPERIMENT.md).
+
 Template and MFCC sequence alignment accept `dtwImplementation: "banded"` as
 an opt-in memory-efficient implementation. The full-matrix implementation
 remains the reference until longer real-recording comparisons are complete.

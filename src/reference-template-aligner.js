@@ -65,8 +65,11 @@ export function alignWithReferenceTemplates({
     dtwImplementation: options.dtwImplementation,
   });
   const refinementRadius = Math.max(0, Math.floor(options.templateBoundaryRadius ?? 0));
+  const refinementMinImprovementRatio = Number.isFinite(options.templateBoundaryMinImprovementRatio)
+    ? Math.max(0, options.templateBoundaryMinImprovementRatio)
+    : 0;
   if (refinementRadius > 0) {
-    const refinement = refineTemplateBoundaries(targetMfcc.frames, templates.templates, alignment.segments, { radius: refinementRadius, frameRate: targetMfcc.frameRate, minLength, window: options.window ?? 8, dtwImplementation: options.dtwImplementation });
+    const refinement = refineTemplateBoundaries(targetMfcc.frames, templates.templates, alignment.segments, { radius: refinementRadius, frameRate: targetMfcc.frameRate, minLength, window: options.window ?? 8, dtwImplementation: options.dtwImplementation, minImprovementRatio: refinementMinImprovementRatio });
     alignment = { ...alignment, segments: refinement.segments, templateBoundaryRefinement: refinement.diagnostics, refinementMethod: refinement.method };
   }
   const alignedLines = lines.map((line, index) => ({
@@ -84,7 +87,7 @@ export function alignWithReferenceTemplates({
     alignment,
     reference: { duration: referenceDuration, sampleRate: referenceSampleRate, lineCount: referenceStarts.length, templateFrameRate: templates.frameRate },
     target: { duration, sampleRate: targetSampleRate, frameCount: targetMfcc.frames.length, frameRate: targetMfcc.frameRate },
-    parameters: { mfcc: mfccOptions, minLength, maxLength, expectedLengths, anchorScale, templateBoundaryRadius: refinementRadius, lengthTolerance: options.lengthTolerance ?? 0.75, searchStride, featureStride, descriptorTopK, descriptorDimensions: options.descriptorDimensions ?? 6, useReferenceAnchors, initialFrame, expectedStarts, anchorToleranceSeconds, anchorToleranceFrames, slack: options.slack ?? 2, window: options.window ?? 8, dtwImplementation: options.dtwImplementation === "banded" ? "banded" : "full-matrix" },
+    parameters: { mfcc: mfccOptions, minLength, maxLength, expectedLengths, anchorScale, templateBoundaryRadius: refinementRadius, templateBoundaryMinImprovementRatio: refinementMinImprovementRatio, lengthTolerance: options.lengthTolerance ?? 0.75, searchStride, featureStride, descriptorTopK, descriptorDimensions: options.descriptorDimensions ?? 6, useReferenceAnchors, initialFrame, expectedStarts, anchorToleranceSeconds, anchorToleranceFrames, slack: options.slack ?? 2, window: options.window ?? 8, dtwImplementation: options.dtwImplementation === "banded" ? "banded" : "full-matrix" },
   };
 }
 

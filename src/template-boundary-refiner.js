@@ -13,6 +13,7 @@ export function refineTemplateBoundaries(audioFrames, templates, segments, optio
   const implementation = options.dtwImplementation === "banded" ? constrainedDtwBanded : constrainedDtw;
   const window = options.window;
   const minLength = Math.max(1, Math.floor(options.minLength ?? 1));
+  const minImprovementRatio = Number.isFinite(options.minImprovementRatio) ? Math.max(0, options.minImprovementRatio) : 0;
   const refined = segments.map((segment) => ({ ...segment }));
   const diagnostics = [];
   for (let index = 0; index < refined.length - 1; index++) {
@@ -26,12 +27,16 @@ export function refineTemplateBoundaries(audioFrames, templates, segments, optio
       const cost = pairCost(audioFrames, templates[index], templates[index + 1], left.startFrame, boundary, right.endFrame, implementation, window);
       if (cost < best.cost) best = { boundary, cost };
     }
-    const margin = Math.max(0, currentCost - best.cost);
-    left.endFrame = best.boundary;
-    right.startFrame = best.boundary;
-    left.endTime = best.boundary / options.frameRate;
-    right.startTime = best.boundary / options.frameRate;
-    diagnostics.push({ boundaryIndex: index, originalBoundary, refinedBoundary: best.boundary, shiftFrames: best.boundary - originalBoundary, originalCost: currentCost, refinedCost: best.cost, improvement: margin, changed: best.boundary !== originalBoundary });
+    const candidateImprovement = Math.max(0, currentCost - best.cost);
+    const improvementRatio = Number.isFinite(currentCost) ? candidateImprovement / Math.max(Math.abs(currentCost), 1e-9) : 0;
+    const accepted = best.boundary !== originalBoundary && improvementRatio >= minImprovementRatio;
+    const refinedBoundary = accepted ? best.boundary : originalBoundary;
+    const refinedCost = accepted ? best.cost : currentCost;
+    left.endFrame = refinedBoundary;
+    right.startFrame = refinedBoundary;
+    left.endTime = refinedBoundary / options.frameRate;
+    right.startTime = refinedBoundary / options.frameRate;
+    diagnostics.push({ boundaryIndex: index, originalBoundary, refinedBoundary, shiftFrames: refinedBoundary - originalBoundary, originalCost: currentCost, candidateBoundary: best.boundary, candidateCost: best.cost, refinedCost, improvement: accepted ? candidateImprovement : 0, candidateImprovement, improvementRatio, minImprovementRatio, accepted, changed: refinedBoundary !== originalBoundary });
   }
   return { segments: refined, diagnostics, method: "template_boundary_refinement" };
 }

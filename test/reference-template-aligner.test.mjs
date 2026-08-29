@@ -133,8 +133,24 @@ test("reference-template adapter aligns a target recording and preserves line me
     options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, templateBoundaryRadius: 1 },
   });
   assert.equal(refined.parameters.templateBoundaryRadius, 1);
+  assert.equal(refined.parameters.templateBoundaryMinImprovementRatio, 0);
   assert.equal(refined.alignment.templateBoundaryRefinement.length, 1);
+  assert.equal(typeof refined.alignment.templateBoundaryRefinement[0].accepted, "boolean");
   assert.ok(refined.lines[1].startTime >= refined.lines[0].startTime);
+
+  const gated = await alignWithReferenceTemplates({
+    referenceSamples: samples,
+    referenceSampleRate: sampleRate,
+    referenceStarts: [0, 0.2],
+    referenceDuration: 0.4,
+    targetSamples: samples,
+    targetSampleRate: sampleRate,
+    targetDuration: 0.4,
+    lyrics: lines,
+    options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, templateBoundaryRadius: 1, templateBoundaryMinImprovementRatio: 1 },
+  });
+  assert.equal(gated.parameters.templateBoundaryMinImprovementRatio, 1);
+  assert.equal(gated.alignment.templateBoundaryRefinement[0].accepted, false);
 
   const separated = await alignWithSeparatedReferenceTarget({
     separator: createPassthroughSeparator(),
