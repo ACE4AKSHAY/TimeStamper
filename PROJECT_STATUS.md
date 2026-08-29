@@ -170,7 +170,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 120 | Final vision | 🔭 | Reusable timestamped-text technology remains the long-term direction after core lyric alignment is proven. |
 | 121 | Real-data preparation | 🟡 | `scripts/prepare-local-evaluation.mjs` now creates ignored metadata-only stubs from the private collection; a local PCM decoder and manually verified references are still needed for trustworthy accuracy measurements. |
 | 122 | Local decoder adapter | 🟡 | Dependency-free PCM WAV decoding plus optional FFmpeg decoding and a CLI alignment runner now exist; this machine still needs FFmpeg for MP3/M4A real runs. |
-| 123 | Reference-template acquisition | 🟡 | Verified reference timestamps can now produce MFCC line templates and drive target template-DTW alignment; real recordings and confidence calibration remain. |
+| 123 | Reference-template acquisition | 🟡 | Verified reference timestamps can now produce MFCC line templates and drive target template-DTW alignment; the opt-in banded DTW path now flows end to end; real recordings and confidence calibration remain. |
 | 124 | Results audit | 🟡 | All current synthetic runners were executed and their exact metrics are recorded in `benchmarks/RESULTS_SUMMARY.md`; real-song accuracy is intentionally still unmeasured. |
 | 125 | Experiment 08 robustness | 🟡 | Isolated deterministic stress runner covers noise, delayed onsets, long intros and uneven lines; results remain synthetic until real references are verified. |
 | 126 | Experiment 09 parameter sweep | 🟡 | Boundary, combined-profile and multi-profile weights are swept on the synthetic fixture; no parameter is promoted without real-data evidence. |

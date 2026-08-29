@@ -31,6 +31,19 @@ test("reference-template adapter aligns a target recording and preserves line me
   assert.ok(result.lines.every((line) => Number.isFinite(line.confidence) && line.confidence >= 0 && line.confidence <= 1));
   assert.equal(result.alignment.diagnostics.reviewThreshold, 0.5);
   assert.equal(result.reference.lineCount, 2);
+  const banded = alignWithReferenceTemplates({
+    referenceSamples: samples,
+    referenceSampleRate: sampleRate,
+    referenceStarts: [0, 0.2],
+    referenceDuration: 0.4,
+    targetSamples: samples,
+    targetSampleRate: sampleRate,
+    targetDuration: 0.4,
+    lyrics: lines,
+    options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, dtwImplementation: "banded" },
+  });
+  assert.deepEqual(banded.lines.map((line) => line.startTime), result.lines.map((line) => line.startTime));
+  assert.equal(banded.parameters.dtwImplementation, "banded");
 });
 
 test("reference-template adapter rejects a lyric/reference line mismatch", () => {

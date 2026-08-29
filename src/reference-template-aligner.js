@@ -56,6 +56,7 @@ export function alignWithReferenceTemplates({
     anchorToleranceFrames,
     slack: options.slack,
     window: options.window ?? 8,
+    dtwImplementation: options.dtwImplementation,
   });
   const alignedLines = lines.map((line, index) => ({
     ...line,
@@ -71,6 +72,6 @@ export function alignWithReferenceTemplates({
     alignment,
     reference: { duration: referenceDuration, sampleRate: referenceSampleRate, lineCount: referenceStarts.length, templateFrameRate: templates.frameRate },
     target: { duration, sampleRate: targetSampleRate, frameCount: targetMfcc.frames.length, frameRate: targetMfcc.frameRate },
-    parameters: { mfcc: mfccOptions, minLength, maxLength, expectedLengths, lengthTolerance: options.lengthTolerance ?? 0.75, searchStride, featureStride, descriptorTopK, descriptorDimensions: options.descriptorDimensions ?? 6, initialFrame, expectedStarts, anchorToleranceSeconds, anchorToleranceFrames, slack: options.slack ?? 2, window: options.window ?? 8 },
+    parameters: { mfcc: mfccOptions, minLength, maxLength, expectedLengths, lengthTolerance: options.lengthTolerance ?? 0.75, searchStride, featureStride, descriptorTopK, descriptorDimensions: options.descriptorDimensions ?? 6, initialFrame, expectedStarts, anchorToleranceSeconds, anchorToleranceFrames, slack: options.slack ?? 2, window: options.window ?? 8, dtwImplementation: options.dtwImplementation === "banded" ? "banded" : "full-matrix" },
   };
 }

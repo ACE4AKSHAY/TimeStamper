@@ -17,7 +17,9 @@ The optimized implementation is intentionally not wired into the production
 engine default yet. `alignMfccSequences` and `alignLineTemplates` now accept
 `implementation: "banded"` / `dtwImplementation: "banded"` for opt-in trials.
 The full-matrix implementation remains the reference until longer,
-rights-cleared recordings confirm equivalence and memory savings.
+rights-cleared recordings confirm equivalence and memory savings. The
+reference-template adapter forwards the same option, and the local runner
+accepts `LYRICSYNC_DTW_IMPLEMENTATION=banded` for an end-to-end trial.
 
 ## Files
 

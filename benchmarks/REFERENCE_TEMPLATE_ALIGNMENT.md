@@ -28,6 +28,9 @@ lyrics recognizer.
   an unrestricted quadratic search.
 - `src/template-aligner.js` also returns relative per-line cost, bounded
   confidence, boundary-stability margins, and `reviewRequired` diagnostics.
+- `src/reference-template-aligner.js` forwards the opt-in `dtwImplementation:
+  "banded"` setting for lower-memory constrained DTW; the full-matrix path
+  remains the reference default.
 - `scripts/run-reference-template-alignment.mjs` is the local file runner. It
   writes only paths, metadata, and generated timestamps to the ignored private
   benchmark directory.

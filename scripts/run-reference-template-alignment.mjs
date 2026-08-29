@@ -10,7 +10,8 @@ const targetAudioPath = resolve(targetAudioArg), referenceAudioPath = resolve(re
 const [target, reference, referenceDocument, lyricsText] = await Promise.all([decodeAudioFile(targetAudioPath), decodeAudioFile(referenceAudioPath), readFile(referenceJsonPath, "utf8").then(JSON.parse), readFile(lyricPath, "utf8")]);
 const starts = Array.isArray(referenceDocument) ? referenceDocument : referenceDocument.startTimes || (referenceDocument.lines || []).map((line) => line.startTime);
 const lines = parseLyrics(lyricsText, "local_file").lines;
-const result = alignWithReferenceTemplates({ referenceSamples: reference.samples, referenceSampleRate: reference.sampleRate, referenceStarts: starts, referenceDuration: reference.duration, targetSamples: target.samples, targetSampleRate: target.sampleRate, targetDuration: target.duration, lyrics: lines });
+const dtwImplementation = process.env.LYRICSYNC_DTW_IMPLEMENTATION === "banded" ? "banded" : "full-matrix";
+const result = alignWithReferenceTemplates({ referenceSamples: reference.samples, referenceSampleRate: reference.sampleRate, referenceStarts: starts, referenceDuration: reference.duration, targetSamples: target.samples, targetSampleRate: target.sampleRate, targetDuration: target.duration, lyrics: lines, options: { dtwImplementation } });
 const document = { schemaVersion: 1, generatedAt: new Date().toISOString(), privacy: "local paths and generated timeline only; source media and lyrics were not copied", targetAudioPath, referenceAudioPath, referenceJsonPath, lyricPath, result };
 await writeFile(output, JSON.stringify(document, null, 2) + "\n", "utf8");
 console.log(JSON.stringify({ output, method: result.method, lines: result.lines.length, targetDuration: target.duration, referenceDuration: reference.duration }, null, 2));
