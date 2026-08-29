@@ -141,6 +141,8 @@ test("template alignment creates monotonic line-level segments", () => {
   assert.equal(result.segments[0].startTime, 0);
   assert.ok(result.segments[0].endTime <= result.segments[1].startTime);
   assert.equal(result.segments[1].endTime, 0.6);
+  assert.equal(result.diagnostics.boundaries.length, 1);
+  assert.ok(result.segments[0].endBoundary && result.segments[1].startBoundary);
 });
 
 test("engine exposes template MFCC-DTW line timestamps", () => {

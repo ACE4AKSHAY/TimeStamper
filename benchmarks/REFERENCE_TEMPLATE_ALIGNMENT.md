@@ -24,7 +24,7 @@ lyrics recognizer.
   counts, handles different sample rates, and returns editable lines plus
   target/reference diagnostics.
 - `src/template-aligner.js` also returns relative per-line cost, bounded
-  confidence, and `reviewRequired` diagnostics.
+  confidence, boundary-stability margins, and `reviewRequired` diagnostics.
 - `scripts/run-reference-template-alignment.mjs` is the local file runner. It
   writes only paths, metadata, and generated timestamps to the ignored private
   benchmark directory.
@@ -66,4 +66,6 @@ same run. A line at the median receives roughly 0.5 confidence; cheaper lines
 approach 1.0, while more expensive lines receive lower values. This is a
 relative diagnostic, not a probability calibrated across songs. The default
 `reviewRequired` flag is true below 0.5, allowing the UI to focus manual checks
-on acoustically weak lines.
+on acoustically weak or boundary-ambiguous lines. Boundary stability compares
+the chosen split with small neighbouring splits; a low margin means the engine
+could move that line boundary with almost no acoustic cost change.
