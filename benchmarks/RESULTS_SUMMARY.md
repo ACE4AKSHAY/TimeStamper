@@ -35,6 +35,7 @@ they are generated artifacts; regenerate this report with
 | Full engine comparison | `full-engine-generalization-v1` | 60 | best vocal-gated 0.745 s MAE; combined profile 0.792 s; 313 total line starts |
 | Offline pipeline smoke | `offline-pipeline-synthetic-v1` | 1 | 32,000 samples decoded; 64-frame profiles; multi-profile alignment 0.024 s MAE |
 | Unicode text-unit prior | `text-weighted-synthetic-v1` | 2 | codepoint 0.317 s MAE; grapheme 0.450 s MAE; no default promoted |
+| Rolling-cost DTW | `dtw-memory-optimization-synthetic-v1` | 3 | exact path/cost equivalence at 64/128/256 frames; approximately 2–5x faster in fixture |
 
 ## Interpretation
 

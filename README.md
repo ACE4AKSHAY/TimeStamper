@@ -107,6 +107,7 @@ The v0.1 browser UI is a thin client over reusable ES modules:
 - `src/silence-aware-aligner.js` — pause/onset-aware Boundary-DP candidate with configurable gap terms
 - `src/evaluation.js` and `scripts/evaluate-real-cases.mjs` — private verified-case scoring contract and batch evaluator
 - `src/dtw.js` and `src/mfcc-dtw.js` — constrained DTW and MFCC sequence alignment
+- `src/dtw-banded.js` — isolated rolling-cost DTW implementation for long-sequence memory experiments
 
 MFCC and constrained DTW primitives are now present. They compare two feature sequences; they do not magically infer words from lyrics. The next research task is to define and validate how each known lyric line gets an acoustic/template representation, then use that representation to produce line timestamps. This keeps the research honest and prevents a generic DTW path from being mislabeled as lyric recognition.
 

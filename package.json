@@ -34,6 +34,7 @@
     "experiment-mfcc-parameters": "node scripts/run-mfcc-parameter-experiment.mjs",
     "experiment-text-weighted": "node scripts/run-text-weighted-experiment.mjs",
     "experiment-text-unit": "node scripts/run-text-unit-experiment.mjs",
+    "experiment-dtw-performance": "node scripts/run-dtw-performance-experiment.mjs",
     "experiment-boundary-refinement": "node scripts/run-boundary-refinement-experiment.mjs",
     "experiment-ensemble": "node scripts/run-ensemble-experiment.mjs",
     "experiment-vocal-gated": "node scripts/run-vocal-gated-experiment.mjs",
