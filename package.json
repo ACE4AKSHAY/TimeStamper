@@ -18,6 +18,7 @@
     "align-reference-template": "node scripts/run-reference-template-alignment.mjs",
     "compare-engines": "node scripts/run-engine-comparison.mjs",
     "experiment-template-dtw": "node scripts/run-template-dtw-experiment.mjs",
+    "experiment-template-pruning": "node scripts/run-template-pruning-experiment.mjs",
     "experiment-boundary-dp": "node scripts/run-boundary-dp-experiment.mjs",
     "experiment-pitch": "node scripts/run-pitch-experiment.mjs",
     "experiment-multi-profile": "node scripts/run-multi-profile-experiment.mjs",

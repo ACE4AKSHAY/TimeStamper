@@ -99,6 +99,12 @@ options are supplied, so existing audio-only engines retain their behavior.
 Bounds are performance controls, not proof that the target recording has
 identical timing.
 
+The deterministic pruning experiment (`npm run experiment-template-pruning`)
+kept zero timestamp error on the two checked-in fixtures while reducing the
+small-fixture runtime from 7.64 ms (exact) to 2.47 ms (top-1) and 1.13 ms
+(top-2). Synthetic speedups do not guarantee the same ratio on real MP3 files;
+the real-folder pilot remains the authoritative performance test.
+
 ## Limitations and next measurement
 
 The templates contain acoustic shape, not language meaning. Different singers,
