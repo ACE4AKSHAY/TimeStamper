@@ -78,7 +78,7 @@ export function synchronize({ lyrics, duration, energyProfile, engine = "energy-
   }
   if (engine === "template-mfcc-dtw") {
     const alignment = alignLineTemplates(parameters.audioFrames, parameters.lineTemplates, parameters);
-    const alignedLines = lines.map((line, index) => ({ ...line, startTime: alignment.segments[index].startTime, endTime: alignment.segments[index].endTime, alignmentMethod: alignment.method, confidence: null }));
+    const alignedLines = lines.map((line, index) => ({ ...line, startTime: alignment.segments[index].startTime, endTime: alignment.segments[index].endTime, alignmentMethod: alignment.method, confidence: alignment.segments[index].confidence, reviewRequired: alignment.segments[index].reviewRequired }));
     return { engine, engineVersion: ENGINE_VERSION, parameters: { ...parameters, audioFrames: undefined, lineTemplates: undefined }, lines: alignedLines, alignment, generatedAt: new Date().toISOString() };
   }
   if (engine !== "energy-baseline") throw new Error(`Unknown synchronization engine: ${engine}`);

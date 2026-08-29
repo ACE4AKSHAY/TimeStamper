@@ -23,6 +23,8 @@ lyrics recognizer.
 - `src/reference-template-aligner.js` connects those pieces, validates line
   counts, handles different sample rates, and returns editable lines plus
   target/reference diagnostics.
+- `src/template-aligner.js` also returns relative per-line cost, bounded
+  confidence, and `reviewRequired` diagnostics.
 - `scripts/run-reference-template-alignment.mjs` is the local file runner. It
   writes only paths, metadata, and generated timestamps to the ignored private
   benchmark directory.
@@ -56,3 +58,12 @@ arrangements, instrumental-only recordings, and large tempo changes can lower
 the match quality. The next benchmark should compare this assisted path on
 same-song alternate recordings or controlled time-stretches, then report
 line-level MAE and confidence against manually reviewed references.
+
+## Confidence interpretation
+
+Each selected segment is compared with the median selected-line DTW cost in the
+same run. A line at the median receives roughly 0.5 confidence; cheaper lines
+approach 1.0, while more expensive lines receive lower values. This is a
+relative diagnostic, not a probability calibrated across songs. The default
+`reviewRequired` flag is true below 0.5, allowing the UI to focus manual checks
+on acoustically weak lines.

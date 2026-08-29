@@ -44,7 +44,8 @@ export function alignWithReferenceTemplates({
     startTime: alignment.segments[index].startTime,
     endTime: alignment.segments[index].endTime,
     alignmentMethod: "reference_template_mfcc_dtw",
-    confidence: null,
+    confidence: alignment.segments[index].confidence,
+    reviewRequired: alignment.segments[index].reviewRequired,
   }));
   return {
     method: "reference_template_mfcc_dtw",

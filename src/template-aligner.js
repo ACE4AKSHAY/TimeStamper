@@ -27,8 +27,25 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
     }
   }
   if (!Number.isFinite(costs[lineCount][frameCount])) throw new Error("No template alignment path satisfies the line-duration constraints.");
-  const segments = []; let end = frameCount;
+  let segments = []; let end = frameCount;
   for (let line = lineCount; line > 0; line--) { const start = parents[line][end]; segments.push({ lineIndex: line - 1, startFrame: start, endFrame: end, startTime: start / frameRate, endTime: end / frameRate, cost: costs[line][end] - costs[line - 1][start] }); end = start; }
   segments.reverse();
-  return { segments, cost: costs[lineCount][frameCount], frameRate, method: "template_mfcc_dtw" };
+  // DTW costs are only comparable within one alignment because their absolute
+  // scale depends on recording level and MFCC settings. Normalize each line
+  // against the median selected-line cost to expose an explainable relative
+  // confidence, rather than pretending it is a calibrated probability.
+  const selectedCosts = segments.map((segment) => Math.max(0, segment.cost));
+  const orderedCosts = [...selectedCosts].sort((a, b) => a - b);
+  const middle = Math.floor(orderedCosts.length / 2);
+  const medianCost = orderedCosts.length % 2 ? orderedCosts[middle] : (orderedCosts[middle - 1] + orderedCosts[middle]) / 2;
+  const baseline = Number.isFinite(options.confidenceScale) && options.confidenceScale > 0 ? options.confidenceScale : Math.max(medianCost, 1e-9);
+  const reviewThreshold = Number.isFinite(options.reviewThreshold) ? Math.min(1, Math.max(0, options.reviewThreshold)) : 0.5;
+  const diagnostics = segments.map((segment, index) => {
+    const cost = selectedCosts[index];
+    const relativeCost = cost / baseline;
+    const confidence = Math.min(1, baseline / Math.max(cost, 1e-9));
+    return { lineIndex: segment.lineIndex, cost, relativeCost, confidence, reviewRequired: confidence < reviewThreshold };
+  });
+  segments = segments.map((segment, index) => ({ ...segment, ...diagnostics[index] }));
+  return { segments, cost: costs[lineCount][frameCount], frameRate, method: "template_mfcc_dtw", diagnostics: { medianCost, baseline, reviewThreshold } };
 }
