@@ -31,6 +31,10 @@ lyrics recognizer.
 - `src/reference-template-aligner.js` forwards the opt-in `dtwImplementation:
   "banded"` setting for lower-memory constrained DTW; the full-matrix path
   remains the reference default.
+- Set `useReferenceAnchors: false` (or `LYRICSYNC_REFERENCE_ANCHORS=0` in the
+  local runner) to search without assuming target starts match the reference
+  timeline. This is more flexible for alternate recordings but costs more
+  search time and should be compared against the anchored mode.
 - `scripts/run-reference-template-alignment.mjs` is the local file runner. It
   writes only paths, metadata, and generated timestamps to the ignored private
   benchmark directory.
