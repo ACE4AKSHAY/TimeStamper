@@ -1,12 +1,14 @@
 import { constrainedDtw } from "./dtw.js";
+import { constrainedDtwBanded } from "./dtw-banded.js";
 
-function candidateCost(audioFrames, template, start, end, window, featureStride = 1) {
+function candidateCost(audioFrames, template, start, end, window, featureStride = 1, implementation = "full-matrix") {
   const segment = featureStride === 1 ? audioFrames.slice(start, end) : audioFrames.slice(start, end).filter((_, index) => index % featureStride === 0);
-  return constrainedDtw(template, segment, { window }).normalizedCost;
+  const dtw = implementation === "banded" ? constrainedDtwBanded : constrainedDtw;
+  return dtw(template, segment, { window }).normalizedCost;
 }
 
-function safeCandidateCost(audioFrames, template, start, end, window, featureStride = 1) {
-  try { return candidateCost(audioFrames, template, start, end, window, featureStride); } catch { return Infinity; }
+function safeCandidateCost(audioFrames, template, start, end, window, featureStride = 1, implementation = "full-matrix") {
+  try { return candidateCost(audioFrames, template, start, end, window, featureStride, implementation); } catch { return Infinity; }
 }
 
 function meanVector(frames, dimensions) {
@@ -47,6 +49,7 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
   const lineCount = lineTemplates.length, frameCount = audioFrames.length;
   const searchStride = Math.max(1, Math.floor(options.searchStride ?? 1));
   const featureStride = Math.max(1, Math.floor(options.featureStride ?? 1));
+  const dtwImplementation = options.dtwImplementation === "banded" ? "banded" : "full-matrix";
   const searchTemplates = featureStride === 1 ? lineTemplates : lineTemplates.map((template) => template.filter((_, index) => index % featureStride === 0));
   const dtwWindow = Number.isFinite(window) && featureStride > 1 ? Math.max(1, Math.ceil(window / featureStride)) : window;
   const descriptorTopK = Math.max(0, Math.floor(options.descriptorTopK ?? 0));
@@ -85,7 +88,7 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
       if (descriptorTopK && candidates.length > descriptorTopK) candidates.sort((left, right) => left.descriptor - right.descriptor);
       for (const candidate of descriptorTopK ? candidates.slice(0, descriptorTopK) : candidates) {
         const start = candidate.start;
-        const cost = costs[line - 1][start] + candidateCost(audioFrames, searchTemplates[line - 1], start, end, dtwWindow, featureStride);
+        const cost = costs[line - 1][start] + candidateCost(audioFrames, searchTemplates[line - 1], start, end, dtwWindow, featureStride, dtwImplementation);
         if (cost < costs[line][end]) { costs[line][end] = cost; parents[line][end] = start; }
       }
     }
@@ -113,8 +116,8 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
       if (!shift) continue;
       const boundary = left.endFrame + shift;
       if (boundary - left.startFrame < minLength || right.endFrame - boundary < minLength) continue;
-      const alternative = safeCandidateCost(audioFrames, searchTemplates[index], left.startFrame, boundary, dtwWindow, featureStride)
-        + safeCandidateCost(audioFrames, searchTemplates[index + 1], boundary, right.endFrame, dtwWindow, featureStride);
+      const alternative = safeCandidateCost(audioFrames, searchTemplates[index], left.startFrame, boundary, dtwWindow, featureStride, dtwImplementation)
+        + safeCandidateCost(audioFrames, searchTemplates[index + 1], boundary, right.endFrame, dtwWindow, featureStride, dtwImplementation);
       bestAlternative = Math.min(bestAlternative, alternative);
     }
     const margin = Number.isFinite(bestAlternative) ? Math.max(0, bestAlternative - chosenCost) : null;
@@ -132,5 +135,5 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
     return { lineIndex: segment.lineIndex, cost, relativeCost, confidence, reviewRequired: confidence < reviewThreshold || unstableBoundary, startBoundary: boundary.startBoundary || null, endBoundary: boundary.endBoundary || null };
   });
   segments = segments.map((segment, index) => ({ ...segment, ...diagnostics[index] }));
-  return { segments, cost: costs[lineCount][frameCount], frameRate, method: "template_mfcc_dtw", diagnostics: { medianCost, baseline, reviewThreshold, marginFrames, boundaryMarginThreshold, searchStride, featureStride, dtwWindow, descriptorTopK, descriptorDimensions, initialFrame, expectedStarts, anchorToleranceFrames, expectedLengths, lengthTolerance, boundaries: boundaryDiagnostics } };
+  return { segments, cost: costs[lineCount][frameCount], frameRate, method: "template_mfcc_dtw", diagnostics: { medianCost, baseline, reviewThreshold, marginFrames, boundaryMarginThreshold, searchStride, featureStride, dtwImplementation, dtwWindow, descriptorTopK, descriptorDimensions, initialFrame, expectedStarts, anchorToleranceFrames, expectedLengths, lengthTolerance, boundaries: boundaryDiagnostics } };
 }

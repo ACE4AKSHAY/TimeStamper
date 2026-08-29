@@ -14,8 +14,10 @@ reference tie order (diagonal, up, left), so equivalence is testable rather than
 assumed. Both implementations are deterministic and do not use AI/ML.
 
 The optimized implementation is intentionally not wired into the production
-engine yet. It must first match the reference path/cost on fixtures and then be
-measured on longer, rights-cleared recordings.
+engine default yet. `alignMfccSequences` and `alignLineTemplates` now accept
+`implementation: "banded"` / `dtwImplementation: "banded"` for opt-in trials.
+The full-matrix implementation remains the reference until longer,
+rights-cleared recordings confirm equivalence and memory savings.
 
 ## Files
 

@@ -132,6 +132,7 @@ test("constrained DTW returns an ordered path and MFCC adapter metadata", () => 
   assert.equal(result.path[0][0], 0);
   assert.equal(result.path.at(-1)[1], 2);
   assert.equal(alignMfccSequences({ frames: a, frameRate: 10 }, { frames: b, frameRate: 8 }).method, "mfcc_dtw");
+  assert.equal(alignMfccSequences({ frames: a, frameRate: 10 }, { frames: b, frameRate: 8 }, { window: 2, implementation: "banded" }).implementation, "banded");
 });
 
 test("template alignment creates monotonic line-level segments", () => {
@@ -143,6 +144,9 @@ test("template alignment creates monotonic line-level segments", () => {
   assert.equal(result.segments[1].endTime, 0.6);
   assert.equal(result.diagnostics.boundaries.length, 1);
   assert.ok(result.segments[0].endBoundary && result.segments[1].startBoundary);
+  const banded = alignLineTemplates(audio, [toneA, toneB], { frameRate: 10, minLength: 2, maxLength: 4, window: 3, dtwImplementation: "banded" });
+  assert.deepEqual(banded.segments.map((segment) => segment.startFrame), result.segments.map((segment) => segment.startFrame));
+  assert.equal(banded.diagnostics.dtwImplementation, "banded");
 });
 
 test("engine exposes template MFCC-DTW line timestamps", () => {
