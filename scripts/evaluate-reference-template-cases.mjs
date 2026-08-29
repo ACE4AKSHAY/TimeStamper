@@ -5,6 +5,8 @@ import { decodeAudioFile } from "../src/audio-decoder.mjs";
 import { parseLyrics } from "../src/lyrics.js";
 import { alignWithReferenceTemplates } from "../src/reference-template-aligner.js";
 import { scoreTimestamps } from "../src/metrics.js";
+import { FeatureCache } from "../src/feature-cache.mjs";
+import { loadOrExtractMfcc } from "../src/mfcc-feature-cache.mjs";
 
 const root = resolve(process.argv[2] || "benchmarks/private/verified-cases");
 const output = resolve(process.argv[3] || "benchmarks/private/reference-template-self-evaluation.json");
@@ -13,6 +15,7 @@ const audioExtensions = new Set([".mp3", ".m4a", ".wav", ".wave", ".flac", ".ogg
 const lyricExtensions = new Set([".lrc", ".txt"]);
 const dtwImplementation = process.env.LYRICSYNC_DTW_IMPLEMENTATION === "banded" ? "banded" : undefined;
 const useReferenceAnchors = process.env.LYRICSYNC_REFERENCE_ANCHORS === "0" ? false : true;
+const featureCache = new FeatureCache(process.env.LYRICSYNC_FEATURE_CACHE_DIR || "cache/features");
 const entries = (await readdir(root, { withFileTypes: true })).filter((entry) => entry.isDirectory()).sort((a, b) => a.name.localeCompare(b.name)).slice(0, limit);
 const cases = [];
 for (const entry of entries) cases.push(await evaluateCase(join(root, entry.name), entry.name));
@@ -46,8 +49,9 @@ async function evaluateCase(caseRoot, id) {
     const lyrics = parseLyrics(await readFile(join(caseRoot, lyric.name), "utf8"), "reference_template_self_evaluation");
     const starts = (reference.startTimes || []).map(Number);
     if (starts.length !== lyrics.lines.length) return { id, status: "failed", reason: "reference_line_count_does_not_match_lyrics" };
+    const mfcc = await loadOrExtractMfcc({ audioPath: join(caseRoot, audio.name), decoded, cache: featureCache, enabled: process.env.LYRICSYNC_DISABLE_FEATURE_CACHE !== "1" });
     const started = performance.now();
-    const result = alignWithReferenceTemplates({ referenceSamples: decoded.samples, referenceSampleRate: decoded.sampleRate, referenceStarts: starts, referenceDuration: decoded.duration, targetSamples: decoded.samples, targetSampleRate: decoded.sampleRate, targetDuration: decoded.duration, lyrics: lyrics.lines, options: { dtwImplementation, useReferenceAnchors } });
+    const result = alignWithReferenceTemplates({ referenceSamples: decoded.samples, referenceSampleRate: decoded.sampleRate, referenceStarts: starts, referenceDuration: decoded.duration, targetSamples: decoded.samples, targetSampleRate: decoded.sampleRate, targetDuration: decoded.duration, lyrics: lyrics.lines, options: { dtwImplementation, useReferenceAnchors, referenceMfcc: mfcc, targetMfcc: mfcc } });
     const predicted = result.lines.map((line) => line.startTime);
     return { id, status: "evaluated", audioPath: join(caseRoot, audio.name), lyricPath: join(caseRoot, lyric.name), lineCount: starts.length, runtimeMs: performance.now() - started, metrics: scoreTimestamps(predicted, starts), confidence: { mean: result.lines.reduce((sum, line) => sum + (line.confidence || 0), 0) / result.lines.length, reviewRequired: result.lines.filter((line) => line.reviewRequired).length }, diagnostics: result.alignment.diagnostics };
   } catch (error) {

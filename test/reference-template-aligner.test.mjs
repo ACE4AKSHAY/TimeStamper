@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { alignWithReferenceTemplates } from "../src/reference-template-aligner.js";
 import { synchronize } from "../src/engine.js";
 import { createPassthroughSeparator, createVocalSeparator, validateSeparatedAudio } from "../src/vocal-separator.js";
+import { extractMfcc } from "../src/features.js";
 
 test("vocal separator contract validates PCM and preserves a deterministic passthrough", async () => {
   const input = { samples: [0, 0.25, -0.25], sampleRate: 8000 };
@@ -14,7 +15,7 @@ test("vocal separator contract validates PCM and preserves a deterministic passt
   assert.throws(() => validateSeparatedAudio({ samples: [], sampleRate: 8000 }), /empty audio/u);
 });
 
-test("reference-template adapter aligns a target recording and preserves line metadata", () => {
+test("reference-template adapter aligns a target recording and preserves line metadata", async () => {
   const sampleRate = 8000;
   const samples = Float32Array.from({ length: 3200 }, (_, index) => {
     const frequency = index < 1600 ? 220 : 440;
@@ -91,6 +92,20 @@ test("reference-template adapter aligns a target recording and preserves line me
   assert.equal(throughEngine.parameters.dtwImplementation, "banded");
   assert.equal(throughEngine.parameters.referenceSamples, undefined);
   assert.ok(throughEngine.lines.every((line) => Number.isFinite(line.startTime)));
+
+  const cachedFrames = extractMfcc(samples, sampleRate, { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 });
+  const fromFrames = await alignWithReferenceTemplates({
+    referenceSamples: samples,
+    referenceSampleRate: sampleRate,
+    referenceStarts: [0, 0.2],
+    referenceDuration: 0.4,
+    targetSamples: samples,
+    targetSampleRate: sampleRate,
+    targetDuration: 0.4,
+    lyrics: lines,
+    options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, referenceMfcc: cachedFrames, targetMfcc: cachedFrames },
+  });
+  assert.deepEqual(fromFrames.lines.map((line) => line.startTime), result.lines.map((line) => line.startTime));
 });
 
 test("reference-template adapter rejects a lyric/reference line mismatch", () => {

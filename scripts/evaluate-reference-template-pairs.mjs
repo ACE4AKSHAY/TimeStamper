@@ -6,6 +6,8 @@ import { extractReferenceStarts } from "../src/evaluation.js";
 import { parseLyrics } from "../src/lyrics.js";
 import { alignWithReferenceTemplates } from "../src/reference-template-aligner.js";
 import { scoreTimestamps } from "../src/metrics.js";
+import { FeatureCache } from "../src/feature-cache.mjs";
+import { loadOrExtractMfcc } from "../src/mfcc-feature-cache.mjs";
 
 const root = resolve(process.argv[2] || "benchmarks/private/reference-template-pairs");
 const output = resolve(process.argv[3] || "benchmarks/private/reference-template-pair-evaluation.json");
@@ -13,6 +15,7 @@ const limit = Number.isFinite(Number(process.argv[4])) && Number(process.argv[4]
 const audioExtensions = new Set([".mp3", ".m4a", ".wav", ".wave", ".flac", ".ogg", ".opus", ".aac"]);
 const lyricExtensions = new Set([".lrc", ".txt"]);
 const options = { dtwImplementation: process.env.LYRICSYNC_DTW_IMPLEMENTATION === "banded" ? "banded" : undefined, useReferenceAnchors: process.env.LYRICSYNC_REFERENCE_ANCHORS !== "0" };
+const featureCache = new FeatureCache(process.env.LYRICSYNC_FEATURE_CACHE_DIR || "cache/features");
 let entries = [];
 try { entries = (await readdir(root, { withFileTypes: true })).filter((entry) => entry.isDirectory()).sort((a, b) => a.name.localeCompare(b.name)).slice(0, limit); } catch { entries = []; }
 const cases = [];
@@ -50,8 +53,10 @@ async function evaluateCase(caseRoot, id) {
     const lyrics = parseLyrics(lyricsText, "reference_template_pair_evaluation");
     const referenceStarts = extractReferenceStarts(referenceDocument), targetStarts = extractReferenceStarts(targetDocument);
     if (referenceStarts.length !== lyrics.lines.length || targetStarts.length !== lyrics.lines.length) return { id, status: "failed", reason: "reference_or_target_line_count_does_not_match_lyrics" };
+    const referenceMfcc = await loadOrExtractMfcc({ audioPath: join(caseRoot, referenceAudio.name), decoded: reference, cache: featureCache, enabled: process.env.LYRICSYNC_DISABLE_FEATURE_CACHE !== "1" });
+    const targetMfcc = await loadOrExtractMfcc({ audioPath: join(caseRoot, targetAudio.name), decoded: target, cache: featureCache, enabled: process.env.LYRICSYNC_DISABLE_FEATURE_CACHE !== "1" });
     const started = performance.now();
-    const result = alignWithReferenceTemplates({ referenceSamples: reference.samples, referenceSampleRate: reference.sampleRate, referenceStarts, referenceDuration: reference.duration, targetSamples: target.samples, targetSampleRate: target.sampleRate, targetDuration: target.duration, lyrics: lyrics.lines, options });
+    const result = alignWithReferenceTemplates({ referenceSamples: reference.samples, referenceSampleRate: reference.sampleRate, referenceStarts, referenceDuration: reference.duration, targetSamples: target.samples, targetSampleRate: target.sampleRate, targetDuration: target.duration, lyrics: lyrics.lines, options: { ...options, referenceMfcc, targetMfcc } });
     const predicted = result.lines.map((line) => line.startTime);
     return { id, status: "evaluated", referenceAudioPath: join(caseRoot, referenceAudio.name), targetAudioPath: join(caseRoot, targetAudio.name), lyricPath: join(caseRoot, lyric.name), lineCount: targetStarts.length, runtimeMs: performance.now() - started, metrics: scoreTimestamps(predicted, targetStarts), confidence: { mean: result.lines.reduce((sum, line) => sum + (line.confidence || 0), 0) / result.lines.length, reviewRequired: result.lines.filter((line) => line.reviewRequired).length }, diagnostics: result.alignment.diagnostics };
   } catch (error) { return { id, status: "failed", reason: error.code || error.message || "pair_evaluation_failed" }; }

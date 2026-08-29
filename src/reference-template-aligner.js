@@ -1,5 +1,5 @@
 import { extractMfcc } from "./features.js";
-import { buildMfccLineTemplates } from "./template-builder.js";
+import { buildMfccLineTemplates, buildMfccLineTemplatesFromFrames } from "./template-builder.js";
 import { alignLineTemplates } from "./template-aligner.js";
 
 /**
@@ -27,8 +27,10 @@ export function alignWithReferenceTemplates({
   if (!Array.isArray(referenceStarts) || referenceStarts.length !== lines.length) throw new Error("Reference timestamps and lyric line count must match.");
 
   const mfccOptions = { frameSize: 512, hopSize: 256, melBands: 26, coefficients: 13, ...(options.mfcc || {}) };
-  const templates = buildMfccLineTemplates(referenceSamples, referenceSampleRate, referenceStarts, referenceDuration, mfccOptions);
-  const targetMfcc = extractMfcc(targetSamples, targetSampleRate, mfccOptions);
+  const templates = options.referenceMfcc?.frames?.length
+    ? buildMfccLineTemplatesFromFrames(options.referenceMfcc.frames, options.referenceMfcc.frameRate, referenceStarts, referenceDuration, { ...mfccOptions, sampleRate: referenceSampleRate })
+    : buildMfccLineTemplates(referenceSamples, referenceSampleRate, referenceStarts, referenceDuration, mfccOptions);
+  const targetMfcc = options.targetMfcc?.frames?.length ? options.targetMfcc : extractMfcc(targetSamples, targetSampleRate, mfccOptions);
   const largestTemplate = Math.max(...templates.templates.map((template) => template.length));
   const minLength = Math.max(1, Number.isFinite(options.minLength) ? options.minLength : 1);
   const maxLength = Math.max(minLength, Number.isFinite(options.maxLength) ? options.maxLength : Math.ceil(Math.max(largestTemplate * 2.5, targetMfcc.frames.length / lines.length * 2)));

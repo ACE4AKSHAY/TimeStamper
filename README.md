@@ -92,6 +92,7 @@ The v0.1 browser UI is a thin client over reusable ES modules:
 - `src/engine.js` — platform-neutral `synchronize()` entry point for reusable alignment engines
 - `src/project-store.mjs` — structured local project directory storage for desktop/CLI workflows
 - `src/feature-cache.mjs` — file-backed, content-identity/config-keyed cache for reusable decoded features and alignment inputs
+- `src/mfcc-feature-cache.mjs` — cache-aware whole-recording MFCC extraction used by reference-template experiments
 - `src/audio-feature-cache.mjs` — optional cache-aware profile/pitch extraction used by local alignment and private evaluation scripts
 - `src/run-config.mjs` — stable, serializable record of the settings used for each alignment run
 - `src/metrics.js` and `scripts/run-benchmark.mjs` — accuracy and resource measurement for experiments
@@ -149,6 +150,10 @@ To compare a locally produced vocal stem with its original full mix, use
 Template and MFCC sequence alignment accept `dtwImplementation: "banded"` as
 an opt-in memory-efficient implementation. The full-matrix implementation
 remains the reference until longer real-recording comparisons are complete.
+
+Reference-template evaluators reuse cached whole-recording MFCC frames. Set
+`LYRICSYNC_DISABLE_FEATURE_CACHE=1` to force a cold extraction when measuring
+runtime; see [`MFCC_CACHE_EXPERIMENT.md`](benchmarks/MFCC_CACHE_EXPERIMENT.md).
 
 The platform-neutral core can be reused by a future mobile client or a native frontend on another operating system. The project can technically meet its
 objective as a line-level offline synchronizer: the remaining work is measured
