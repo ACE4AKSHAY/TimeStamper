@@ -35,6 +35,7 @@ export function alignWithReferenceTemplates({
   const referenceDurations = referenceStarts.map((start, index) => Math.max(1 / referenceSampleRate, (index + 1 < referenceStarts.length ? referenceStarts[index + 1] : referenceDuration) - start));
   const expectedLengths = referenceDurations.map((seconds) => Math.max(1, seconds * targetMfcc.frameRate));
   const searchStride = Math.max(1, Math.floor(options.searchStride ?? (targetMfcc.frames.length > 8000 ? 4 : 1)));
+  const featureStride = Math.max(1, Math.floor(options.featureStride ?? (targetMfcc.frames.length > 8000 ? 4 : 1)));
   const initialFrame = Math.max(0, Math.min(targetMfcc.frames.length - 1, Math.round((options.initialOffsetSeconds ?? referenceStarts[0]) * targetMfcc.frameRate)));
   const alignment = alignLineTemplates(targetMfcc.frames, templates.templates, {
     frameRate: targetMfcc.frameRate,
@@ -43,6 +44,7 @@ export function alignWithReferenceTemplates({
     expectedLengths,
     lengthTolerance: options.lengthTolerance ?? 0.75,
     searchStride,
+    featureStride,
     initialFrame,
     slack: options.slack,
     window: options.window ?? 8,
@@ -61,6 +63,6 @@ export function alignWithReferenceTemplates({
     alignment,
     reference: { duration: referenceDuration, sampleRate: referenceSampleRate, lineCount: referenceStarts.length, templateFrameRate: templates.frameRate },
     target: { duration, sampleRate: targetSampleRate, frameCount: targetMfcc.frames.length, frameRate: targetMfcc.frameRate },
-    parameters: { mfcc: mfccOptions, minLength, maxLength, expectedLengths, lengthTolerance: options.lengthTolerance ?? 0.75, searchStride, initialFrame, slack: options.slack ?? 2, window: options.window ?? 8 },
+    parameters: { mfcc: mfccOptions, minLength, maxLength, expectedLengths, lengthTolerance: options.lengthTolerance ?? 0.75, searchStride, featureStride, initialFrame, slack: options.slack ?? 2, window: options.window ?? 8 },
   };
 }

@@ -1,11 +1,12 @@
 import { constrainedDtw } from "./dtw.js";
 
-function candidateCost(audioFrames, template, start, end, window) {
-  return constrainedDtw(template, audioFrames.slice(start, end), { window }).normalizedCost;
+function candidateCost(audioFrames, template, start, end, window, featureStride = 1) {
+  const segment = featureStride === 1 ? audioFrames.slice(start, end) : audioFrames.slice(start, end).filter((_, index) => index % featureStride === 0);
+  return constrainedDtw(template, segment, { window }).normalizedCost;
 }
 
-function safeCandidateCost(audioFrames, template, start, end, window) {
-  try { return candidateCost(audioFrames, template, start, end, window); } catch { return Infinity; }
+function safeCandidateCost(audioFrames, template, start, end, window, featureStride = 1) {
+  try { return candidateCost(audioFrames, template, start, end, window, featureStride); } catch { return Infinity; }
 }
 
 /**
@@ -19,6 +20,9 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
   const frameRate = options.frameRate || 1, minLength = Math.max(1, options.minLength || 1), slack = Math.max(0, options.slack ?? 2), largestTemplate = lineTemplates.reduce((largest, template) => Math.max(largest, template.length), 0), maxLength = options.maxLength || Math.max(minLength, largestTemplate + slack), window = options.window;
   const lineCount = lineTemplates.length, frameCount = audioFrames.length;
   const searchStride = Math.max(1, Math.floor(options.searchStride ?? 1));
+  const featureStride = Math.max(1, Math.floor(options.featureStride ?? 1));
+  const searchTemplates = featureStride === 1 ? lineTemplates : lineTemplates.map((template) => template.filter((_, index) => index % featureStride === 0));
+  const dtwWindow = Number.isFinite(window) && featureStride > 1 ? Math.max(1, Math.ceil(window / featureStride)) : window;
   const expectedLengths = options.expectedLengths == null ? null : options.expectedLengths.map(Number);
   if (expectedLengths && (expectedLengths.length !== lineCount || expectedLengths.some((value) => !Number.isFinite(value) || value <= 0))) throw new Error("Expected template lengths must contain one positive value per lyric line.");
   const lengthTolerance = Math.min(10, Math.max(0, Number.isFinite(options.lengthTolerance) ? options.lengthTolerance : 0.75));
@@ -37,7 +41,7 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
       for (let start = firstStart; start <= lastStart; start++) {
         if (start !== initialFrame && start % searchStride !== 0) continue;
         if (!Number.isFinite(costs[line - 1][start])) continue;
-        const cost = costs[line - 1][start] + candidateCost(audioFrames, lineTemplates[line - 1], start, end, window);
+        const cost = costs[line - 1][start] + candidateCost(audioFrames, searchTemplates[line - 1], start, end, dtwWindow, featureStride);
         if (cost < costs[line][end]) { costs[line][end] = cost; parents[line][end] = start; }
       }
     }
@@ -65,8 +69,8 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
       if (!shift) continue;
       const boundary = left.endFrame + shift;
       if (boundary - left.startFrame < minLength || right.endFrame - boundary < minLength) continue;
-      const alternative = safeCandidateCost(audioFrames, lineTemplates[index], left.startFrame, boundary, window)
-        + safeCandidateCost(audioFrames, lineTemplates[index + 1], boundary, right.endFrame, window);
+      const alternative = safeCandidateCost(audioFrames, searchTemplates[index], left.startFrame, boundary, dtwWindow, featureStride)
+        + safeCandidateCost(audioFrames, searchTemplates[index + 1], boundary, right.endFrame, dtwWindow, featureStride);
       bestAlternative = Math.min(bestAlternative, alternative);
     }
     const margin = Number.isFinite(bestAlternative) ? Math.max(0, bestAlternative - chosenCost) : null;
@@ -84,5 +88,5 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
     return { lineIndex: segment.lineIndex, cost, relativeCost, confidence, reviewRequired: confidence < reviewThreshold || unstableBoundary, startBoundary: boundary.startBoundary || null, endBoundary: boundary.endBoundary || null };
   });
   segments = segments.map((segment, index) => ({ ...segment, ...diagnostics[index] }));
-  return { segments, cost: costs[lineCount][frameCount], frameRate, method: "template_mfcc_dtw", diagnostics: { medianCost, baseline, reviewThreshold, marginFrames, boundaryMarginThreshold, searchStride, initialFrame, expectedLengths, lengthTolerance, boundaries: boundaryDiagnostics } };
+  return { segments, cost: costs[lineCount][frameCount], frameRate, method: "template_mfcc_dtw", diagnostics: { medianCost, baseline, reviewThreshold, marginFrames, boundaryMarginThreshold, searchStride, featureStride, dtwWindow, initialFrame, expectedLengths, lengthTolerance, boundaries: boundaryDiagnostics } };
 }

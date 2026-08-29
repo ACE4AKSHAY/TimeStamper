@@ -84,10 +84,11 @@ downsampling and tighter candidate pruning before running the whole collection.
 The assisted adapter derives an expected target length for each line from the
 reference start intervals. By default it allows a broad 75% duration tolerance,
 preserves the reference's leading intro offset, and uses a four-frame search
-stride only for very large MFCC sequences. The general aligner keeps stride 1
-and unrestricted durations unless these options are supplied, so existing
-audio-only engines retain their behavior. Bounds are performance controls, not
-proof that the target recording has identical timing.
+stride and four-frame MFCC feature stride only for very large MFCC sequences.
+The general aligner keeps stride 1 and full-resolution features unless these
+options are supplied, so existing audio-only engines retain their behavior.
+Bounds are performance controls, not proof that the target recording has
+identical timing.
 
 ## Limitations and next measurement
 
