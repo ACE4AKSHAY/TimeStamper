@@ -217,6 +217,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 167 | Reference-template ensemble consensus | 🟡 | Added an opt-in reusable engine that runs named deterministic template variants, takes median line starts, and marks disagreement for review; independent-pair calibration is still required. |
 | 168 | Confidence-weighted template consensus | 🟡 | Added an opt-in weighted-median consensus using bounded candidate confidence; default unweighted behavior remains unchanged until independent-pair tests establish whether weighting helps. |
 | 169 | Clustered template consensus | 🟡 | Added an opt-in nearby-hypothesis clustering layer that selects the strongest cluster and reports outliers; default median behavior remains unchanged pending independent-pair validation. |
+| 170 | Ensemble options in alternate-pair evaluator | 🟡 | Held-out pair evaluation now supports ensemble, confidence weighting, and clustering flags while preserving per-candidate outputs; real verified pairs are still required for accuracy claims. |
 
 ## Recommended next steps
 

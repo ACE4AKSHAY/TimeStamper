@@ -5,6 +5,7 @@ import { decodeAudioFile } from "../src/audio-decoder.mjs";
 import { extractReferenceStarts } from "../src/evaluation.js";
 import { parseLyrics } from "../src/lyrics.js";
 import { alignWithReferenceTemplates } from "../src/reference-template-aligner.js";
+import { alignWithReferenceTemplateEnsemble } from "../src/reference-template-ensemble.js";
 import { scoreTimestamps, summarizeConfidence } from "../src/metrics.js";
 import { validateReferenceTargetPair } from "../src/reference-target-validation.js";
 import { FeatureCache } from "../src/feature-cache.mjs";
@@ -23,6 +24,12 @@ const options = {
   templateBoundaryMinImprovementRatio: finiteEnvNumber("LYRICSYNC_TEMPLATE_BOUNDARY_MIN_IMPROVEMENT_RATIO", 0, (value) => Math.max(0, value)),
   featureNormalization: process.env.LYRICSYNC_FEATURE_NORMALIZATION === "global-zscore" ? "global-zscore" : "none",
 };
+const ensembleMode = process.env.LYRICSYNC_TEMPLATE_ENSEMBLE === "1";
+const ensembleOptions = {
+  weightByConfidence: process.env.LYRICSYNC_ENSEMBLE_WEIGHT_BY_CONFIDENCE === "1",
+  clusterToleranceSeconds: finiteEnvNumber("LYRICSYNC_ENSEMBLE_CLUSTER_TOLERANCE", 0, (value) => Math.max(0, value)),
+  confidenceScale: finiteEnvNumber("LYRICSYNC_ENSEMBLE_CONFIDENCE_SCALE", 0.5, (value) => Math.max(0.000001, value)),
+};
 const featureCache = new FeatureCache(process.env.LYRICSYNC_FEATURE_CACHE_DIR || "cache/features");
 let entries = [];
 try { entries = (await readdir(root, { withFileTypes: true })).filter((entry) => entry.isDirectory()).sort((a, b) => a.name.localeCompare(b.name)).slice(0, limit); } catch { entries = []; }
@@ -35,7 +42,7 @@ const document = {
   generatedAt: new Date().toISOString(),
   purpose: "held-out alternate-recording evaluation of reference-assisted MFCC/DTW",
   limitation: "requires manually verified target timestamps; a cover, live or remix may legitimately change line timing",
-  configuration: options,
+  configuration: { ...options, ensembleMode, ensembleOptions },
   privacy: "metadata, local paths and generated timestamps/metrics only; source media and lyric text were not copied",
   root,
   summary: { discoveredCases: cases.length, evaluatedCases: evaluated.length, skippedCases: cases.filter((item) => item.status === "skipped").length, failedCases: cases.filter((item) => item.status === "failed").length },
@@ -66,10 +73,17 @@ async function evaluateCase(caseRoot, id) {
     const referenceMfcc = await loadOrExtractMfcc({ audioPath: join(caseRoot, referenceAudio.name), decoded: reference, cache: featureCache, enabled: process.env.LYRICSYNC_DISABLE_FEATURE_CACHE !== "1" });
     const targetMfcc = await loadOrExtractMfcc({ audioPath: join(caseRoot, targetAudio.name), decoded: target, cache: featureCache, enabled: process.env.LYRICSYNC_DISABLE_FEATURE_CACHE !== "1" });
     const started = performance.now();
-    const result = alignWithReferenceTemplates({ referenceSamples: reference.samples, referenceSampleRate: reference.sampleRate, referenceStarts, referenceDuration: reference.duration, targetSamples: target.samples, targetSampleRate: target.sampleRate, targetDuration: target.duration, lyrics: lyrics.lines, options: { ...options, referenceMfcc, targetMfcc } });
+    const commonInput = { referenceSamples: reference.samples, referenceSampleRate: reference.sampleRate, referenceStarts, referenceDuration: reference.duration, targetSamples: target.samples, targetSampleRate: target.sampleRate, targetDuration: target.duration, lyrics: lyrics.lines, referenceMfcc, targetMfcc };
+    const result = ensembleMode
+      ? alignWithReferenceTemplateEnsemble({ ...commonInput, duration: target.duration, ensembleOptions, variants: [
+        { name: "anchored", options: { ...options, useReferenceAnchors: true, referenceMfcc, targetMfcc } },
+        { name: "anchor-free", options: { ...options, useReferenceAnchors: false, referenceMfcc, targetMfcc } },
+        { name: "boundary-refined", options: { ...options, useReferenceAnchors: true, templateBoundaryRadius: Math.max(1, options.templateBoundaryRadius), referenceMfcc, targetMfcc } },
+      ] })
+      : alignWithReferenceTemplates({ ...commonInput, options: { ...options, referenceMfcc, targetMfcc } });
     const predicted = result.lines.map((line) => line.startTime);
     const metrics = scoreTimestamps(predicted, targetStarts);
-    return { id, status: "evaluated", referenceAudioPath: join(caseRoot, referenceAudio.name), targetAudioPath: join(caseRoot, targetAudio.name), lyricPath: join(caseRoot, lyric.name), lineCount: targetStarts.length, preflight, runtimeMs: performance.now() - started, metrics, confidence: { mean: result.lines.reduce((sum, line) => sum + (line.confidence || 0), 0) / result.lines.length, reviewRequired: result.lines.filter((line) => line.reviewRequired).length, failureCategories: countFailureCategories(result.lines), calibration: summarizeConfidence(predicted, targetStarts, result.lines.map((line) => line.confidence)) }, refinement: summarizeRefinement(result.alignment.templateBoundaryRefinement), diagnostics: result.alignment.diagnostics };
+    return { id, status: "evaluated", referenceAudioPath: join(caseRoot, referenceAudio.name), targetAudioPath: join(caseRoot, targetAudio.name), lyricPath: join(caseRoot, lyric.name), lineCount: targetStarts.length, preflight, runtimeMs: performance.now() - started, metrics, confidence: { mean: result.lines.reduce((sum, line) => sum + (line.confidence || 0), 0) / result.lines.length, reviewRequired: result.lines.filter((line) => line.reviewRequired).length, failureCategories: countFailureCategories(result.lines), calibration: summarizeConfidence(predicted, targetStarts, result.lines.map((line) => line.confidence)) }, refinement: summarizeRefinement(result.alignment?.templateBoundaryRefinement), candidates: result.candidates?.map((candidate) => ({ name: candidate.name, starts: candidate.starts })) || [], diagnostics: result.alignment?.diagnostics || null };
   } catch (error) { return { id, status: "failed", reason: error.code || error.message || "pair_evaluation_failed" }; }
 }
 
