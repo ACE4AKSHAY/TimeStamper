@@ -85,6 +85,9 @@ The assisted adapter derives an expected target length for each line from the
 reference start intervals. By default it allows a broad 75% duration tolerance,
 preserves the reference's leading intro offset, and uses a four-frame search
 stride and four-frame MFCC feature stride only for very large MFCC sequences.
+Reference-assisted runs also use expected start anchors with a one-second
+default tolerance; this sharply limits candidate windows around the known
+reference structure and can be widened for alternate recordings.
 The general aligner keeps stride 1 and full-resolution features unless these
 options are supplied, so existing audio-only engines retain their behavior.
 Bounds are performance controls, not proof that the target recording has

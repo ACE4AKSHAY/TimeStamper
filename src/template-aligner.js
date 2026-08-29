@@ -31,14 +31,21 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
   const prefixMinimums = [0];
   for (let index = 0; index < lineCount; index++) prefixMinimums.push(prefixMinimums[index] + lineMinLengths[index]);
   const initialFrame = Math.min(frameCount - 1, Math.max(0, Math.floor(options.initialFrame ?? 0)));
+  const expectedStarts = options.expectedStarts == null ? null : options.expectedStarts.map(Number);
+  if (expectedStarts && (expectedStarts.length !== lineCount || expectedStarts.some((value) => !Number.isFinite(value) || value < 0 || value >= frameCount))) throw new Error("Expected template starts must contain one in-range frame per lyric line.");
+  const anchorToleranceFrames = Math.max(0, Math.floor(options.anchorToleranceFrames ?? Infinity));
   const costs = Array.from({ length: lineCount + 1 }, () => new Float64Array(frameCount + 1).fill(Infinity)); const parents = Array.from({ length: lineCount + 1 }, () => new Int32Array(frameCount + 1).fill(-1)); costs[0][initialFrame] = 0;
   for (let line = 1; line <= lineCount; line++) {
-    const minimumEnd = Math.max(initialFrame + prefixMinimums[line], line * minLength);
-    for (let end = minimumEnd; end <= frameCount; end++) {
+    const expectedEnd = expectedStarts ? expectedStarts[line - 1] + expectedLengths[line - 1] : null;
+    const minimumEnd = Math.max(initialFrame + prefixMinimums[line], line * minLength, expectedEnd === null ? 0 : Math.floor(expectedEnd - anchorToleranceFrames));
+    const maximumEnd = line === lineCount ? frameCount : Math.min(frameCount, expectedEnd === null ? frameCount : Math.ceil(expectedEnd + anchorToleranceFrames));
+    for (let end = minimumEnd; end <= maximumEnd; end++) {
       if (end !== frameCount && end % searchStride !== 0) continue;
       const firstStart = Math.max(initialFrame + prefixMinimums[line - 1], end - lineMaxLengths[line - 1]);
-      const lastStart = end - lineMinLengths[line - 1];
-      for (let start = firstStart; start <= lastStart; start++) {
+      const expectedStart = expectedStarts ? expectedStarts[line - 1] : null;
+      const lastStart = Math.min(end - lineMinLengths[line - 1], expectedStart === null ? end - lineMinLengths[line - 1] : Math.floor(expectedStart + anchorToleranceFrames));
+      const boundedFirstStart = expectedStart === null ? firstStart : Math.max(firstStart, Math.ceil(expectedStart - anchorToleranceFrames));
+      for (let start = boundedFirstStart; start <= lastStart; start++) {
         if (start !== initialFrame && start % searchStride !== 0) continue;
         if (!Number.isFinite(costs[line - 1][start])) continue;
         const cost = costs[line - 1][start] + candidateCost(audioFrames, searchTemplates[line - 1], start, end, dtwWindow, featureStride);
@@ -88,5 +95,5 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
     return { lineIndex: segment.lineIndex, cost, relativeCost, confidence, reviewRequired: confidence < reviewThreshold || unstableBoundary, startBoundary: boundary.startBoundary || null, endBoundary: boundary.endBoundary || null };
   });
   segments = segments.map((segment, index) => ({ ...segment, ...diagnostics[index] }));
-  return { segments, cost: costs[lineCount][frameCount], frameRate, method: "template_mfcc_dtw", diagnostics: { medianCost, baseline, reviewThreshold, marginFrames, boundaryMarginThreshold, searchStride, featureStride, dtwWindow, initialFrame, expectedLengths, lengthTolerance, boundaries: boundaryDiagnostics } };
+  return { segments, cost: costs[lineCount][frameCount], frameRate, method: "template_mfcc_dtw", diagnostics: { medianCost, baseline, reviewThreshold, marginFrames, boundaryMarginThreshold, searchStride, featureStride, dtwWindow, initialFrame, expectedStarts, anchorToleranceFrames, expectedLengths, lengthTolerance, boundaries: boundaryDiagnostics } };
 }

@@ -37,6 +37,9 @@ export function alignWithReferenceTemplates({
   const searchStride = Math.max(1, Math.floor(options.searchStride ?? (targetMfcc.frames.length > 8000 ? 4 : 1)));
   const featureStride = Math.max(1, Math.floor(options.featureStride ?? (targetMfcc.frames.length > 8000 ? 4 : 1)));
   const initialFrame = Math.max(0, Math.min(targetMfcc.frames.length - 1, Math.round((options.initialOffsetSeconds ?? referenceStarts[0]) * targetMfcc.frameRate)));
+  const expectedStarts = referenceStarts.map((seconds) => Math.max(0, Math.min(targetMfcc.frames.length - 1, Math.round(seconds * targetMfcc.frameRate))));
+  const anchorToleranceSeconds = Number.isFinite(options.anchorToleranceSeconds) ? Math.max(0, options.anchorToleranceSeconds) : 1;
+  const anchorToleranceFrames = Math.max(0, Math.round(anchorToleranceSeconds * targetMfcc.frameRate));
   const alignment = alignLineTemplates(targetMfcc.frames, templates.templates, {
     frameRate: targetMfcc.frameRate,
     minLength,
@@ -46,6 +49,8 @@ export function alignWithReferenceTemplates({
     searchStride,
     featureStride,
     initialFrame,
+    expectedStarts,
+    anchorToleranceFrames,
     slack: options.slack,
     window: options.window ?? 8,
   });
@@ -63,6 +68,6 @@ export function alignWithReferenceTemplates({
     alignment,
     reference: { duration: referenceDuration, sampleRate: referenceSampleRate, lineCount: referenceStarts.length, templateFrameRate: templates.frameRate },
     target: { duration, sampleRate: targetSampleRate, frameCount: targetMfcc.frames.length, frameRate: targetMfcc.frameRate },
-    parameters: { mfcc: mfccOptions, minLength, maxLength, expectedLengths, lengthTolerance: options.lengthTolerance ?? 0.75, searchStride, featureStride, initialFrame, slack: options.slack ?? 2, window: options.window ?? 8 },
+    parameters: { mfcc: mfccOptions, minLength, maxLength, expectedLengths, lengthTolerance: options.lengthTolerance ?? 0.75, searchStride, featureStride, initialFrame, expectedStarts, anchorToleranceSeconds, anchorToleranceFrames, slack: options.slack ?? 2, window: options.window ?? 8 },
   };
 }

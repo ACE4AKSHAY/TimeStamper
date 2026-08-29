@@ -154,11 +154,12 @@ test("engine exposes template MFCC-DTW line timestamps", () => {
 
 test("template alignment supports a leading offset and duration bands", () => {
   const result = alignLineTemplates([[-1], [-1], [0], [0.1], [1], [1.1]], [[[0], [0.1]], [[1], [1.1]]], {
-    frameRate: 10, initialFrame: 2, expectedLengths: [2, 2], lengthTolerance: 0.5, minLength: 1, maxLength: 4, window: 2, featureStride: 2,
+    frameRate: 10, initialFrame: 2, expectedStarts: [2, 4], anchorToleranceFrames: 1, expectedLengths: [2, 2], lengthTolerance: 0.5, minLength: 1, maxLength: 4, window: 2, featureStride: 2,
   });
   assert.equal(result.segments[0].startFrame, 2);
   assert.equal(result.diagnostics.initialFrame, 2);
   assert.equal(result.diagnostics.featureStride, 2);
+  assert.deepEqual(result.diagnostics.expectedStarts, [2, 4]);
   assert.deepEqual(result.diagnostics.expectedLengths, [2, 2]);
 });
 
