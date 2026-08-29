@@ -29,6 +29,7 @@ import { alignByEnsemble } from "../src/ensemble-aligner.js";
 import { alignByVocalGatedBoundaryDp, buildVocalGatedProfile } from "../src/vocal-gated-aligner.js";
 import { alignByAdaptiveVocalBoundaryDp, summarizeVoicedness } from "../src/adaptive-vocal-aligner.js";
 import { alignBySilenceAwareBoundaryDp } from "../src/silence-aware-aligner.js";
+import { summarizeConfidence } from "../src/metrics.js";
 
 test("editor time parser accepts precise editor forms without swapping units", () => {
   assert.equal(parseEditorTime("01:23.456"), 83.456);
@@ -339,4 +340,13 @@ test("multi-profile boundary adapter preserves explicit component weights", () =
   assert.equal(result.lines[0].alignmentMethod, "multi_profile_boundary_dp");
   assert.deepEqual(result.fusion.components, [{ name: "energy", weight: 0.5 }, { name: "spectralFlux", weight: 0.3 }, { name: "voicedness", weight: 0.2 }]);
   assert.equal(result.alignment.segments.length, 3);
+});
+
+test("confidence summary reports bounded triage buckets without claiming probabilities", () => {
+  const summary = summarizeConfidence([0, 1.4, 2.8, 4], [0, 1, 3, 2], [0.95, 0.8, 0.55, 0.2]);
+  assert.deepEqual(Object.fromEntries(Object.entries(summary.buckets).map(([name, value]) => [name, value.count])), { high: 2, medium: 1, low: 1 });
+  assert.ok(Math.abs(summary.buckets.high.maeSeconds - 0.2) < 1e-12);
+  assert.equal(summary.buckets.low.within100, 0);
+  assert.equal(summary.ordering.highMaeNotWorseThanLow, true);
+  assert.throws(() => summarizeConfidence([0], [0], [1.2]), /between 0 and 1/u);
 });

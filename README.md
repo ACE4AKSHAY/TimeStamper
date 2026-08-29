@@ -96,6 +96,7 @@ The v0.1 browser UI is a thin client over reusable ES modules:
 - `src/audio-feature-cache.mjs` — optional cache-aware profile/pitch extraction used by local alignment and private evaluation scripts
 - `src/run-config.mjs` — stable, serializable record of the settings used for each alignment run
 - `src/metrics.js` and `scripts/run-benchmark.mjs` — accuracy and resource measurement for experiments
+- `src/metrics.js` — timestamp metrics plus confidence-bucket diagnostics for review prioritization
 - `src/features.js` — configurable pure-JavaScript MFCC extraction
 - `src/audio-profiles.js` and `src/profile-fusion.js` — explainable RMS/spectral-flux extraction and weighted profile fusion
 - `src/pitch-profile.js` — bounded autocorrelation pitch and voicedness extraction
@@ -154,6 +155,10 @@ remains the reference until longer real-recording comparisons are complete.
 Reference-template evaluators reuse cached whole-recording MFCC frames. Set
 `LYRICSYNC_DISABLE_FEATURE_CACHE=1` to force a cold extraction when measuring
 runtime; see [`MFCC_CACHE_EXPERIMENT.md`](benchmarks/MFCC_CACHE_EXPERIMENT.md).
+
+Reference-template evaluation also reports high/medium/low confidence error
+buckets. These are review-prioritization diagnostics, not calibrated
+probabilities; see [`CONFIDENCE_CALIBRATION_EXPERIMENT.md`](benchmarks/CONFIDENCE_CALIBRATION_EXPERIMENT.md).
 
 The platform-neutral core can be reused by a future mobile client or a native frontend on another operating system. The project can technically meet its
 objective as a line-level offline synchronizer: the remaining work is measured

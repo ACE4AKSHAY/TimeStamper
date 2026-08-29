@@ -5,7 +5,7 @@ import { decodeAudioFile } from "../src/audio-decoder.mjs";
 import { extractReferenceStarts } from "../src/evaluation.js";
 import { parseLyrics } from "../src/lyrics.js";
 import { alignWithReferenceTemplates } from "../src/reference-template-aligner.js";
-import { scoreTimestamps } from "../src/metrics.js";
+import { scoreTimestamps, summarizeConfidence } from "../src/metrics.js";
 import { FeatureCache } from "../src/feature-cache.mjs";
 import { loadOrExtractMfcc } from "../src/mfcc-feature-cache.mjs";
 
@@ -58,7 +58,8 @@ async function evaluateCase(caseRoot, id) {
     const started = performance.now();
     const result = alignWithReferenceTemplates({ referenceSamples: reference.samples, referenceSampleRate: reference.sampleRate, referenceStarts, referenceDuration: reference.duration, targetSamples: target.samples, targetSampleRate: target.sampleRate, targetDuration: target.duration, lyrics: lyrics.lines, options: { ...options, referenceMfcc, targetMfcc } });
     const predicted = result.lines.map((line) => line.startTime);
-    return { id, status: "evaluated", referenceAudioPath: join(caseRoot, referenceAudio.name), targetAudioPath: join(caseRoot, targetAudio.name), lyricPath: join(caseRoot, lyric.name), lineCount: targetStarts.length, runtimeMs: performance.now() - started, metrics: scoreTimestamps(predicted, targetStarts), confidence: { mean: result.lines.reduce((sum, line) => sum + (line.confidence || 0), 0) / result.lines.length, reviewRequired: result.lines.filter((line) => line.reviewRequired).length }, diagnostics: result.alignment.diagnostics };
+    const metrics = scoreTimestamps(predicted, targetStarts);
+    return { id, status: "evaluated", referenceAudioPath: join(caseRoot, referenceAudio.name), targetAudioPath: join(caseRoot, targetAudio.name), lyricPath: join(caseRoot, lyric.name), lineCount: targetStarts.length, runtimeMs: performance.now() - started, metrics, confidence: { mean: result.lines.reduce((sum, line) => sum + (line.confidence || 0), 0) / result.lines.length, reviewRequired: result.lines.filter((line) => line.reviewRequired).length, calibration: summarizeConfidence(predicted, targetStarts, result.lines.map((line) => line.confidence)) }, diagnostics: result.alignment.diagnostics };
   } catch (error) { return { id, status: "failed", reason: error.code || error.message || "pair_evaluation_failed" }; }
 }
 
