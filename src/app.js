@@ -5,6 +5,7 @@ import { deserializeProject, downloadText, openText, saveText, serializeProject 
 import { ProjectLogger } from "./logger.js";
 import { DEFAULT_SETTINGS, applySettings, loadSettings, saveSettings } from "./settings.js";
 import { createEnergyInitialTimeline } from "./energy-aligner.js";
+import { parseEditorTime } from "./time-utils.js";
 
 const $ = (id) => document.getElementById(id);
 let project = createProject(); let audioUrl = null; let selectedId = null; let peaks = []; let energyProfile = []; let waveformDragging = false; let scanTimer = null; let scanWasPlaying = false; let toastTimer = null; let settings = loadSettings();
@@ -19,23 +20,13 @@ function formatClock(seconds) {
   return `${hours ? `${String(hours).padStart(2, "0")}:` : ""}${String(minutes).padStart(2, "0")}:${String(wholeSeconds).padStart(2, "0")}.${String(milliseconds).padStart(3, "0")}`;
 }
 
-function parseEditorTime(value) {
-  const text = String(value).trim().replace(/^\[/u, "").replace(/\]$/u, "");
-  if (!text) return null;
-  const parts = text.split(":");
-  if (parts.length > 3 || parts.some((part) => !/^\d+(?:\.\d+)?$/u.test(part))) return null;
-  const values = parts.map(Number);
-  const seconds = values.length === 3 ? values[0] * 3600 + values[1] * 60 + values[2] : values.length === 2 ? values[0] * 60 + values[1] : values[0];
-  return Number.isFinite(seconds) && seconds >= 0 ? seconds : null;
-}
-
 function activeStampTime() { const typed = $("stamp-time").value.trim(); return typed ? parseEditorTime(typed) : audio.currentTime; }
 function adjustmentSeconds() { return Math.max(0.001, Number($("adjust-ms").value) / 1000 || 0.1); }
 function updateMetadata() { ["title", "artist", "album", "language"].forEach((key) => { project.metadata[key] = $(key).value.trim(); }); }
 function showToast(message, level = "info") { const toast = $("toast"); toast.textContent = message; toast.className = `toast visible ${level}`; clearTimeout(toastTimer); toastTimer = setTimeout(() => { toast.className = "toast"; }, 2600); }
 function normalizedShortcut(key) { if (key === " ") return "Space"; if (key.length === 1) return key.toUpperCase(); return key; }
 function shortcutLabel(key) { return key === "ArrowLeft" ? "←" : key === "ArrowRight" ? "→" : key === "Escape" ? "Esc" : key; }
-function seekToTime(seconds) { if (!audio.duration || !Number.isFinite(seconds)) return; audio.currentTime = Math.max(0, Math.min(audio.duration, seconds)); updatePositionDisplays(audio.currentTime); renderWaveform(); }
+function seekToTime(seconds) { if (!audio.duration || !Number.isFinite(seconds)) return; const bounded = Math.max(0, Math.min(audio.duration, seconds)); audio.currentTime = bounded; updatePositionDisplays(bounded); renderWaveform(); return bounded; }
 function selectLine(line, seek = true) { selectedId = line.id; if (seek && Number.isFinite(line.startTime)) seekToTime(line.startTime); renderTimeline(); }
 function scrollSelectedLineIntoView() { requestAnimationFrame(() => { const selected = $("timeline").querySelector("tr.selected"); selected?.scrollIntoView({ block: "nearest", behavior: "smooth" }); }); }
 function previousTimestamp(line) { const index = timelineLines().indexOf(line); return index > 0 ? timelineLines()[index - 1].startTime : null; }
@@ -47,6 +38,8 @@ function render() {
   $("lyrics-status").textContent = `${project.lyrics.lines.length} lyric line(s) loaded`;
   $("audio-status").textContent = project.audio.name ? `${project.audio.name}${project.audio.duration ? ` · ${formatClock(project.audio.duration)}` : ""}` : "No audio selected";
   const enabled = Boolean(project.audio.name);
+  $("remove-audio").disabled = !enabled;
+  $("remove-lyrics").disabled = !timelineLines().length;
   ["reset-audio", "rewind", "play-toggle", "fast-forward", "seek", "jump-to-time", "stamp", "shift-earlier", "shift-later"].forEach((id) => { $(id).disabled = !enabled; });
   $("auto-timestamp").disabled = !enabled || !timelineLines().length || !energyProfile.length;
   renderTimeline(); renderWaveform(); updatePositionDisplays();
@@ -55,18 +48,30 @@ function render() {
 function renderTimeline() {
   $("timeline").replaceChildren(...timelineLines().map((line, index) => {
     const tr = document.createElement("tr"); tr.className = line.id === selectedId ? "selected" : "";
-    tr.innerHTML = `<td>${index + 1}</td><td><input class="time-input" aria-label="Timestamp for line ${index + 1}" value="${Number.isFinite(line.startTime) ? formatClock(line.startTime) : ""}" placeholder="mm:ss.mmm"></td><td class="line-text"></td><td class="row-actions"><button aria-label="Stamp chosen time" title="Stamp chosen time">⏱</button> <button aria-label="Clear timestamp" title="Clear timestamp">🗑</button> <button aria-label="Insert empty line after" title="Insert empty line after">＋</button> <button aria-label="Duplicate line" title="Duplicate line">⧉</button></td>`;
+    tr.innerHTML = `<td>${index + 1}</td><td><input class="time-input" aria-label="Timestamp for line ${index + 1}" value="${Number.isFinite(line.startTime) ? formatClock(line.startTime) : ""}" placeholder="mm:ss.mmm" title="mm:ss.mmm or mm:ss:mmm" inputmode="numeric"></td><td class="line-text"></td><td class="row-actions"><button data-action="stamp" aria-label="Stamp chosen time" title="Stamp chosen time">⏱</button> <button data-action="clear" aria-label="Clear timestamp" title="Clear timestamp">⌫</button> <button data-action="insert" aria-label="Insert empty line after" title="Insert empty line after">＋</button> <button data-action="duplicate" aria-label="Duplicate line" title="Duplicate line">⧉</button> <button data-action="delete" aria-label="Delete lyric line" title="Delete lyric line">✕</button></td>`;
     tr.querySelector(".line-text").textContent = line.originalText;
     tr.addEventListener("click", (event) => { if (!event.target.matches("input,button")) selectLine(line); });
     tr.querySelector(".line-text").addEventListener("click", () => selectLine(line));
     tr.querySelector("input").addEventListener("click", () => { if (selectedId !== line.id) selectLine(line); else if (Number.isFinite(line.startTime)) seekToTime(line.startTime); });
     tr.querySelector("input").addEventListener("change", (event) => setTimestamp(line, event.target.value));
-    tr.querySelectorAll("button")[0].addEventListener("click", () => stamp(line));
-    tr.querySelectorAll("button")[1].addEventListener("click", () => { line.startTime = null; line.manuallyCorrected = true; log.info(`Cleared timestamp for line ${index + 1}`); render(); });
-    tr.querySelectorAll("button")[2].addEventListener("click", () => insertLineAfter(index, ""));
-    tr.querySelectorAll("button")[3].addEventListener("click", () => insertLineAfter(index, line.originalText, line.startTime));
+    tr.querySelector('[data-action="stamp"]').addEventListener("click", () => stamp(line));
+    tr.querySelector('[data-action="clear"]').addEventListener("click", () => { line.startTime = null; line.manuallyCorrected = true; log.info(`Cleared timestamp for line ${index + 1}`); showToast(`Cleared timestamp for line ${index + 1}.`); render(); });
+    tr.querySelector('[data-action="insert"]').addEventListener("click", () => insertLineAfter(index, ""));
+    tr.querySelector('[data-action="duplicate"]').addEventListener("click", () => insertLineAfter(index, line.originalText, line.startTime));
+    tr.querySelector('[data-action="delete"]').addEventListener("click", () => deleteLine(index));
     return tr;
   })); scrollSelectedLineIntoView();
+}
+
+function deleteLine(index) {
+  const lines = timelineLines();
+  const [removed] = lines.splice(index, 1);
+  lines.forEach((item, order) => { item.order = order; });
+  project.lyrics.lines = lines;
+  selectedId = lines[index]?.id || lines[index - 1]?.id || null;
+  log.info(`Deleted lyric line ${index + 1}: ${removed?.originalText || "(empty)"}`);
+  showToast(`Deleted lyric line ${index + 1}.`);
+  render();
 }
 
 function insertLineAfter(index, text, startTime = null) {
@@ -77,7 +82,8 @@ function insertLineAfter(index, text, startTime = null) {
 
 function setTimestamp(line, value) {
   const seconds = parseEditorTime(value);
-  if (seconds === null) { log.warning(`Invalid timestamp “${value}”. Use mm:ss.mmm, hh:mm:ss.mmm, or seconds.`); renderTimeline(); return; }
+  if (seconds === null) { const message = `Invalid timestamp “${value}”. Use mm:ss.mmm, mm:ss:mmm, hh:mm:ss.mmm, or seconds.`; log.warning(message); showToast(message, "warning"); renderTimeline(); return; }
+  if (Number.isFinite(audio.duration) && seconds > audio.duration) { const message = `Timestamp ${formatClock(seconds)} is beyond the audio duration (${formatClock(audio.duration)}).`; log.warning(message); showToast(message, "warning"); renderTimeline(); return; }
   if (!acceptsTimestamp(line, seconds)) { renderTimeline(); return; }
   line.startTime = seconds; line.manuallyCorrected = true; selectedId = line.id; log.info(`Set timestamp for line ${line.order + 1} to ${formatClock(seconds)}`); render();
 }
@@ -85,7 +91,7 @@ function setTimestamp(line, value) {
 function stamp(line = timelineLines().find((item) => item.id === selectedId)) {
   if (!line) { log.warning("Select a lyric line before stamping."); return; }
   const time = activeStampTime();
-  if (time === null) { log.warning("The stamp time is invalid. Use mm:ss.mmm, hh:mm:ss.mmm, or seconds."); return; }
+  if (time === null) { const message = "The stamp time is invalid. Use mm:ss.mmm, mm:ss:mmm, hh:mm:ss.mmm, or seconds."; log.warning(message); showToast(message, "warning"); return; }
   const currentIndex = timelineLines().indexOf(line);
   const boundedTime = Math.min(time, audio.duration || time); if (!acceptsTimestamp(line, boundedTime)) return;
   line.startTime = boundedTime; line.manuallyCorrected = true; selectedId = timelineLines()[currentIndex + 1]?.id || line.id; log.info(`Stamped line ${line.order + 1} at ${formatClock(line.startTime)}${selectedId !== line.id ? "; selected the next line." : ""}`); render();
@@ -105,7 +111,20 @@ function createInitialTiming() {
 
 async function loadAudio(file) {
   if (audioUrl) URL.revokeObjectURL(audioUrl); audioUrl = URL.createObjectURL(file); audio.src = audioUrl;
+  peaks = []; energyProfile = [];
   project.audio = { name: file.name, type: file.type, duration: null, sourceHint: "Select this audio file again after reopening the project." }; log.info(`Audio selected: ${file.name}`); render();
+}
+
+function removeAudio() {
+  if (audioUrl) URL.revokeObjectURL(audioUrl);
+  audioUrl = null; audio.pause(); audio.removeAttribute("src"); audio.load();
+  project.audio = { name: "", type: "", duration: null, sourceHint: "" }; peaks = []; energyProfile = [];
+  $("audio-file").value = ""; log.info("Audio removed from the project."); showToast("Audio removed."); render();
+}
+
+function removeLyrics() {
+  project.lyrics = { source: "manual", lines: [] }; project.timeline.lines = []; selectedId = null;
+  $("lyrics-file").value = ""; $("lyrics-text").value = ""; log.info("Lyrics removed from the project."); showToast("Lyrics removed."); render();
 }
 
 function loadLyrics(text, source = "pasted") {
@@ -147,14 +166,16 @@ function stopScan(direction) { if (direction > 0) { audio.playbackRate = 1; if (
 
 $("audio-file").addEventListener("change", async (event) => { const file = event.target.files[0]; if (file) { await loadAudio(file); extractWaveform(file); } });
 $("lyrics-file").addEventListener("change", async (event) => { const file = event.target.files[0]; if (file) { const text = await file.text(); $("lyrics-text").value = text; loadLyrics(text, file.name.toLowerCase().endsWith(".lrc") ? "lrc" : "txt"); } });
+$("remove-audio").addEventListener("click", removeAudio); $("remove-lyrics").addEventListener("click", removeLyrics);
 $("load-lyrics").addEventListener("click", () => loadLyrics($("lyrics-text").value)); $("clear-timestamps").addEventListener("click", () => { timelineLines().forEach((line) => { line.startTime = null; }); log.info("Cleared all timestamps."); render(); });
 $("play-toggle").addEventListener("click", togglePlayback); $("seek").addEventListener("input", (event) => { const seconds = Number(event.target.value); audio.currentTime = seconds; updatePositionDisplays(seconds); renderWaveform(); });
 $("reset-audio").addEventListener("click", resetAudio); ["pointerup", "pointerleave", "pointercancel"].forEach((eventName) => $("rewind").addEventListener(eventName, () => stopScan(-1))); $("rewind").addEventListener("pointerdown", () => startScan(-1)); ["pointerup", "pointerleave", "pointercancel"].forEach((eventName) => $("fast-forward").addEventListener(eventName, () => stopScan(1))); $("fast-forward").addEventListener("pointerdown", () => startScan(1));
-$("jump-to-time").addEventListener("click", () => { const seconds = parseEditorTime($("jump-time").value); if (seconds === null) { log.warning("The Go to time value is invalid."); return; } seekToTime(seconds); });
+function jumpToTypedTime() { const value = $("jump-time").value; const seconds = parseEditorTime(value); if (seconds === null) { const message = `Invalid time “${value}”. Use mm:ss.mmm, mm:ss:mmm, hh:mm:ss.mmm, or seconds.`; log.warning(message); showToast(message, "warning"); return; } const bounded = seekToTime(seconds); if (Number.isFinite(bounded) && bounded !== seconds) showToast(`Moved to the end of the audio (${formatClock(bounded)}).`); }
+$("jump-to-time").addEventListener("click", jumpToTypedTime); $("jump-time").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); jumpToTypedTime(); } });
 $("stamp").addEventListener("click", () => stamp()); $("shift-earlier").addEventListener("click", () => shiftSelected(-1)); $("shift-later").addEventListener("click", () => shiftSelected(1));
 $("auto-timestamp").addEventListener("click", createInitialTiming);
 $("waveform").addEventListener("pointerdown", (event) => { waveformDragging = true; $("waveform").setPointerCapture(event.pointerId); seekFromWaveform(event); }); $("waveform").addEventListener("pointermove", (event) => { seekFromWaveform(event, waveformDragging); }); $("waveform").addEventListener("pointerup", (event) => { waveformDragging = false; $("waveform").releasePointerCapture(event.pointerId); $("waveform-tooltip").classList.remove("visible"); }); $("waveform").addEventListener("pointerleave", () => { if (!waveformDragging) $("waveform-tooltip").classList.remove("visible"); });
-$("new-project").addEventListener("click", () => { if (confirm("Start a new project? Unsaved changes will be lost.")) { project = createProject(); selectedId = null; peaks = []; energyProfile = []; audio.removeAttribute("src"); log.info("New project created."); render(); } });
+$("new-project").addEventListener("click", () => { if (confirm("Start a new project? Unsaved changes will be lost.")) { if (audioUrl) URL.revokeObjectURL(audioUrl); audioUrl = null; audio.pause(); audio.removeAttribute("src"); audio.load(); project = createProject(); selectedId = null; peaks = []; energyProfile = []; $("audio-file").value = ""; $("lyrics-file").value = ""; log.info("New project created."); render(); } });
 $("save-project").addEventListener("click", async () => { updateMetadata(); const result = await saveText(serializeProject(project), `${safeName(project.metadata.title)}.lyricsync.json`, "application/json", [{ name: "LyricSync project", extensions: ["json"] }]); if (!result.canceled) log.info(result.path ? `Project saved: ${result.path}` : "Project file downloaded."); });
 $("export-lrc").addEventListener("click", async () => { updateMetadata(); const count = timelineLines().filter((line) => Number.isFinite(line.startTime)).length; if (!count) { log.warning("No timestamps to export."); return; } const result = await saveText(exportLrc(project), `${safeName(project.metadata.title)}.lrc`, "text/plain;charset=utf-8", [{ name: "LRC lyrics", extensions: ["lrc"] }]); if (!result.canceled) log.info(result.path ? `LRC exported: ${result.path}` : `Exported ${count} timestamped line(s) as LRC.`); });
 $("open-project").addEventListener("click", async () => { const desktopFile = await openText([{ name: "LyricSync project", extensions: ["json"] }]); if (!desktopFile) { if (!window.lyricSyncDesktop) $("project-file").click(); return; } try { project = deserializeProject(desktopFile.content); selectedId = project.timeline.lines[0]?.id || null; peaks = []; log.info(`Opened project: ${desktopFile.path}. Re-select the audio file to play it.`); render(); } catch (error) { log.error(error.message); alert(error.message); } });

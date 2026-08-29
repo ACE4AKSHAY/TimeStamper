@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { secondsToLrc, lrcToSeconds, exportLrc } from "../src/lrc.js";
 import { parseLyrics } from "../src/lyrics.js";
+import { parseEditorTime } from "../src/time-utils.js";
 import { createProject } from "../src/domain.js";
 import { createEnergyInitialTimeline } from "../src/energy-aligner.js";
 import { synchronize } from "../src/engine.js";
@@ -28,6 +29,16 @@ import { alignByEnsemble } from "../src/ensemble-aligner.js";
 import { alignByVocalGatedBoundaryDp, buildVocalGatedProfile } from "../src/vocal-gated-aligner.js";
 import { alignByAdaptiveVocalBoundaryDp, summarizeVoicedness } from "../src/adaptive-vocal-aligner.js";
 import { alignBySilenceAwareBoundaryDp } from "../src/silence-aware-aligner.js";
+
+test("editor time parser accepts precise editor forms without swapping units", () => {
+  assert.equal(parseEditorTime("01:23.456"), 83.456);
+  assert.equal(parseEditorTime("01:23:456"), 83.456);
+  assert.equal(parseEditorTime("01:02:03.456"), 3723.456);
+  assert.equal(parseEditorTime("12.5"), 12.5);
+  assert.equal(parseEditorTime("01:60.000"), null);
+  assert.equal(parseEditorTime("00:00:1000"), null);
+  assert.equal(parseEditorTime("not-a-time"), null);
+});
 import { buildEvaluationParameters, extractReferenceStarts } from "../src/evaluation.js";
 import { summarizeConsensus, buildConsensusTimeline } from "../src/consensus-aligner.js";
 

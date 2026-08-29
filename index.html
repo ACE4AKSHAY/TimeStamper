@@ -28,14 +28,14 @@
           <label>Language <input id="language" placeholder="e.g. en, hi, te" /></label>
         </div>
         <div class="grid import-grid">
-          <label class="drop-target">Audio file
-            <input id="audio-file" type="file" accept="audio/*,.mp3,.wav,.flac,.ogg,.opus,.aac,.m4a" />
+          <div class="drop-target"><div class="file-heading"><span>Audio file</span><button id="remove-audio" class="inline-icon" type="button" aria-label="Remove audio" title="Remove audio">✕</button></div>
+            <label class="file-picker">Choose audio<input id="audio-file" type="file" accept="audio/*,.mp3,.wav,.flac,.ogg,.opus,.aac,.m4a" /></label>
             <small id="audio-status">No audio selected</small>
-          </label>
-          <label class="drop-target">Lyrics TXT or LRC
-            <input id="lyrics-file" type="file" accept=".txt,.lrc,text/plain" />
+          </div>
+          <div class="drop-target"><div class="file-heading"><span>Lyrics TXT or LRC</span><button id="remove-lyrics" class="inline-icon" type="button" aria-label="Remove lyrics" title="Remove lyrics">✕</button></div>
+            <label class="file-picker">Choose lyrics<input id="lyrics-file" type="file" accept=".txt,.lrc,text/plain" /></label>
             <small id="lyrics-status">Paste lyrics below or select a file</small>
-          </label>
+          </div>
         </div>
         <label class="lyrics-label">Lyrics <textarea id="lyrics-text" rows="7" placeholder="Paste one lyric line per row. LRC timestamps are imported when present."></textarea></label>
         <div class="actions"><button id="load-lyrics">Load lyrics into timeline</button><button id="clear-timestamps">Clear timestamps</button></div>
@@ -56,15 +56,15 @@
           <audio id="audio" preload="metadata"></audio>
         </div>
         <div class="exact-controls">
-          <label for="jump-time">Go to time <input id="jump-time" class="compact-input" inputmode="decimal" placeholder="mm:ss.mmm" aria-describedby="time-format" /></label>
+          <label for="jump-time">Go to time <input id="jump-time" class="compact-input" inputmode="numeric" placeholder="mm:ss.mmm" aria-describedby="time-format" /></label>
           <button id="jump-to-time" disabled>Go</button>
-          <span id="time-format" class="hint">Use mm:ss.mmm, hh:mm:ss.mmm, or seconds.</span>
+          <span id="time-format" class="hint">Use mm:ss.mmm, mm:ss:mmm, hh:mm:ss.mmm, or seconds.</span>
         </div>
         <p class="hint">Select a lyric line, play or seek to its start, then press <kbd>T</kbd> or “Stamp current time.”</p>
       </section>
 
       <section class="card timeline-card">
-        <div class="section-heading"><h2>Manual timeline</h2><div class="actions"><button id="auto-timestamp" disabled title="Generate editable energy-based initial timestamps">Initial timing</button><label>Stamp time <input id="stamp-time" class="compact-input" inputmode="decimal" placeholder="Current time" /></label><button id="stamp" disabled>Stamp selected line</button><label>Adjust by <input id="adjust-ms" class="ms-input" type="number" min="1" max="60000" step="1" value="100" /> ms</label><button id="shift-earlier" disabled aria-label="Move selected timestamp earlier">−</button><button id="shift-later" disabled aria-label="Move selected timestamp later">+</button></div></div>
+        <div class="section-heading"><h2>Manual timeline</h2><div class="actions"><button id="auto-timestamp" disabled title="Generate editable energy-based initial timestamps">Initial timing</button><label>Stamp time <input id="stamp-time" class="compact-input" inputmode="numeric" placeholder="Current time" /></label><button id="stamp" disabled>Stamp selected line</button><label>Adjust by <input id="adjust-ms" class="ms-input" type="number" min="1" max="60000" step="1" value="100" /> ms</label><button id="shift-earlier" disabled aria-label="Move selected timestamp earlier">−</button><button id="shift-later" disabled aria-label="Move selected timestamp later">+</button></div></div>
         <div class="table-wrap"><table><thead><tr><th>#</th><th>Start</th><th>Lyric line</th><th>Actions</th></tr></thead><tbody id="timeline"></tbody></table></div>
       </section>
 

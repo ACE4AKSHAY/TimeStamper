@@ -53,9 +53,14 @@ For each selected case:
 8. Select a line, press `T`, and confirm it stamps and selects/scrolls to the
    next line. Test enough lines to make the list scroll.
 9. Try the row icons: stamp, clear, insert empty line, and duplicate line.
-   Hover each icon and confirm its tooltip name is understandable.
-10. Enter a timestamp earlier than the preceding line. Confirm a short toast
-    appears and the invalid value is not accepted.
+   Hover each icon, including the new delete-line icon, and confirm its tooltip
+   name is understandable. Use the setup-card icons to remove and re-select
+   the audio or lyrics.
+10. Enter `01:23.456`, `01:23:456`, and `01:02:03.456` in a time field. The
+   first two mean 1 minute 23.456 seconds; the third means 1 hour 2 minutes
+   3.456 seconds. Invalid values must produce a short toast.
+11. Enter a timestamp earlier than the preceding line. Confirm a short toast
+   appears and the invalid value is not accepted.
 
 ## 4. Settings checks
 
