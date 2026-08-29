@@ -76,11 +76,12 @@ The output remains ignored and contains no lyric text or audio bytes.
 The first full-song pilot showed that even with duration bands, unrestricted
 MFCC/DTW candidate scoring remains CPU-heavy on a 216-second MP3. The harness
 therefore supports a case limit for safe experiments. This is a performance
-finding, not an accuracy result; the next optimization is coarse MFCC
-downsampling and tighter candidate pruning before running the whole collection.
+finding, not an accuracy result; coarse MFCC downsampling and tighter candidate
+pruning are now implemented before running the whole collection.
 The follow-up anchored pilot reduced the search region and memory pressure but
 was still too slow for this pure-JavaScript implementation. A coarse segment
-descriptor or native/WASM DTW kernel is now the preferred performance path.
+descriptor is now used to rank candidates; a native/WASM DTW kernel remains a
+fallback if real-folder runs are still too slow.
 
 ## Search bounds
 
@@ -91,6 +92,8 @@ stride and four-frame MFCC feature stride only for very large MFCC sequences.
 Reference-assisted runs also use expected start anchors with a one-second
 default tolerance; this sharply limits candidate windows around the known
 reference structure and can be widened for alternate recordings.
+Large assisted runs additionally rank candidates by a cheap MFCC mean-vector
+descriptor and run full DTW only on the best six candidates per endpoint.
 The general aligner keeps stride 1 and full-resolution features unless these
 options are supplied, so existing audio-only engines retain their behavior.
 Bounds are performance controls, not proof that the target recording has

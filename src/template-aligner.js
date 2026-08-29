@@ -9,6 +9,32 @@ function safeCandidateCost(audioFrames, template, start, end, window, featureStr
   try { return candidateCost(audioFrames, template, start, end, window, featureStride); } catch { return Infinity; }
 }
 
+function meanVector(frames, dimensions) {
+  const mean = new Float64Array(dimensions);
+  if (!frames.length) return mean;
+  for (const frame of frames) for (let index = 0; index < dimensions; index++) mean[index] += Number(frame[index] || 0);
+  for (let index = 0; index < dimensions; index++) mean[index] /= frames.length;
+  return mean;
+}
+
+function createPrefixSums(frames, dimensions) {
+  const prefixes = Array.from({ length: dimensions }, () => new Float64Array(frames.length + 1));
+  for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) for (let dimension = 0; dimension < dimensions; dimension++) prefixes[dimension][frameIndex + 1] = prefixes[dimension][frameIndex] + Number(frames[frameIndex][dimension] || 0);
+  return prefixes;
+}
+
+function segmentMean(prefixes, start, end) {
+  const count = Math.max(1, end - start), mean = new Float64Array(prefixes.length);
+  for (let dimension = 0; dimension < prefixes.length; dimension++) mean[dimension] = (prefixes[dimension][end] - prefixes[dimension][start]) / count;
+  return mean;
+}
+
+function descriptorDistance(left, right) {
+  let sum = 0;
+  for (let index = 0; index < left.length; index++) sum += (left[index] - right[index]) ** 2;
+  return Math.sqrt(sum / Math.max(1, left.length));
+}
+
 /**
  * Monotonic dynamic-programming segmentation using one acoustic feature
  * template per known lyric line. Templates are intentionally explicit: they
@@ -23,6 +49,10 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
   const featureStride = Math.max(1, Math.floor(options.featureStride ?? 1));
   const searchTemplates = featureStride === 1 ? lineTemplates : lineTemplates.map((template) => template.filter((_, index) => index % featureStride === 0));
   const dtwWindow = Number.isFinite(window) && featureStride > 1 ? Math.max(1, Math.ceil(window / featureStride)) : window;
+  const descriptorTopK = Math.max(0, Math.floor(options.descriptorTopK ?? 0));
+  const descriptorDimensions = Math.max(1, Math.floor(options.descriptorDimensions ?? Math.min(6, searchTemplates[0][0]?.length || 1)));
+  const descriptorMeans = descriptorTopK ? searchTemplates.map((template) => meanVector(template, descriptorDimensions)) : null;
+  const descriptorPrefixes = descriptorTopK ? createPrefixSums(audioFrames, descriptorDimensions) : null;
   const expectedLengths = options.expectedLengths == null ? null : options.expectedLengths.map(Number);
   if (expectedLengths && (expectedLengths.length !== lineCount || expectedLengths.some((value) => !Number.isFinite(value) || value <= 0))) throw new Error("Expected template lengths must contain one positive value per lyric line.");
   const lengthTolerance = Math.min(10, Math.max(0, Number.isFinite(options.lengthTolerance) ? options.lengthTolerance : 0.75));
@@ -45,9 +75,16 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
       const expectedStart = expectedStarts ? expectedStarts[line - 1] : null;
       const lastStart = Math.min(end - lineMinLengths[line - 1], expectedStart === null ? end - lineMinLengths[line - 1] : Math.floor(expectedStart + anchorToleranceFrames));
       const boundedFirstStart = expectedStart === null ? firstStart : Math.max(firstStart, Math.ceil(expectedStart - anchorToleranceFrames));
+      const candidates = [];
       for (let start = boundedFirstStart; start <= lastStart; start++) {
         if (start !== initialFrame && start % searchStride !== 0) continue;
         if (!Number.isFinite(costs[line - 1][start])) continue;
+        const descriptor = descriptorTopK ? descriptorDistance(descriptorMeans[line - 1], segmentMean(descriptorPrefixes, start, end)) : 0;
+        candidates.push({ start, descriptor });
+      }
+      if (descriptorTopK && candidates.length > descriptorTopK) candidates.sort((left, right) => left.descriptor - right.descriptor);
+      for (const candidate of descriptorTopK ? candidates.slice(0, descriptorTopK) : candidates) {
+        const start = candidate.start;
         const cost = costs[line - 1][start] + candidateCost(audioFrames, searchTemplates[line - 1], start, end, dtwWindow, featureStride);
         if (cost < costs[line][end]) { costs[line][end] = cost; parents[line][end] = start; }
       }
@@ -95,5 +132,5 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
     return { lineIndex: segment.lineIndex, cost, relativeCost, confidence, reviewRequired: confidence < reviewThreshold || unstableBoundary, startBoundary: boundary.startBoundary || null, endBoundary: boundary.endBoundary || null };
   });
   segments = segments.map((segment, index) => ({ ...segment, ...diagnostics[index] }));
-  return { segments, cost: costs[lineCount][frameCount], frameRate, method: "template_mfcc_dtw", diagnostics: { medianCost, baseline, reviewThreshold, marginFrames, boundaryMarginThreshold, searchStride, featureStride, dtwWindow, initialFrame, expectedStarts, anchorToleranceFrames, expectedLengths, lengthTolerance, boundaries: boundaryDiagnostics } };
+  return { segments, cost: costs[lineCount][frameCount], frameRate, method: "template_mfcc_dtw", diagnostics: { medianCost, baseline, reviewThreshold, marginFrames, boundaryMarginThreshold, searchStride, featureStride, dtwWindow, descriptorTopK, descriptorDimensions, initialFrame, expectedStarts, anchorToleranceFrames, expectedLengths, lengthTolerance, boundaries: boundaryDiagnostics } };
 }
