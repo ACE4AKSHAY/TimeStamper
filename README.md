@@ -117,6 +117,10 @@ with the isolated text-weighted prior. The prior is useful for testing uneven
 lyric line lengths but is not selected as the production default without
 real-song evidence.
 
+Run `npm run experiment-text-unit` to compare codepoint and Unicode grapheme
+duration priors. The grapheme option is useful for combining-mark scripts but
+is still an experiment, not a claim of syllable or word recognition.
+
 For a local decoded-file run, use `npm run align-local -- <audio-path> <lyric-path> [engine] [output-json]`. WAV/PCM works without extra packages; MP3/M4A/FLAC require an available local FFmpeg executable. The command reuses derived profiles from the ignored `cache/features` directory; set `LYRICSYNC_DISABLE_FEATURE_CACHE=1` to disable it or `LYRICSYNC_FEATURE_CACHE_DIR=<folder>` to choose another cache location. See `benchmarks/REAL_DATA_EVALUATION.md` and `benchmarks/FEATURE_CACHE_INTEGRATION.md` for the privacy boundary and cache details.
 
 For reference-assisted MFCC/DTW, use `npm run align-reference-template -- <target-audio> <reference-audio> <reference-json> <lyrics>`. The reference JSON supplies manually verified line starts; the generated target timeline remains editable and is written only to the ignored private output path.

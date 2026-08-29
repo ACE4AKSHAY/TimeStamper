@@ -5,6 +5,17 @@ function lineText(line) {
   return line?.normalizedText ?? line?.originalText ?? line?.text ?? "";
 }
 
+/** Count language-neutral text units without identifying or translating a language. */
+export function countTextUnits(value, unit = "codepoint") {
+  const text = String(value ?? "").normalize("NFC");
+  if (unit === "grapheme" && typeof Intl?.Segmenter === "function") {
+    return [...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(text)]
+      .map((item) => item.segment)
+      .filter((item) => !/^\s$/u.test(item)).length;
+  }
+  return Array.from(text).filter((character) => !/\s/u.test(character)).length;
+}
+
 /**
  * Estimate relative vocal duration from the amount of lyric text. Unicode
  * code points are counted after whitespace removal, so native scripts work
@@ -14,11 +25,12 @@ export function estimateTextWeights(lines, options = {}) {
   if (!Array.isArray(lines) || !lines.length) throw new Error("Text weighting requires at least one lyric line.");
   const exponent = Number.isFinite(options.exponent) && options.exponent > 0 ? options.exponent : 1;
   const minimumWeight = Number.isFinite(options.minimumWeight) && options.minimumWeight > 0 ? options.minimumWeight : 1;
-  const textLengths = lines.map((line) => Array.from(String(lineText(line)).normalize("NFC")).filter((character) => !/\s/u.test(character)).length);
+  const textUnit = options.textUnit === "grapheme" ? "grapheme" : "codepoint";
+  const textLengths = lines.map((line) => countTextUnits(lineText(line), textUnit));
   const safeLengths = textLengths.map((length) => Math.max(minimumWeight, length));
   const weights = safeLengths.map((length) => length ** exponent);
   const totalWeight = weights.reduce((sum, value) => sum + value, 0);
-  return { textLengths, weights, totalWeight, exponent, minimumWeight };
+  return { textLengths, weights, totalWeight, exponent, minimumWeight, textUnit };
 }
 
 function onsetStrength(profile, index) {
@@ -73,5 +85,5 @@ export function alignByTextWeightedBoundaryDp(lines, profile, duration, options 
     end = start;
   }
   segments.reverse();
-  return { segments, cost: costs[lineCount][frameCount], frameRate: frameCount / duration, expectedLengths, textLengths: text.textLengths, textWeights: text.weights, exponent: text.exponent, minimumWeight: text.minimumWeight, minLength, maxLength, durationWeight, boundaryWeight, method: "text_weighted_boundary_dynamic_programming" };
+  return { segments, cost: costs[lineCount][frameCount], frameRate: frameCount / duration, expectedLengths, textLengths: text.textLengths, textWeights: text.weights, textUnit: text.textUnit, exponent: text.exponent, minimumWeight: text.minimumWeight, minLength, maxLength, durationWeight, boundaryWeight, method: "text_weighted_boundary_dynamic_programming" };
 }

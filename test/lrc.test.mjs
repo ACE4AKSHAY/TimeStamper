@@ -22,7 +22,7 @@ import { extractPitchProfile, pitchVoicednessProfile } from "../src/pitch-profil
 import { alignMultiProfile } from "../src/multi-profile-aligner.js";
 import { alignByIntroAwareBoundaryDp } from "../src/intro-aware-aligner.js";
 import { alignByAdaptiveBoundaryDp } from "../src/adaptive-boundary-aligner.js";
-import { alignByTextWeightedBoundaryDp, estimateTextWeights } from "../src/text-weighted-aligner.js";
+import { alignByTextWeightedBoundaryDp, countTextUnits, estimateTextWeights } from "../src/text-weighted-aligner.js";
 import { refineBoundarySegments } from "../src/boundary-refiner.js";
 import { alignByEnsemble } from "../src/ensemble-aligner.js";
 import { alignByVocalGatedBoundaryDp, buildVocalGatedProfile } from "../src/vocal-gated-aligner.js";
@@ -233,6 +233,16 @@ test("text-weighted Boundary-DP handles Unicode line lengths", () => {
   assert.ok(result.segments[1].endFrame - result.segments[1].startFrame > result.segments[0].endFrame - result.segments[0].startFrame);
   const engineResult = synchronize({ engine: "text-weighted-boundary-dp", lyrics: lines, duration: 16, parameters: { profile: Array.from({ length: 32 }, () => 0.5), boundaryWeight: 0 } });
   assert.equal(engineResult.lines[0].alignmentMethod, "text_weighted_boundary_dynamic_programming");
+});
+
+test("grapheme text weighting keeps combining-mark scripts language-neutral", () => {
+  assert.equal(countTextUnits("कि", "codepoint"), 2);
+  assert.equal(countTextUnits("कि", "grapheme"), 1);
+  const weights = estimateTextWeights(["कि", "किताब"], { textUnit: "grapheme" });
+  assert.equal(weights.textUnit, "grapheme");
+  assert.ok(weights.textLengths[1] > weights.textLengths[0]);
+  const result = alignByTextWeightedBoundaryDp(["कि", "किताब"], Array.from({ length: 20 }, () => 0.5), 10, { boundaryWeight: 0, textUnit: "grapheme" });
+  assert.equal(result.textUnit, "grapheme");
 });
 
 test("local boundary refinement moves coarse boundaries toward onsets", () => {
