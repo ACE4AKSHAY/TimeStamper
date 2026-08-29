@@ -97,9 +97,9 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 47 | Git structure | 🟡 | Source, tests and documentation exist; experiments/datasets structure is pending. |
 | 48 | Git branching | 🟡 | Stable `main` branch will be created; later work uses `feature/*` and `experiment/*`. |
 | 49 | Git commits | ✅ | This milestone will have a descriptive initial commit. |
-| 50 | Testing | 🟡 | Automated unit tests exist; integration/desktop UI tests are next. |
+| 50 | Testing | 🟡 | Automated unit and audio-pipeline integration tests exist; desktop UI tests are next. |
 | 51 | Unit tests | 🟡 | LRC conversion, parsing, Unicode, one-line lyrics and energy baseline are covered. |
-| 52 | Integration tests | ⏳ | Add audio + lyrics + export fixture tests. |
+| 52 | Integration tests | 🟡 | Audio decode + Unicode lyrics + profile + timeline + LRC export fixture is covered; desktop UI integration remains. |
 | 53 | Benchmark dataset | 🟡 | Private audit plus CSV importer/candidate builder now inventories local pairs without copying media; rights-cleared ground truth is next. |
 | 54 | Dataset categories | 🟡 | Manifest captures language-independent lyric/timestamp/instrumental review flags; genre/recording metadata is next. |
 | 55 | Ground truth | 🟡 | Private review queue, validator, CSV candidate builder and manual checklist now exist; no real pair is considered verified yet. |
