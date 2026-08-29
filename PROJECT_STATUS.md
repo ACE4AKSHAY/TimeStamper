@@ -86,9 +86,9 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 36 | Human review | ✅ | Playback, waveform, timeline selection, click-to-seek, autoscroll and direct timestamp editing work. |
 | 37 | Fast correction | 🟡 | Exact time entry, custom adjustment, insert/duplicate, ordering guard and dynamic shortcuts work; undo/redo is next. |
 | 38 | Visualization | 🟡 | Waveform is done; research plots are later. |
-| 39 | Local project storage | 🟡 | Browser download and Node `ProjectStore` structured directory are present; feature caches are next. |
+| 39 | Local project storage | 🟡 | Browser download and Node `ProjectStore` structured directory are present; file-backed feature caching is now available. |
 | 40 | Storage principle | ✅ | Original audio is referenced, not copied into project JSON. |
-| 41 | Cache design | ⏳ | Add file-backed feature cache after desktop storage structure. |
+| 41 | Cache design | 🟡 | `FeatureCache` stores derived features under ignored, identity/config-keyed JSON entries; engine integration is next. |
 | 42 | Reproducibility | 🟡 | Method/confidence fields are saved; full run configuration record is next. |
 | 43 | Human-readable logging | ✅ | Local downloadable activity log is implemented. |
 | 44 | Log levels | 🟡 | INFO/WARNING/ERROR are used; DEBUG preference is pending. |

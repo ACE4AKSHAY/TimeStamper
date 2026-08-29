@@ -88,6 +88,7 @@ The v0.1 browser UI is a thin client over reusable ES modules:
 - `src/online-provider.js` — optional online-search contract, intentionally unused by core functionality
 - `src/engine.js` — platform-neutral `synchronize()` entry point for reusable alignment engines
 - `src/project-store.mjs` — structured local project directory storage for desktop/CLI workflows
+- `src/feature-cache.mjs` — file-backed, content-identity/config-keyed cache for reusable decoded features and alignment inputs
 - `src/metrics.js` and `scripts/run-benchmark.mjs` — accuracy and resource measurement for experiments
 - `src/features.js` — configurable pure-JavaScript MFCC extraction
 - `src/audio-profiles.js` and `src/profile-fusion.js` — explainable RMS/spectral-flux extraction and weighted profile fusion
