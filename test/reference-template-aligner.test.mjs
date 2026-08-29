@@ -72,6 +72,19 @@ test("reference-template adapter aligns a target recording and preserves line me
   assert.equal(anchorFree.parameters.useReferenceAnchors, false);
   assert.equal(anchorFree.parameters.expectedStarts, null);
   assert.ok(anchorFree.lines.every((line) => Number.isFinite(line.startTime)));
+  const scaled = await alignWithReferenceTemplates({
+    referenceSamples: samples,
+    referenceSampleRate: sampleRate,
+    referenceStarts: [0, 0.2],
+    referenceDuration: 0.4,
+    targetSamples: Float32Array.from({ length: 4800 }, (_, index) => samples[index % samples.length]),
+    targetSampleRate: sampleRate,
+    targetDuration: 0.6,
+    lyrics: lines,
+    options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 80, window: 4, anchorScale: "duration-ratio" },
+  });
+  assert.ok(Math.abs(scaled.parameters.anchorScale - 1.5) < 1e-12);
+  assert.equal(scaled.parameters.expectedStarts[1], 38);
 
   const throughEngine = synchronize({
     lyrics: lines,

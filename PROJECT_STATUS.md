@@ -205,6 +205,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 155 | Confidence calibration diagnostics | 🟡 | Scored reference-template runs now group line errors by high/medium/low confidence and report review-prioritization metrics; a 64-line self-reference check populated only the high bucket (19.5ms MAE) and cannot calibrate thresholds. |
 | 156 | Separator-to-aligner integration | 🟡 | Optional separator adapters can now feed validated mono PCM directly into reference-assisted MFCC/DTW; a real separator model and measured full-mix versus vocal-only result remain pending. |
 | 157 | Explainable line failure categories | 🟡 | Template alignment now labels each line as stable, high-relative-cost, unstable-boundary, or both; evaluators persist category counts so future manual review can target the actual failure mode. |
+| 158 | Alternate-duration anchor scaling | 🟡 | Reference-template alignment now supports an opt-in duration-ratio scale for slowed, sped-up, remix, or alternate-length targets; default behavior remains unchanged and real calibration is pending. |
 
 ## Recommended next steps
 

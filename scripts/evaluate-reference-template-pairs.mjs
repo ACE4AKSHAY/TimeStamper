@@ -14,7 +14,7 @@ const output = resolve(process.argv[3] || "benchmarks/private/reference-template
 const limit = Number.isFinite(Number(process.argv[4])) && Number(process.argv[4]) > 0 ? Math.floor(Number(process.argv[4])) : Infinity;
 const audioExtensions = new Set([".mp3", ".m4a", ".wav", ".wave", ".flac", ".ogg", ".opus", ".aac"]);
 const lyricExtensions = new Set([".lrc", ".txt"]);
-const options = { dtwImplementation: process.env.LYRICSYNC_DTW_IMPLEMENTATION === "banded" ? "banded" : undefined, useReferenceAnchors: process.env.LYRICSYNC_REFERENCE_ANCHORS !== "0" };
+const options = { dtwImplementation: process.env.LYRICSYNC_DTW_IMPLEMENTATION === "banded" ? "banded" : undefined, useReferenceAnchors: process.env.LYRICSYNC_REFERENCE_ANCHORS !== "0", anchorScale: process.env.LYRICSYNC_REFERENCE_ANCHOR_SCALE === "duration-ratio" ? "duration-ratio" : undefined };
 const featureCache = new FeatureCache(process.env.LYRICSYNC_FEATURE_CACHE_DIR || "cache/features");
 let entries = [];
 try { entries = (await readdir(root, { withFileTypes: true })).filter((entry) => entry.isDirectory()).sort((a, b) => a.name.localeCompare(b.name)).slice(0, limit); } catch { entries = []; }

@@ -39,6 +39,11 @@ lyrics recognizer.
   local runner) to search without assuming target starts match the reference
   timeline. This is more flexible for alternate recordings but costs more
   search time and should be compared against the anchored mode.
+For recordings with a broadly different total duration, set
+`anchorScale: "duration-ratio"` (or
+`LYRICSYNC_REFERENCE_ANCHOR_SCALE=duration-ratio`) to scale reference start
+and duration expectations by target/reference length. This is an opt-in
+heuristic; a long intro or outro can make a global ratio misleading.
 - `scripts/run-reference-template-alignment.mjs` is the local file runner. It
   writes only paths, metadata, and generated timestamps to the ignored private
   benchmark directory.

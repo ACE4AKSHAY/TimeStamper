@@ -36,13 +36,14 @@ export function alignWithReferenceTemplates({
   const minLength = Math.max(1, Number.isFinite(options.minLength) ? options.minLength : 1);
   const maxLength = Math.max(minLength, Number.isFinite(options.maxLength) ? options.maxLength : Math.ceil(Math.max(largestTemplate * 2.5, targetMfcc.frames.length / lines.length * 2)));
   const referenceDurations = referenceStarts.map((start, index) => Math.max(1 / referenceSampleRate, (index + 1 < referenceStarts.length ? referenceStarts[index + 1] : referenceDuration) - start));
-  const expectedLengths = referenceDurations.map((seconds) => Math.max(1, seconds * targetMfcc.frameRate));
+  const anchorScale = options.anchorScale === "duration-ratio" ? duration / Math.max(referenceDuration, 1 / referenceSampleRate) : Number.isFinite(options.anchorScale) && options.anchorScale > 0 ? options.anchorScale : 1;
+  const expectedLengths = referenceDurations.map((seconds) => Math.max(1, seconds * anchorScale * targetMfcc.frameRate));
   const searchStride = Math.max(1, Math.floor(options.searchStride ?? (targetMfcc.frames.length > 8000 ? 4 : 1)));
   const featureStride = Math.max(1, Math.floor(options.featureStride ?? (targetMfcc.frames.length > 8000 ? 4 : 1)));
   const descriptorTopK = Math.max(0, Math.floor(options.descriptorTopK ?? (targetMfcc.frames.length > 8000 ? 6 : 0)));
   const useReferenceAnchors = options.useReferenceAnchors !== false;
-  const initialFrame = Math.max(0, Math.min(targetMfcc.frames.length - 1, Math.round((options.initialOffsetSeconds ?? (useReferenceAnchors ? referenceStarts[0] : 0)) * targetMfcc.frameRate)));
-  const expectedStarts = useReferenceAnchors ? referenceStarts.map((seconds) => Math.max(0, Math.min(targetMfcc.frames.length - 1, Math.round(seconds * targetMfcc.frameRate)))) : null;
+  const initialFrame = Math.max(0, Math.min(targetMfcc.frames.length - 1, Math.round((options.initialOffsetSeconds ?? (useReferenceAnchors ? referenceStarts[0] * anchorScale : 0)) * targetMfcc.frameRate)));
+  const expectedStarts = useReferenceAnchors ? referenceStarts.map((seconds) => Math.max(0, Math.min(targetMfcc.frames.length - 1, Math.round(seconds * anchorScale * targetMfcc.frameRate)))) : null;
   const anchorToleranceSeconds = Number.isFinite(options.anchorToleranceSeconds) ? Math.max(0, options.anchorToleranceSeconds) : 1;
   const anchorToleranceFrames = Math.max(0, Math.round(anchorToleranceSeconds * targetMfcc.frameRate));
   const alignment = alignLineTemplates(targetMfcc.frames, templates.templates, {
@@ -77,7 +78,7 @@ export function alignWithReferenceTemplates({
     alignment,
     reference: { duration: referenceDuration, sampleRate: referenceSampleRate, lineCount: referenceStarts.length, templateFrameRate: templates.frameRate },
     target: { duration, sampleRate: targetSampleRate, frameCount: targetMfcc.frames.length, frameRate: targetMfcc.frameRate },
-    parameters: { mfcc: mfccOptions, minLength, maxLength, expectedLengths, lengthTolerance: options.lengthTolerance ?? 0.75, searchStride, featureStride, descriptorTopK, descriptorDimensions: options.descriptorDimensions ?? 6, useReferenceAnchors, initialFrame, expectedStarts, anchorToleranceSeconds, anchorToleranceFrames, slack: options.slack ?? 2, window: options.window ?? 8, dtwImplementation: options.dtwImplementation === "banded" ? "banded" : "full-matrix" },
+    parameters: { mfcc: mfccOptions, minLength, maxLength, expectedLengths, anchorScale, lengthTolerance: options.lengthTolerance ?? 0.75, searchStride, featureStride, descriptorTopK, descriptorDimensions: options.descriptorDimensions ?? 6, useReferenceAnchors, initialFrame, expectedStarts, anchorToleranceSeconds, anchorToleranceFrames, slack: options.slack ?? 2, window: options.window ?? 8, dtwImplementation: options.dtwImplementation === "banded" ? "banded" : "full-matrix" },
   };
 }
 
