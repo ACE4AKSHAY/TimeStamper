@@ -11,6 +11,8 @@ const output = resolve(process.argv[3] || "benchmarks/private/reference-template
 const limit = Number.isFinite(Number(process.argv[4])) && Number(process.argv[4]) > 0 ? Math.floor(Number(process.argv[4])) : Infinity;
 const audioExtensions = new Set([".mp3", ".m4a", ".wav", ".wave", ".flac", ".ogg", ".opus", ".aac"]);
 const lyricExtensions = new Set([".lrc", ".txt"]);
+const dtwImplementation = process.env.LYRICSYNC_DTW_IMPLEMENTATION === "banded" ? "banded" : undefined;
+const useReferenceAnchors = process.env.LYRICSYNC_REFERENCE_ANCHORS === "0" ? false : true;
 const entries = (await readdir(root, { withFileTypes: true })).filter((entry) => entry.isDirectory()).sort((a, b) => a.name.localeCompare(b.name)).slice(0, limit);
 const cases = [];
 for (const entry of entries) cases.push(await evaluateCase(join(root, entry.name), entry.name));
@@ -21,6 +23,7 @@ const document = {
   generatedAt: new Date().toISOString(),
   purpose: "real-recording implementation sanity check using each reviewed recording as both reference and target",
   limitation: "self-reference does not measure alternate-recording generalization; use a separate target recording for that claim",
+  configuration: { dtwImplementation: dtwImplementation || "full-matrix", useReferenceAnchors },
   privacy: "metadata, local paths and generated timestamps/metrics only; source media and lyric text were not copied",
   root,
   summary: { discoveredCases: cases.length, evaluatedCases: evaluated.length, failedCases: cases.filter((item) => item.status === "failed").length },
@@ -44,7 +47,7 @@ async function evaluateCase(caseRoot, id) {
     const starts = (reference.startTimes || []).map(Number);
     if (starts.length !== lyrics.lines.length) return { id, status: "failed", reason: "reference_line_count_does_not_match_lyrics" };
     const started = performance.now();
-    const result = alignWithReferenceTemplates({ referenceSamples: decoded.samples, referenceSampleRate: decoded.sampleRate, referenceStarts: starts, referenceDuration: decoded.duration, targetSamples: decoded.samples, targetSampleRate: decoded.sampleRate, targetDuration: decoded.duration, lyrics: lyrics.lines });
+    const result = alignWithReferenceTemplates({ referenceSamples: decoded.samples, referenceSampleRate: decoded.sampleRate, referenceStarts: starts, referenceDuration: decoded.duration, targetSamples: decoded.samples, targetSampleRate: decoded.sampleRate, targetDuration: decoded.duration, lyrics: lyrics.lines, options: { dtwImplementation, useReferenceAnchors } });
     const predicted = result.lines.map((line) => line.startTime);
     return { id, status: "evaluated", audioPath: join(caseRoot, audio.name), lyricPath: join(caseRoot, lyric.name), lineCount: starts.length, runtimeMs: performance.now() - started, metrics: scoreTimestamps(predicted, starts), confidence: { mean: result.lines.reduce((sum, line) => sum + (line.confidence || 0), 0) / result.lines.length, reviewRequired: result.lines.filter((line) => line.reviewRequired).length }, diagnostics: result.alignment.diagnostics };
   } catch (error) {

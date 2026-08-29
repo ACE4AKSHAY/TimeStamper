@@ -197,6 +197,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 147 | Experiment 25 Unicode text units | 🟡 | Text-weighted alignment can compare codepoint and grapheme-cluster priors without language identification; real multilingual calibration remains. |
 | 148 | Experiment 26 rolling-cost DTW | 🟡 | A banded rolling-cost DTW candidate preserves the full reference path/cost on fixtures and is available as an opt-in MFCC/template implementation; long-recording memory/runtime measurement remains. |
 | 149 | Manual UI review follow-up | 🟡 | Screen-recording/LRC audit is documented; strict editor time parsing, visible validation toasts, delete-line, remove-audio and remove-lyrics controls are implemented and await one focused manual recheck. |
+| 150 | Experiment 27 reference-template self-alignment | 🟡 | Banded MFCC/constrained-DTW reproduced 1,114 verified lines from identical reference/target recordings with 29.2 ms aggregate MAE; this validates implementation and memory behavior, not alternate-recording generalization. |
 
 ## Recommended next steps
 

@@ -128,6 +128,12 @@ For a local decoded-file run, use `npm run align-local -- <audio-path> <lyric-pa
 
 For reference-assisted MFCC/DTW, use `npm run align-reference-template -- <target-audio> <reference-audio> <reference-json> <lyrics>`. The reference JSON supplies manually verified line starts; the generated target timeline remains editable and is written only to the ignored private output path.
 
+For a local implementation sanity check across reviewed recordings, set
+`LYRICSYNC_DTW_IMPLEMENTATION=banded` and run
+`scripts/evaluate-reference-template-cases.mjs`; see
+`benchmarks/REFERENCE_TEMPLATE_SELF_EVALUATION.md`. Identical reference/target
+results validate the pipeline but do not measure alternate-recording accuracy.
+
 Template and MFCC sequence alignment accept `dtwImplementation: "banded"` as
 an opt-in memory-efficient implementation. The full-matrix implementation
 remains the reference until longer real-recording comparisons are complete.
