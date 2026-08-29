@@ -193,6 +193,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 143 | Experiment 22 silence-aware Boundary-DP | 🟡 | Pause gaps, onset strength and following activity now contribute to an isolated selectable aligner; real pause calibration remains pending. |
 | 144 | Private real-case evaluation harness | 🟡 | Verified case folders can now be batch-decoded and scored across engines without copying audio or lyric text; real results await user-prepared references. |
 | 145 | Experiment 23 adaptive vocal threshold sweep | 🟡 | Twelve voicedness/coverage threshold combinations are now evaluated reproducibly; synthetic sensitivity does not establish real-song defaults. |
+| 146 | Experiment 24 full engine comparison | 🟡 | All current deterministic engines are compared on a new seeded varied corpus; rankings remain synthetic until real verified cases arrive. |
 
 ## Recommended next steps
 

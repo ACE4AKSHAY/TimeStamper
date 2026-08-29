@@ -32,6 +32,7 @@ they are generated artifacts; regenerate this report with
 | Adaptive vocal selector | `adaptive-vocal-boundary-synthetic-v1` | 2 | energy-only 0.583 s MAE; routed 0.417 s MAE; high coverage gates, low coverage falls back |
 | Silence-aware Boundary-DP | `silence-aware-boundary-synthetic-v1` | 2 | ordinary 0.417 s MAE; pause-aware 0.583 s MAE; 67% within 1.00 s |
 | Adaptive vocal threshold sweep | `adaptive-vocal-threshold-sweep-v1` | 12 | all tested combinations tied at 0.417 s MAE; no synthetic winner identified |
+| Full engine comparison | `full-engine-generalization-v1` | 60 | best vocal-gated 0.745 s MAE; combined profile 0.792 s; 313 total line starts |
 | Offline pipeline smoke | `offline-pipeline-synthetic-v1` | 1 | 32,000 samples decoded; 64-frame profiles; multi-profile alignment 0.024 s MAE |
 
 ## Interpretation
@@ -138,6 +139,12 @@ Experiment 23 swept 12 vocal-routing threshold combinations. Every candidate
 tied at 0.417 s MAE because the fixture contains clearly high and clearly low
 voicedness coverage. This cannot identify a production threshold; borderline
 real recordings are required for that calibration.
+
+Experiment 24 compares all current engines on a fresh varied corpus. Vocal
+gating ranks first (0.745 s MAE), combined profile second (0.792 s), while
+text-weighted, refined, silence-aware, and basic Boundary-DP trail on this
+corpus. This ranking is a development hypothesis only; real verified
+recordings remain decisive.
 
 ## Real-song status
 
