@@ -199,6 +199,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 149 | Manual UI review follow-up | 🟡 | Screen-recording/LRC audit is documented; strict editor time parsing, visible validation toasts, delete-line, remove-audio and remove-lyrics controls are implemented and await one focused manual recheck. |
 | 150 | Experiment 27 reference-template self-alignment | 🟡 | Banded MFCC/constrained-DTW reproduced 1,114 verified lines from identical reference/target recordings with 29.2 ms aggregate MAE; this validates implementation and memory behavior, not alternate-recording generalization. |
 | 151 | Reference-template engine integration | 🟡 | The assisted MFCC/DTW adapter is now exposed through the platform-neutral `synchronize()` API as an explicit opt-in engine; PCM inputs are kept out of serializable parameter snapshots and the path is covered by tests. Interactive UI integration remains intentionally deferred until alternate-recording accuracy and async runtime are measured. |
+| 152 | Vocal-separation comparison contract | 🟡 | Added a model-agnostic separator interface and full-mix versus separated-vocal comparison runner; actual Demucs/Spleeter/native results remain pending because no separator model is bundled or required. |
 
 ## Recommended next steps
 

@@ -2,6 +2,17 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { alignWithReferenceTemplates } from "../src/reference-template-aligner.js";
 import { synchronize } from "../src/engine.js";
+import { createPassthroughSeparator, createVocalSeparator, validateSeparatedAudio } from "../src/vocal-separator.js";
+
+test("vocal separator contract validates PCM and preserves a deterministic passthrough", async () => {
+  const input = { samples: [0, 0.25, -0.25], sampleRate: 8000 };
+  const separated = await createPassthroughSeparator().separate(input);
+  assert.ok(separated.samples instanceof Float32Array);
+  assert.equal(separated.duration, 3 / 8000);
+  const custom = createVocalSeparator({ name: "test-separator", separate: async () => ({ samples: [1], sampleRate: 4000 }) });
+  assert.equal((await custom.separate(input)).format, "separated-pcm");
+  assert.throws(() => validateSeparatedAudio({ samples: [], sampleRate: 8000 }), /empty audio/u);
+});
 
 test("reference-template adapter aligns a target recording and preserves line metadata", () => {
   const sampleRate = 8000;

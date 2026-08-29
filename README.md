@@ -101,6 +101,7 @@ The v0.1 browser UI is a thin client over reusable ES modules:
 - `src/audio-decoder.mjs` — dependency-free WAV decoding with optional local FFmpeg for compressed audio
 - `src/template-builder.js` — MFCC line-template extraction from a verified reference timeline
 - `src/reference-template-aligner.js` — reusable reference-assisted MFCC/constrained-DTW pipeline for aligning a target recording, with intro and duration bounds
+- `src/vocal-separator.js` — optional, model-agnostic local vocal-separation contract; no separator model is bundled
 - `src/combined-aligner.js` — reusable combined-profile candidate generator
 - `src/text-weighted-aligner.js` — Unicode-safe lyric-length prior with a selectable Boundary-DP variant
 - `src/boundary-refiner.js` — bounded coarse-to-fine onset refinement with explainable confidence margins
@@ -136,6 +137,9 @@ For a local implementation sanity check across reviewed recordings, set
 `scripts/evaluate-reference-template-cases.mjs`; see
 `benchmarks/REFERENCE_TEMPLATE_SELF_EVALUATION.md`. Identical reference/target
 results validate the pipeline but do not measure alternate-recording accuracy.
+
+To compare a locally produced vocal stem with its original full mix, use
+`npm run compare-vocal-separation -- <full-mix> <vocal-file> <lyrics> <reference-json>`. See [`benchmarks/VOCAL_SEPARATION_EXPERIMENT.md`](benchmarks/VOCAL_SEPARATION_EXPERIMENT.md). This is an optional measurement path; it does not add a network or model dependency to the app.
 
 Template and MFCC sequence alignment accept `dtwImplementation: "banded"` as
 an opt-in memory-efficient implementation. The full-matrix implementation
