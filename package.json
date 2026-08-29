@@ -14,6 +14,7 @@
     "prepare-local-evaluation": "node scripts/prepare-local-evaluation.mjs",
     "align-local": "node scripts/run-local-alignment.mjs",
     "evaluate-real": "node scripts/evaluate-real-cases.mjs",
+    "evaluate-reference-template": "node scripts/evaluate-reference-template-cases.mjs",
     "align-reference-template": "node scripts/run-reference-template-alignment.mjs",
     "compare-engines": "node scripts/run-engine-comparison.mjs",
     "experiment-template-dtw": "node scripts/run-template-dtw-experiment.mjs",

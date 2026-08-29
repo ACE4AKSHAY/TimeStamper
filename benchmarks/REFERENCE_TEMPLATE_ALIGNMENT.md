@@ -54,6 +54,31 @@ $env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
 MP3/M4A decoding uses a local FFmpeg executable; WAV/PCM decoding is built in.
 No network service or dataset upload is involved.
 
+## Reviewed-folder sanity run
+
+To exercise the full adapter on real recordings without needing a second
+recording yet, run the self-evaluation harness. It uses each reviewed song as
+both reference and target, so it verifies decoding, MFCC extraction, bounded
+search, DTW segmentation, and confidence reporting. It is an implementation
+sanity check—not evidence that the method generalizes to another singer or
+recording.
+
+```powershell
+$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
+& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' run evaluate-reference-template -- `
+  'C:\path\to\TimeStamper_Manual_Review_2026-08-29' `
+  'benchmarks/private/reference-template-self-evaluation.json' 3
+```
+
+The final argument limits the number of cases; omit it to process every case.
+The output remains ignored and contains no lyric text or audio bytes.
+
+The first full-song pilot showed that even with duration bands, unrestricted
+MFCC/DTW candidate scoring remains CPU-heavy on a 216-second MP3. The harness
+therefore supports a case limit for safe experiments. This is a performance
+finding, not an accuracy result; the next optimization is coarse MFCC
+downsampling and tighter candidate pruning before running the whole collection.
+
 ## Search bounds
 
 The assisted adapter derives an expected target length for each line from the
