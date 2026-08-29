@@ -89,7 +89,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 39 | Local project storage | 🟡 | Browser download and Node `ProjectStore` structured directory are present; file-backed feature caching is now available. |
 | 40 | Storage principle | ✅ | Original audio is referenced, not copied into project JSON. |
 | 41 | Cache design | 🟡 | `FeatureCache` stores derived features under ignored, identity/config-keyed JSON entries; local alignment and private evaluation now reuse cached profiles/pitch, with an opt-out environment flag. |
-| 42 | Reproducibility | 🟡 | Method/confidence fields are saved; full run configuration record is next. |
+| 42 | Reproducibility | 🟡 | Method/confidence fields and a stable run-configuration record are saved with local/evaluation outputs; cross-machine result comparison remains. |
 | 43 | Human-readable logging | ✅ | Local downloadable activity log is implemented. |
 | 44 | Log levels | 🟡 | INFO/WARNING/ERROR are used; DEBUG preference is pending. |
 | 45 | Error handling | 🟡 | Import/parse/export errors are surfaced and logged; pipeline-specific failures arrive with those modules. |

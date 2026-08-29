@@ -6,6 +6,7 @@ import { buildEvaluationParameters, DEFAULT_EVALUATION_ENGINES, extractReference
 import { synchronize } from "../src/engine.js";
 import { loadOrExtractAudioFeatures } from "../src/audio-feature-cache.mjs";
 import { FeatureCache } from "../src/feature-cache.mjs";
+import { createRunConfiguration } from "../src/run-config.mjs";
 import { parseLyrics } from "../src/lyrics.js";
 import { scoreTimestamps } from "../src/metrics.js";
 
@@ -65,7 +66,9 @@ async function evaluateCase(caseRoot, id) {
       const predicted = result.lines.map((line) => line.startTime);
       enginesOutput[engine] = { metrics: scoreTimestamps(predicted, starts), predicted, runtimeMs: performance.now() - started };
     }
-    return { id, status: "evaluated", audioPath, lyricPath, lyricCandidates: lyricCandidates.map((entry) => entry.name), decoder: { format: decoded.format, sampleRate: decoded.sampleRate, duration: decoded.duration }, featureCache: features.cache, lyricLines: lyrics.lines.length, referenceLines: starts.length, engines: enginesOutput };
+    const decoder = { format: decoded.format, sampleRate: decoded.sampleRate, duration: decoded.duration };
+    const runConfiguration = createRunConfiguration({ workflow: "real-case-evaluation", engines, decoder, featureExtraction: features.extraction, cache: features.cache });
+    return { id, status: "evaluated", audioPath, lyricPath, lyricCandidates: lyricCandidates.map((entry) => entry.name), decoder, featureCache: features.cache, runConfiguration, lyricLines: lyrics.lines.length, referenceLines: starts.length, engines: enginesOutput };
   } catch (error) {
     return { id, status: "failed", reason: error.code || error.message || "evaluation_failed" };
   }

@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { parseLyrics } from "../src/lyrics.js";
 import { loadOrExtractAudioFeatures } from "../src/audio-feature-cache.mjs";
 import { FeatureCache } from "../src/feature-cache.mjs";
+import { createRunConfiguration } from "../src/run-config.mjs";
 import { synchronize } from "../src/engine.js";
 import { decodeAudioFile } from "../src/audio-decoder.mjs";
 
@@ -17,6 +18,8 @@ const features = await loadOrExtractAudioFeatures({ audioPath, decoded, cache, e
 const { profiles } = features;
 const engineParameters = engine === "multi-profile-boundary-dp" ? { profiles: { ...profiles, pitch: features.voicedness } } : engine === "combined-profile" ? { profiles } : {};
 const result = synchronize({ lyrics: lyrics.lines, duration: decoded.duration, energyProfile: profiles.energy, engine, parameters: engineParameters });
-const document = { schemaVersion: 1, generatedAt: new Date().toISOString(), privacy: "local paths and generated timeline only; source media and lyrics were not copied", audioPath, lyricPath, decoder: { format: decoded.format, sampleRate: decoded.sampleRate, duration: decoded.duration }, featureCache: features.cache, result };
+const decoder = { format: decoded.format, sampleRate: decoded.sampleRate, duration: decoded.duration };
+const runConfiguration = createRunConfiguration({ workflow: "local-alignment", engine, decoder, featureExtraction: features.extraction, cache: features.cache });
+const document = { schemaVersion: 1, generatedAt: new Date().toISOString(), privacy: "local paths and generated timeline only; source media and lyrics were not copied", audioPath, lyricPath, decoder, featureCache: features.cache, runConfiguration, result };
 await writeFile(output, JSON.stringify(document, null, 2) + "\n", "utf8");
 console.log(JSON.stringify({ output, engine, lines: result.lines.length, duration: decoded.duration, decoder: decoded.format }, null, 2));

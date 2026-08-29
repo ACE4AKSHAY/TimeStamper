@@ -19,14 +19,14 @@ export async function loadOrExtractAudioFeatures({ audioPath, decoded, cache = n
   if (enabled) {
     const cached = await cache.get(key);
     if (cached?.profiles?.energy && cached?.profiles?.spectralFlux && cached?.pitch?.frames) {
-      return { ...cached, cache: { enabled: true, hit: true, key } };
+      return { ...cached, extraction, cache: { enabled: true, hit: true, key } };
     }
   }
   const profiles = extractExplainableProfiles(decoded.samples, profilesConfig);
   const pitch = extractPitchProfile(decoded.samples, decoded.sampleRate, pitchConfig);
   const value = { profiles, pitch, voicedness: pitchVoicednessProfile(pitch) };
   if (enabled) await cache.set(key, value, { kind: "audio-features", extraction });
-  return { ...value, cache: { enabled, hit: false, key: enabled ? key : null } };
+  return { ...value, extraction, cache: { enabled, hit: false, key: enabled ? key : null } };
 }
 
 export { DEFAULT_PITCH_OPTIONS, DEFAULT_PROFILE_OPTIONS };

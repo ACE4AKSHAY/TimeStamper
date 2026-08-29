@@ -6,7 +6,7 @@ const packageJson = JSON.parse(await readFile(resolve("package.json"), "utf8"));
 const portableModules = [
   "domain.js", "lyrics.js", "lrc.js", "energy-aligner.js", "features.js", "dtw.js",
   "mfcc-dtw.js", "template-aligner.js", "template-builder.js", "reference-template-aligner.js", "profile-fusion.js",
-  "audio-profiles.js", "pitch-profile.js", "combined-aligner.js", "boundary-dp-aligner.js",
+  "audio-profiles.js", "pitch-profile.js", "run-config.mjs", "combined-aligner.js", "boundary-dp-aligner.js",
   "intro-aware-aligner.js", "adaptive-boundary-aligner.js", "text-weighted-aligner.js", "boundary-refiner.js", "ensemble-aligner.js", "vocal-gated-aligner.js", "adaptive-vocal-aligner.js", "silence-aware-aligner.js", "evaluation.js", "multi-profile-aligner.js", "consensus-aligner.js",
   "engine.js", "metrics.js",
 ];

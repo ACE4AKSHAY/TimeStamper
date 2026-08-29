@@ -90,6 +90,7 @@ The v0.1 browser UI is a thin client over reusable ES modules:
 - `src/project-store.mjs` — structured local project directory storage for desktop/CLI workflows
 - `src/feature-cache.mjs` — file-backed, content-identity/config-keyed cache for reusable decoded features and alignment inputs
 - `src/audio-feature-cache.mjs` — optional cache-aware profile/pitch extraction used by local alignment and private evaluation scripts
+- `src/run-config.mjs` — stable, serializable record of the settings used for each alignment run
 - `src/metrics.js` and `scripts/run-benchmark.mjs` — accuracy and resource measurement for experiments
 - `src/features.js` — configurable pure-JavaScript MFCC extraction
 - `src/audio-profiles.js` and `src/profile-fusion.js` — explainable RMS/spectral-flux extraction and weighted profile fusion
