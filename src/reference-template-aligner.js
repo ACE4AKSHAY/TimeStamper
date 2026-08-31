@@ -70,6 +70,7 @@ export function alignWithReferenceTemplates({
     window: options.window ?? 8,
     dtwImplementation: options.dtwImplementation,
     signal: options.signal,
+    onProgress: options.onProgress,
   });
   const refinementRadius = Math.max(0, Math.floor(options.templateBoundaryRadius ?? 0));
   const refinementMinImprovementRatio = Number.isFinite(options.templateBoundaryMinImprovementRatio)

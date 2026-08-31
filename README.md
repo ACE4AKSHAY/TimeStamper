@@ -174,6 +174,8 @@ selects the strongest nearby hypothesis; see
 [`REFERENCE_TEMPLATE_CLUSTERED_CONSENSUS.md`](benchmarks/REFERENCE_TEMPLATE_CLUSTERED_CONSENSUS.md).
 Long reference-template runs accept an optional `AbortSignal` through
 `options.signal`; see [`ALIGNMENT_CANCELLATION.md`](benchmarks/ALIGNMENT_CANCELLATION.md).
+They also accept `options.onProgress` for line/variant progress updates; see
+[`ALIGNMENT_PROGRESS.md`](benchmarks/ALIGNMENT_PROGRESS.md).
 
 Template and MFCC sequence alignment accept `dtwImplementation: "banded"` as
 an opt-in memory-efficient implementation. The full-matrix implementation

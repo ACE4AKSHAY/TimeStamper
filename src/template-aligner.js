@@ -65,12 +65,15 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
   for (let index = 0; index < lineCount; index++) prefixMinimums.push(prefixMinimums[index] + lineMinLengths[index]);
   const initialFrame = Math.min(frameCount - 1, Math.max(0, Math.floor(options.initialFrame ?? 0)));
   const signal = options.signal;
+  const progress = typeof options.onProgress === "function" ? options.onProgress : null;
+  reportProgress(progress, { phase: "template-dtw", completedLines: 0, totalLines: lineCount, fraction: 0 });
   const expectedStarts = options.expectedStarts == null ? null : options.expectedStarts.map(Number);
   if (expectedStarts && (expectedStarts.length !== lineCount || expectedStarts.some((value) => !Number.isFinite(value) || value < 0 || value >= frameCount))) throw new Error("Expected template starts must contain one in-range frame per lyric line.");
   const anchorToleranceFrames = Math.max(0, Math.floor(options.anchorToleranceFrames ?? Infinity));
   const costs = Array.from({ length: lineCount + 1 }, () => new Float64Array(frameCount + 1).fill(Infinity)); const parents = Array.from({ length: lineCount + 1 }, () => new Int32Array(frameCount + 1).fill(-1)); costs[0][initialFrame] = 0;
   for (let line = 1; line <= lineCount; line++) {
     throwIfAborted(signal);
+    reportProgress(progress, { phase: "template-dtw", completedLines: line - 1, totalLines: lineCount, fraction: (line - 1) / lineCount });
     const expectedEnd = expectedStarts ? expectedStarts[line - 1] + expectedLengths[line - 1] : null;
     const minimumEnd = Math.max(initialFrame + prefixMinimums[line], line * minLength, expectedEnd === null ? 0 : Math.floor(expectedEnd - anchorToleranceFrames));
     const maximumEnd = line === lineCount ? frameCount : Math.min(frameCount, expectedEnd === null ? frameCount : Math.ceil(expectedEnd + anchorToleranceFrames));
@@ -140,6 +143,7 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
     return { lineIndex: segment.lineIndex, cost, relativeCost, confidence, reviewRequired: highRelativeCost || unstableBoundary, failureCategory, startBoundary: boundary.startBoundary || null, endBoundary: boundary.endBoundary || null };
   });
   segments = segments.map((segment, index) => ({ ...segment, ...diagnostics[index] }));
+  reportProgress(progress, { phase: "template-dtw", completedLines: lineCount, totalLines: lineCount, fraction: 1 });
   return { segments, cost: costs[lineCount][frameCount], frameRate, method: "template_mfcc_dtw", diagnostics: { medianCost, baseline, reviewThreshold, marginFrames, boundaryMarginThreshold, searchStride, featureStride, dtwImplementation, dtwWindow, descriptorTopK, descriptorDimensions, initialFrame, expectedStarts, anchorToleranceFrames, expectedLengths, lengthTolerance, boundaries: boundaryDiagnostics } };
 }
 
@@ -149,4 +153,9 @@ function throwIfAborted(signal) {
     error.name = "AbortError";
     throw error;
   }
+}
+
+function reportProgress(callback, progress) {
+  if (!callback) return;
+  try { callback(progress); } catch { /* progress observers must not break alignment */ }
 }

@@ -60,6 +60,7 @@ test("reference-template adapter aligns a target recording and preserves line me
     return 0.6 * envelope * Math.sin(2 * Math.PI * frequency * index / sampleRate);
   });
   const lines = [{ id: "a", originalText: "one", order: 0 }, { id: "b", originalText: "two", order: 1 }];
+  const progressEvents = [];
   const result = alignWithReferenceTemplates({
     referenceSamples: samples,
     referenceSampleRate: sampleRate,
@@ -69,7 +70,7 @@ test("reference-template adapter aligns a target recording and preserves line me
     targetSampleRate: sampleRate,
     targetDuration: 0.4,
     lyrics: lines,
-    options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 },
+    options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, onProgress: (event) => progressEvents.push(event) },
   });
   assert.equal(result.method, "reference_template_mfcc_dtw");
   assert.equal(result.lines.length, 2);
@@ -81,6 +82,8 @@ test("reference-template adapter aligns a target recording and preserves line me
   assert.ok(result.lines.every((line) => ["stable", "high_relative_cost", "unstable_boundary", "high_relative_cost_and_unstable_boundary"].includes(line.failureCategory)));
   assert.equal(result.alignment.diagnostics.reviewThreshold, 0.5);
   assert.equal(result.reference.lineCount, 2);
+  assert.ok(progressEvents.length >= 2);
+  assert.equal(progressEvents.at(-1).fraction, 1);
   const normalized = await alignWithReferenceTemplates({
     referenceSamples: samples,
     referenceSampleRate: sampleRate,

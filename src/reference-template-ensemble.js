@@ -13,11 +13,15 @@ export function alignWithReferenceTemplateEnsemble({ variants, lyrics, duration,
   const maxVariants = Number.isFinite(alignmentInput.ensembleOptions?.maxVariants) ? Math.max(1, Math.floor(alignmentInput.ensembleOptions.maxVariants)) : 8;
   const selectedVariants = variants.slice(0, maxVariants);
   const ensembleStarted = now();
+  const progress = typeof alignmentInput.onProgress === "function" ? alignmentInput.onProgress : null;
+  reportProgress(progress, { phase: "ensemble", completedVariants: 0, totalVariants: selectedVariants.length, fraction: 0 });
   const candidates = selectedVariants.map((variant, index) => {
     const name = String(variant?.name || `variant_${index + 1}`);
     throwIfAborted(alignmentInput.signal);
+    reportProgress(progress, { phase: "ensemble", variant: name, completedVariants: index, totalVariants: selectedVariants.length, fraction: index / selectedVariants.length });
     const started = now();
-    const alignment = alignWithReferenceTemplates({ ...alignmentInput, lyrics: lines, targetDuration: alignmentInput.targetDuration ?? duration, options: variant?.options || {} });
+    const alignment = alignWithReferenceTemplates({ ...alignmentInput, lyrics: lines, targetDuration: alignmentInput.targetDuration ?? duration, options: { ...(variant?.options || {}), onProgress: progress } });
+    reportProgress(progress, { phase: "ensemble", variant: name, completedVariants: index + 1, totalVariants: selectedVariants.length, fraction: (index + 1) / selectedVariants.length });
     return { name, alignment, runtimeMs: now() - started };
   });
   const confidenceScale = Number.isFinite(alignmentInput.ensembleOptions?.confidenceScale) && alignmentInput.ensembleOptions.confidenceScale > 0 ? alignmentInput.ensembleOptions.confidenceScale : 0.5;
@@ -56,4 +60,5 @@ export function alignWithReferenceTemplateEnsemble({ variants, lyrics, duration,
 }
 
 function now() { return globalThis.performance?.now ? globalThis.performance.now() : Date.now(); }
+function reportProgress(callback, progress) { if (!callback) return; try { callback(progress); } catch { /* progress observers must not break alignment */ } }
 function throwIfAborted(signal) { if (signal?.aborted) { const error = new Error("Reference-template ensemble aborted."); error.name = "AbortError"; throw error; } }
