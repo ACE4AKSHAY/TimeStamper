@@ -131,6 +131,24 @@ test("reference-template adapter aligns a target recording and preserves line me
     ensembleOptions: { clusterToleranceSeconds: 0.1 },
   });
   assert.equal(clusteredEnsemble.clusterToleranceSeconds, 0.1);
+  const limitedEnsemble = alignWithReferenceTemplateEnsemble({
+    variants: [
+      { name: "first", options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 } },
+      { name: "second", options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 } },
+    ],
+    referenceSamples: samples,
+    referenceSampleRate: sampleRate,
+    referenceStarts: [0, 0.2],
+    referenceDuration: 0.4,
+    targetSamples: samples,
+    targetSampleRate: sampleRate,
+    targetDuration: 0.4,
+    lyrics: lines,
+    duration: 0.4,
+    ensembleOptions: { maxVariants: 1 },
+  });
+  assert.equal(limitedEnsemble.candidates.length, 1);
+  assert.equal(limitedEnsemble.truncatedVariantCount, 1);
   const ensembleEngine = synchronize({
     lyrics: lines,
     duration: 0.4,

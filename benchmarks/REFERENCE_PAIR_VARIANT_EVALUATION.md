@@ -18,6 +18,7 @@ Supported options:
 | `LYRICSYNC_TEMPLATE_ENSEMBLE=1` | Run anchored, anchor-free, and boundary-refined variants as an ensemble. |
 | `LYRICSYNC_ENSEMBLE_WEIGHT_BY_CONFIDENCE=1` | Use candidate confidence as ensemble influence. |
 | `LYRICSYNC_ENSEMBLE_CLUSTER_TOLERANCE=0.25` | Cluster nearby hypotheses before consensus and report outliers. |
+| `LYRICSYNC_ENSEMBLE_MAX_VARIANTS=3` | Bound repeated MFCC/DTW passes for desktop runtime safety. |
 
 The output records the effective configuration, confidence diagnostics,
 failure categories, and boundary-refinement summary. It still requires two

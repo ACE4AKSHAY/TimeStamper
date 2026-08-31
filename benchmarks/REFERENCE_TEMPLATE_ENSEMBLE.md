@@ -22,6 +22,10 @@ review. The layer does not recognize language and does not claim that a
 consensus is correct: correlated MFCC errors can still produce the same wrong
 answer.
 
+For desktop safety, the ensemble applies a default maximum of eight variants.
+Set `ensembleOptions.maxVariants` to a smaller value when CPU time is limited;
+the result records requested, selected, and truncated counts.
+
 ## Example configuration
 
 ```js
@@ -47,4 +51,3 @@ answer.
 This is an API/fixture validation milestone only. Independent reference and
 target recordings are still required before confidence thresholds or variant
 selection can be promoted into the desktop workflow.
-

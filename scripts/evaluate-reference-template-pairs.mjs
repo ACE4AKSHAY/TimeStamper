@@ -29,6 +29,7 @@ const ensembleOptions = {
   weightByConfidence: process.env.LYRICSYNC_ENSEMBLE_WEIGHT_BY_CONFIDENCE === "1",
   clusterToleranceSeconds: finiteEnvNumber("LYRICSYNC_ENSEMBLE_CLUSTER_TOLERANCE", 0, (value) => Math.max(0, value)),
   confidenceScale: finiteEnvNumber("LYRICSYNC_ENSEMBLE_CONFIDENCE_SCALE", 0.5, (value) => Math.max(0.000001, value)),
+  maxVariants: finiteEnvNumber("LYRICSYNC_ENSEMBLE_MAX_VARIANTS", 8, (value) => Math.max(1, Math.floor(value))),
 };
 const featureCache = new FeatureCache(process.env.LYRICSYNC_FEATURE_CACHE_DIR || "cache/features");
 let entries = [];

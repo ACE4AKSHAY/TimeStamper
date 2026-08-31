@@ -9,7 +9,10 @@ import { summarizeClusteredConsensus, summarizeConsensus, summarizeWeightedConse
 export function alignWithReferenceTemplateEnsemble({ variants, lyrics, duration, ...alignmentInput }) {
   const lines = Array.isArray(lyrics) ? lyrics : lyrics?.lines;
   if (!Array.isArray(lines) || !lines.length || !Array.isArray(variants) || !variants.length) throw new Error("Reference-template ensemble requires lyric lines and at least one variant.");
-  const candidates = variants.map((variant, index) => {
+  const requestedVariantCount = variants.length;
+  const maxVariants = Number.isFinite(alignmentInput.ensembleOptions?.maxVariants) ? Math.max(1, Math.floor(alignmentInput.ensembleOptions.maxVariants)) : 8;
+  const selectedVariants = variants.slice(0, maxVariants);
+  const candidates = selectedVariants.map((variant, index) => {
     const name = String(variant?.name || `variant_${index + 1}`);
     const alignment = alignWithReferenceTemplates({ ...alignmentInput, lyrics: lines, targetDuration: alignmentInput.targetDuration ?? duration, options: variant?.options || {} });
     return { name, alignment };
@@ -41,5 +44,8 @@ export function alignWithReferenceTemplateEnsemble({ variants, lyrics, duration,
     clusterToleranceSeconds,
     agreementThreshold,
     maxSpreadSeconds,
+    maxVariants,
+    requestedVariantCount,
+    truncatedVariantCount: Math.max(0, requestedVariantCount - candidates.length),
   };
 }
