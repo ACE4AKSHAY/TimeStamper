@@ -219,6 +219,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 169 | Clustered template consensus | 🟡 | Added an opt-in nearby-hypothesis clustering layer that selects the strongest cluster and reports outliers; default median behavior remains unchanged pending independent-pair validation. |
 | 170 | Ensemble options in alternate-pair evaluator | 🟡 | Held-out pair evaluation now supports ensemble, confidence weighting, and clustering flags while preserving per-candidate outputs; real verified pairs are still required for accuracy claims. |
 | 171 | Ensemble variant budget | 🟡 | Added a default eight-variant cap with requested/selected/truncated diagnostics to protect desktop runtime; callers can lower the budget explicitly. |
+| 172 | Ensemble runtime diagnostics | 🟡 | Records total and per-variant runtime for reference-template ensembles so CPU-heavy configurations can be measured before UI integration. |
 
 ## Recommended next steps
 

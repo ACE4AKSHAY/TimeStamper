@@ -25,6 +25,8 @@ answer.
 For desktop safety, the ensemble applies a default maximum of eight variants.
 Set `ensembleOptions.maxVariants` to a smaller value when CPU time is limited;
 the result records requested, selected, and truncated counts.
+The result also records total runtime and per-variant runtime so expensive
+configurations can be identified before enabling them in a desktop workflow.
 
 ## Example configuration
 

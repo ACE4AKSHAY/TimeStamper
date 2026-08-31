@@ -12,10 +12,12 @@ export function alignWithReferenceTemplateEnsemble({ variants, lyrics, duration,
   const requestedVariantCount = variants.length;
   const maxVariants = Number.isFinite(alignmentInput.ensembleOptions?.maxVariants) ? Math.max(1, Math.floor(alignmentInput.ensembleOptions.maxVariants)) : 8;
   const selectedVariants = variants.slice(0, maxVariants);
+  const ensembleStarted = now();
   const candidates = selectedVariants.map((variant, index) => {
     const name = String(variant?.name || `variant_${index + 1}`);
+    const started = now();
     const alignment = alignWithReferenceTemplates({ ...alignmentInput, lyrics: lines, targetDuration: alignmentInput.targetDuration ?? duration, options: variant?.options || {} });
-    return { name, alignment };
+    return { name, alignment, runtimeMs: now() - started };
   });
   const confidenceScale = Number.isFinite(alignmentInput.ensembleOptions?.confidenceScale) && alignmentInput.ensembleOptions.confidenceScale > 0 ? alignmentInput.ensembleOptions.confidenceScale : 0.5;
   const agreementThreshold = Number.isFinite(alignmentInput.ensembleOptions?.agreementThreshold) ? Math.max(0, Math.min(1, alignmentInput.ensembleOptions.agreementThreshold)) : 0.6;
@@ -37,7 +39,7 @@ export function alignWithReferenceTemplateEnsemble({ variants, lyrics, duration,
   return {
     method: "reference_template_ensemble",
     lines: alignedLines,
-    candidates: candidates.map((candidate) => ({ name: candidate.name, method: candidate.alignment.method, starts: candidate.alignment.lines.map((line) => line.startTime), confidence: candidate.alignment.lines.map((line) => line.confidence) })),
+    candidates: candidates.map((candidate) => ({ name: candidate.name, method: candidate.alignment.method, starts: candidate.alignment.lines.map((line) => line.startTime), confidence: candidate.alignment.lines.map((line) => line.confidence), runtimeMs: candidate.runtimeMs })),
     consensus,
     confidenceScale,
     weightByConfidence,
@@ -47,5 +49,9 @@ export function alignWithReferenceTemplateEnsemble({ variants, lyrics, duration,
     maxVariants,
     requestedVariantCount,
     truncatedVariantCount: Math.max(0, requestedVariantCount - candidates.length),
+    runtimeMs: now() - ensembleStarted,
+    candidateRuntimesMs: candidates.map((candidate) => ({ name: candidate.name, runtimeMs: candidate.runtimeMs })),
   };
 }
+
+function now() { return globalThis.performance?.now ? globalThis.performance.now() : Date.now(); }

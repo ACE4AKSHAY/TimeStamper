@@ -95,6 +95,8 @@ test("reference-template adapter aligns a target recording and preserves line me
   });
   assert.equal(ensemble.method, "reference_template_ensemble");
   assert.equal(ensemble.candidates.length, 2);
+  assert.ok(Number.isFinite(ensemble.runtimeMs) && ensemble.runtimeMs >= 0);
+  assert.ok(ensemble.candidateRuntimesMs.every((item) => Number.isFinite(item.runtimeMs)));
   assert.ok(ensemble.lines.every((line, index) => index === 0 || line.startTime >= ensemble.lines[index - 1].startTime));
   assert.ok(ensemble.lines.every((line) => line.alignmentReview.candidateCount >= 1));
   const weightedEnsemble = alignWithReferenceTemplateEnsemble({
