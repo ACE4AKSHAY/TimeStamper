@@ -64,15 +64,18 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
   const prefixMinimums = [0];
   for (let index = 0; index < lineCount; index++) prefixMinimums.push(prefixMinimums[index] + lineMinLengths[index]);
   const initialFrame = Math.min(frameCount - 1, Math.max(0, Math.floor(options.initialFrame ?? 0)));
+  const signal = options.signal;
   const expectedStarts = options.expectedStarts == null ? null : options.expectedStarts.map(Number);
   if (expectedStarts && (expectedStarts.length !== lineCount || expectedStarts.some((value) => !Number.isFinite(value) || value < 0 || value >= frameCount))) throw new Error("Expected template starts must contain one in-range frame per lyric line.");
   const anchorToleranceFrames = Math.max(0, Math.floor(options.anchorToleranceFrames ?? Infinity));
   const costs = Array.from({ length: lineCount + 1 }, () => new Float64Array(frameCount + 1).fill(Infinity)); const parents = Array.from({ length: lineCount + 1 }, () => new Int32Array(frameCount + 1).fill(-1)); costs[0][initialFrame] = 0;
   for (let line = 1; line <= lineCount; line++) {
+    throwIfAborted(signal);
     const expectedEnd = expectedStarts ? expectedStarts[line - 1] + expectedLengths[line - 1] : null;
     const minimumEnd = Math.max(initialFrame + prefixMinimums[line], line * minLength, expectedEnd === null ? 0 : Math.floor(expectedEnd - anchorToleranceFrames));
     const maximumEnd = line === lineCount ? frameCount : Math.min(frameCount, expectedEnd === null ? frameCount : Math.ceil(expectedEnd + anchorToleranceFrames));
     for (let end = minimumEnd; end <= maximumEnd; end++) {
+      if ((end & 127) === 0) throwIfAborted(signal);
       if (end !== frameCount && end % searchStride !== 0) continue;
       const firstStart = Math.max(initialFrame + prefixMinimums[line - 1], end - lineMaxLengths[line - 1]);
       const expectedStart = expectedStarts ? expectedStarts[line - 1] : null;
@@ -138,4 +141,12 @@ export function alignLineTemplates(audioFrames, lineTemplates, options = {}) {
   });
   segments = segments.map((segment, index) => ({ ...segment, ...diagnostics[index] }));
   return { segments, cost: costs[lineCount][frameCount], frameRate, method: "template_mfcc_dtw", diagnostics: { medianCost, baseline, reviewThreshold, marginFrames, boundaryMarginThreshold, searchStride, featureStride, dtwImplementation, dtwWindow, descriptorTopK, descriptorDimensions, initialFrame, expectedStarts, anchorToleranceFrames, expectedLengths, lengthTolerance, boundaries: boundaryDiagnostics } };
+}
+
+function throwIfAborted(signal) {
+  if (signal?.aborted) {
+    const error = new Error("Template alignment aborted.");
+    error.name = "AbortError";
+    throw error;
+  }
 }

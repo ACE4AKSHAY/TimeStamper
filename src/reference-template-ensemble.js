@@ -15,6 +15,7 @@ export function alignWithReferenceTemplateEnsemble({ variants, lyrics, duration,
   const ensembleStarted = now();
   const candidates = selectedVariants.map((variant, index) => {
     const name = String(variant?.name || `variant_${index + 1}`);
+    throwIfAborted(alignmentInput.signal);
     const started = now();
     const alignment = alignWithReferenceTemplates({ ...alignmentInput, lyrics: lines, targetDuration: alignmentInput.targetDuration ?? duration, options: variant?.options || {} });
     return { name, alignment, runtimeMs: now() - started };
@@ -55,3 +56,4 @@ export function alignWithReferenceTemplateEnsemble({ variants, lyrics, duration,
 }
 
 function now() { return globalThis.performance?.now ? globalThis.performance.now() : Date.now(); }
+function throwIfAborted(signal) { if (signal?.aborted) { const error = new Error("Reference-template ensemble aborted."); error.name = "AbortError"; throw error; } }

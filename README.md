@@ -172,6 +172,8 @@ Its optional `ensembleOptions.weightByConfidence` mode is documented in
 For multimodal disagreements, `ensembleOptions.clusterToleranceSeconds`
 selects the strongest nearby hypothesis; see
 [`REFERENCE_TEMPLATE_CLUSTERED_CONSENSUS.md`](benchmarks/REFERENCE_TEMPLATE_CLUSTERED_CONSENSUS.md).
+Long reference-template runs accept an optional `AbortSignal` through
+`options.signal`; see [`ALIGNMENT_CANCELLATION.md`](benchmarks/ALIGNMENT_CANCELLATION.md).
 
 Template and MFCC sequence alignment accept `dtwImplementation: "banded"` as
 an opt-in memory-efficient implementation. The full-matrix implementation

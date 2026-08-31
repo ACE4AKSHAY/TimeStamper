@@ -25,6 +25,22 @@ test("clustered consensus keeps a selected timing hypothesis away from outliers"
   assert.equal(summary.outlierCount, 1);
 });
 
+test("reference-template alignment cooperatively aborts before expensive work", () => {
+  const controller = new AbortController();
+  controller.abort();
+  assert.throws(() => alignWithReferenceTemplates({
+    referenceSamples: [0, 1, 0, -1],
+    referenceSampleRate: 20,
+    referenceStarts: [0],
+    referenceDuration: 0.2,
+    targetSamples: [0, 1, 0, -1],
+    targetSampleRate: 20,
+    targetDuration: 0.2,
+    lyrics: [{ originalText: "one", order: 0 }],
+    options: { signal: controller.signal },
+  }), (error) => error?.name === "AbortError");
+});
+
 test("vocal separator contract validates PCM and preserves a deterministic passthrough", async () => {
   const input = { samples: [0, 0.25, -0.25], sampleRate: 8000 };
   const separated = await createPassthroughSeparator().separate(input);

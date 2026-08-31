@@ -23,6 +23,7 @@ export function alignWithReferenceTemplates({
   lyrics,
   options = {},
 }) {
+  throwIfAborted(options.signal);
   const lines = Array.isArray(lyrics) ? lyrics : lyrics?.lines;
   if (!Array.isArray(lines) || !lines.length) throw new Error("Reference-template alignment requires lyric lines.");
   if (!Number.isFinite(targetSampleRate) || targetSampleRate <= 0) throw new Error("Reference-template alignment requires a positive target sample rate.");
@@ -68,6 +69,7 @@ export function alignWithReferenceTemplates({
     slack: options.slack,
     window: options.window ?? 8,
     dtwImplementation: options.dtwImplementation,
+    signal: options.signal,
   });
   const refinementRadius = Math.max(0, Math.floor(options.templateBoundaryRadius ?? 0));
   const refinementMinImprovementRatio = Number.isFinite(options.templateBoundaryMinImprovementRatio)
@@ -95,6 +97,14 @@ export function alignWithReferenceTemplates({
     target: { duration, sampleRate: targetSampleRate, frameCount: targetMfcc.frames.length, frameRate: targetMfcc.frameRate },
     parameters: { mfcc: mfccOptions, minLength, maxLength, expectedLengths, anchorScale, featureNormalization: featureNormalization.mode, templateBoundaryRadius: refinementRadius, templateBoundaryMinImprovementRatio: refinementMinImprovementRatio, lengthTolerance: options.lengthTolerance ?? 0.75, searchStride, featureStride, descriptorTopK, descriptorDimensions: options.descriptorDimensions ?? 6, useReferenceAnchors, initialFrame, expectedStarts, anchorToleranceSeconds, anchorToleranceFrames, slack: options.slack ?? 2, window: options.window ?? 8, dtwImplementation: options.dtwImplementation === "banded" ? "banded" : "full-matrix" },
   };
+}
+
+function throwIfAborted(signal) {
+  if (signal?.aborted) {
+    const error = new Error("Reference-template alignment aborted.");
+    error.name = "AbortError";
+    throw error;
+  }
 }
 
 /**

@@ -220,6 +220,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 170 | Ensemble options in alternate-pair evaluator | 🟡 | Held-out pair evaluation now supports ensemble, confidence weighting, and clustering flags while preserving per-candidate outputs; real verified pairs are still required for accuracy claims. |
 | 171 | Ensemble variant budget | 🟡 | Added a default eight-variant cap with requested/selected/truncated diagnostics to protect desktop runtime; callers can lower the budget explicitly. |
 | 172 | Ensemble runtime diagnostics | 🟡 | Records total and per-variant runtime for reference-template ensembles so CPU-heavy configurations can be measured before UI integration. |
+| 173 | Cooperative alignment cancellation | 🟡 | Reference-template and ensemble paths now accept an optional AbortSignal and throw AbortError cooperatively during long DTW work; worker/UI wiring remains future scope. |
 
 ## Recommended next steps
 
