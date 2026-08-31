@@ -126,6 +126,8 @@ export function synchronize({ lyrics, duration, energyProfile, engine = "energy-
       targetSampleRate: parameters.targetSampleRate,
       targetDuration: parameters.targetDuration ?? duration,
       ensembleOptions: parameters.ensembleOptions,
+      signal: parameters.signal,
+      onProgress: parameters.onProgress,
     });
     return { engine, engineVersion: ENGINE_VERSION, parameters: { variants: parameters.variants, ensembleOptions: parameters.ensembleOptions || {}, referenceSamples: undefined, targetSamples: undefined, referenceStarts: undefined }, lines: alignment.lines, alignment, generatedAt: new Date().toISOString() };
   }

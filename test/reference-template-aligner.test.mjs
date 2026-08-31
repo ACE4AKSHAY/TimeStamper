@@ -170,7 +170,28 @@ test("reference-template adapter aligns a target recording and preserves line me
   });
   assert.equal(limitedEnsemble.candidates.length, 1);
   assert.equal(limitedEnsemble.truncatedVariantCount, 1);
+  const ensembleProgress = [];
   const ensembleEngine = synchronize({
+    lyrics: lines,
+    duration: 0.4,
+    engine: "reference-template-ensemble",
+    parameters: {
+      referenceSamples: samples,
+      referenceSampleRate: sampleRate,
+      referenceStarts: [0, 0.2],
+      referenceDuration: 0.4,
+      targetSamples: samples,
+      targetSampleRate: sampleRate,
+      targetDuration: 0.4,
+      variants: [{ name: "default", options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 } }],
+      onProgress: (event) => ensembleProgress.push(event),
+    },
+  });
+  assert.equal(ensembleEngine.engine, "reference-template-ensemble");
+  assert.equal(ensembleEngine.lines.length, lines.length);
+  assert.ok(ensembleProgress.length >= 2);
+  assert.equal(ensembleProgress.at(-1).fraction, 1);
+  const ensembleEngineWithoutProgress = synchronize({
     lyrics: lines,
     duration: 0.4,
     engine: "reference-template-ensemble",
@@ -185,8 +206,7 @@ test("reference-template adapter aligns a target recording and preserves line me
       variants: [{ name: "default", options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 } }],
     },
   });
-  assert.equal(ensembleEngine.engine, "reference-template-ensemble");
-  assert.equal(ensembleEngine.lines.length, lines.length);
+  assert.equal(ensembleEngineWithoutProgress.engine, "reference-template-ensemble");
   const banded = alignWithReferenceTemplates({
     referenceSamples: samples,
     referenceSampleRate: sampleRate,
