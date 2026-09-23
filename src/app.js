@@ -1,4 +1,4 @@
-import { createLine, createProject } from "./domain.js";
+import { createLine, createLyricsProvenance, createProject } from "./domain.js";
 import { parseLyrics, linesToText } from "./lyrics.js";
 import { exportLrc, secondsToLrc } from "./lrc.js";
 import { deserializeProject, downloadText, openText, saveText, serializeProject } from "./storage.js";
@@ -40,6 +40,8 @@ function render() {
   ["title", "artist", "album", "language"].forEach((key) => { $(key).value = project.metadata[key] || ""; });
   $("lyrics-text").value = linesToText(project.lyrics.lines);
   $("lyrics-status").textContent = `${project.lyrics.lines.length} lyric line(s) loaded`;
+  const provenance = project.lyrics.provenance;
+  $("lyrics-provenance").textContent = provenance ? `Source: ${provenance.providerName} · ${provenance.resultKind}${provenance.retrievedAt ? ` · ${new Date(provenance.retrievedAt).toLocaleString()}` : ""}` : "Source: local text or file";
   $("audio-status").textContent = project.audio.name ? `${project.audio.name}${project.audio.duration ? ` · ${formatClock(project.audio.duration)}` : ""}` : "No audio selected";
   const enabled = Boolean(project.audio.name);
   $("remove-audio").disabled = !enabled;
@@ -193,11 +195,15 @@ function useOnlineResult(result) {
   if (result.title) project.metadata.title = result.title;
   if (result.artist) project.metadata.artist = result.artist;
   if (result.album) project.metadata.album = result.album;
-  loadLyrics(text, result.syncedLyrics ? "online-lrc" : "online-txt");
+  loadLyrics(text, result.syncedLyrics ? "online-lrc" : "online-txt", createLyricsProvenance({ providerId: result.providerId, providerName: result.providerName, sourceUrl: result.sourceUrl || onlineSourceUrl(result.providerId), resultKind: result.resultKind, query: `${result.artist || ""} - ${result.title || ""}`.replace(/^ - | - $/gu, "") }));
   onlineResults = [];
   showToast(result.syncedLyrics ? `Timed lyrics imported from ${result.providerName || "the online source"}.` : `Plain lyrics imported from ${result.providerName || "the online source"}. Review and timestamp them.`);
   log.info(`Imported optional online lyrics for ${result.title || "selected result"}.`);
   render();
+}
+
+function onlineSourceUrl(providerId) {
+  return providerId === "lrclib" ? "https://lrclib.net/" : providerId === "lyrics-ovh" ? "https://lyrics.ovh/" : "";
 }
 
 function renderTimeline() {
@@ -279,12 +285,12 @@ function removeAudio() {
 }
 
 function removeLyrics() {
-  project.lyrics = { source: "manual", lines: [] }; project.timeline.lines = []; selectedId = null;
+  project.lyrics = { source: "manual", provenance: null, lines: [] }; project.timeline.lines = []; selectedId = null;
   $("lyrics-file").value = ""; $("lyrics-text").value = ""; log.info("Lyrics removed from the project."); showToast("Lyrics removed."); render();
 }
 
-function loadLyrics(text, source = "pasted") {
-  const parsed = parseLyrics(text, source); project.lyrics = { source, lines: parsed.lines }; project.timeline.lines = parsed.lines;
+function loadLyrics(text, source = "pasted", provenance = null) {
+  const parsed = parseLyrics(text, source); project.lyrics = { source, provenance, lines: parsed.lines }; project.timeline.lines = parsed.lines;
   project.metadata.artist ||= parsed.metadata.ar || ""; project.metadata.title ||= parsed.metadata.ti || ""; project.metadata.album ||= parsed.metadata.al || ""; project.metadata.language ||= parsed.metadata.la || "";
   selectedId = parsed.lines[0]?.id || null; log.info(`Loaded ${parsed.lines.length} lyric line(s) from ${source}.`); render();
 }

@@ -234,6 +234,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 184 | Online source controls | 🟡 | Added per-source Settings switches for LRCLIB, lyrics.ovh, and browser-link search; disabled sources are not queried and the default remains opt-in. |
 | 185 | Online request safety | 🟡 | Added bounded provider timeouts, AbortSignal forwarding, and a visible Cancel search action; cancellation and provider failures leave local project state unchanged. |
 | 186 | Local online-result cache | 🟡 | Added a seven-day, provider-scoped localStorage cache with expiry, bounded entry count, and a clear-cache action; cached data contains lyric responses only. |
+| 187 | Online import provenance | 🟡 | Imported online lyrics now retain provider, result kind, source URL, query context, and retrieval time in the project file and show the source beside the loaded lyrics. |
 
 ## Recommended next steps
 

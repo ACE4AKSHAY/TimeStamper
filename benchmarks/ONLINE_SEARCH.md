@@ -33,6 +33,8 @@ that source while leaving the others available.
 - Successful responses are cached locally for seven days per provider and
   artist/title context. Use **Clear cached online results** in Settings to
   remove them; the cache contains no audio or waveform data.
+- When a result is imported, the project records its provider, result type,
+  source URL, query context, and retrieval time beside the lyric source.
 - The provider registry is isolated in `src/online-provider.js`; replacing a
   source or adding another service does not change parsing, editing, alignment,
   or LRC export.

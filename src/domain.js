@@ -27,11 +27,23 @@ export function createProject() {
     updatedAt: new Date().toISOString(),
     metadata: { title: "Untitled project", artist: "", album: "", language: "" },
     audio: { name: "", type: "", duration: null, sourceHint: "" },
-    lyrics: { source: "manual", lines: [] },
+    lyrics: { source: "manual", provenance: null, lines: [] },
     timeline: { lines: [] },
   };
 }
 
 export function isProject(value) {
   return Boolean(value && value.schemaVersion === 1 && value.metadata && Array.isArray(value.timeline?.lines));
+}
+
+export function createLyricsProvenance({ providerId, providerName, sourceUrl, resultKind, query, retrievedAt = new Date().toISOString() } = {}) {
+  return {
+    type: "online",
+    providerId: String(providerId || "unknown"),
+    providerName: String(providerName || providerId || "Online source"),
+    sourceUrl: String(sourceUrl || ""),
+    resultKind: String(resultKind || "unknown"),
+    query: String(query || ""),
+    retrievedAt: String(retrievedAt),
+  };
 }
