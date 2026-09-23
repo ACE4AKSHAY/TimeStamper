@@ -6,22 +6,26 @@
    timeline, and export. No online code is needed for this path.
 2. If a source lyric file is missing, open Settings and enable **optional
    online lyrics search**.
-3. Enter a title or artist in the lookup box and choose a result. Timed LRC
+3. Enter `Artist - Song title` when possible and choose a result. Timed LRC
    text is imported as timestamped lines; plain text is imported as editable
-   untimed lines.
+   untimed lines and can also be copied directly to the clipboard.
 4. Review the imported text and timestamps before export. The service result is
    a convenience source, not ground truth.
 
 ## Privacy and failure behavior
 
 - The default is disabled and remains offline-first.
-- When enabled, only the typed title/artist query is sent to LRCLIB. Audio,
+- When enabled, only the typed title/artist query is sent to the selected
+  public providers. Audio,
   waveform data, project files, and local lyrics are never uploaded.
 - Offline mode, blocked requests, empty results, and HTTP errors produce a
   visible warning while leaving the local project unchanged.
-- The provider is isolated in `src/online-provider.js`; replacing LRCLIB or
-  adding another service does not change parsing, editing, alignment, or LRC
-  export.
+- Automatic providers: LRCLIB for timed/plain results and lyrics.ovh for plain
+  lyrics. Search-link results open Genius, Musixmatch, or Lyrics.com for the
+  user to inspect and copy manually; the app does not scrape those sites.
+- The provider registry is isolated in `src/online-provider.js`; replacing a
+  source or adding another service does not change parsing, editing, alignment,
+  or LRC export.
 
 ## Verification
 

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { LrcLibProvider, canUseOnlineSearch, normalizeResult } from "../src/online-provider.js";
+import { LrcLibProvider, LyricsOvhProvider, WebLyricsSearchProvider, canUseOnlineSearch, createOnlineProviders, normalizeResult, parseArtistTitle } from "../src/online-provider.js";
 
 function fakeFetch(payload, options = {}) {
   const calls = [];
@@ -15,7 +15,7 @@ function fakeFetch(payload, options = {}) {
 
 test("normalizes LRCLIB result fields without changing Unicode lyrics", () => {
   const result = normalizeResult({ trackName: "ఊహలు", artistName: "Artist", syncedLyrics: "[00:01.00]పాట" });
-  assert.deepEqual(result, { id: null, title: "ఊహలు", artist: "Artist", album: "", duration: null, plainLyrics: "", syncedLyrics: "[00:01.00]పాట", sourceUrl: "" });
+  assert.deepEqual(result, { id: null, title: "ఊహలు", artist: "Artist", album: "", duration: null, plainLyrics: "", syncedLyrics: "[00:01.00]పాట", sourceUrl: "", providerId: "lrclib", providerName: "LRCLIB", resultKind: "timed" });
 });
 
 test("LRCLIB provider searches and fetches using injected transport", async () => {
@@ -31,4 +31,27 @@ test("LRCLIB provider reports HTTP failures and offline search stays opt-in", as
   const provider = new LrcLibProvider({ fetchImpl: fakeFetch({}, { ok: false, status: 503 }) });
   await assert.rejects(() => provider.search("Song"), /503/u);
   assert.equal(canUseOnlineSearch({ onlineSearchEnabled: false }), false);
+});
+
+test("lyrics.ovh provider returns plain copyable lyrics for artist-title context", async () => {
+  const fetchImpl = fakeFetch({ lyrics: "line one\nline two" });
+  const provider = new LyricsOvhProvider({ fetchImpl, baseUrl: "https://example.test" });
+  const results = await provider.search("ignored", { artist: "Singer", title: "Song" });
+  assert.equal(results[0].resultKind, "plain");
+  assert.equal(results[0].plainLyrics, "line one\nline two");
+  assert.match(fetchImpl.calls[0].url, /\/v1\/Singer\/Song/u);
+});
+
+test("web source provider returns labeled manual-copy links without scraping", async () => {
+  const results = await new WebLyricsSearchProvider().search("Singer - Song");
+  assert.equal(results.length, 3);
+  assert.ok(results.every((result) => result.resultKind === "link" && result.sourceUrl.startsWith("https://")));
+});
+
+test("online provider registry and artist-title parsing expose all source classes", () => {
+  assert.deepEqual(parseArtistTitle("Singer - Song"), { artist: "Singer", title: "Song" });
+  const providers = createOnlineProviders({ fetchImpl: fakeFetch([]), lrcLib: { baseUrl: "https://lrc.test/api" }, lyricsOvh: { baseUrl: "https://plain.test" } });
+  assert.deepEqual(providers.map((provider) => provider.id), ["lrclib", "lyrics-ovh", "web-search"]);
+  assert.equal(providers[0].baseUrl, "https://lrc.test/api");
+  assert.equal(providers[1].baseUrl, "https://plain.test");
 });

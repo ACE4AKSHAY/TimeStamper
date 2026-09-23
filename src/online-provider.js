@@ -63,6 +63,46 @@ export class LrcLibProvider extends OnlineLyricsProvider {
   }
 }
 
+/** Plain-lyrics lookup. lyrics.ovh does not provide synchronized timestamps. */
+export class LyricsOvhProvider extends OnlineLyricsProvider {
+  constructor({ fetchImpl = globalThis.fetch, baseUrl = "https://api.lyrics.ovh" } = {}) {
+    super({ id: "lyrics-ovh", displayName: "lyrics.ovh" });
+    if (typeof fetchImpl !== "function") throw new Error("Online lyric search requires a fetch implementation.");
+    this.fetchImpl = fetchImpl;
+    this.baseUrl = baseUrl.replace(/\/$/u, "");
+  }
+
+  async search(query, context = {}) {
+    const { artist, title } = parseArtistTitle(query, context);
+    if (!artist || !title) return [];
+    const response = await this.fetchImpl(`${this.baseUrl}/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`, { headers: { Accept: "application/json" } });
+    if (!response?.ok) return [];
+    const data = await response.json();
+    const lyrics = typeof data?.lyrics === "string" ? data.lyrics.trim() : "";
+    return lyrics ? [{ id: `${artist}-${title}`, title, artist, album: "", duration: null, plainLyrics: lyrics, syncedLyrics: "", sourceUrl: "https://lyrics.ovh/", providerId: this.id, providerName: this.displayName, resultKind: "plain" }] : [];
+  }
+
+  async fetchLyrics(result) { return normalizeResult(result); }
+}
+
+/** Search-link provider: opens sources that do not offer a safe public lyrics API. */
+export class WebLyricsSearchProvider extends OnlineLyricsProvider {
+  constructor() { super({ id: "web-search", displayName: "Web lyric sources" }); }
+
+  async search(query) {
+    const text = String(query || "").trim();
+    if (!text) return [];
+    const encoded = encodeURIComponent(text);
+    return [
+      ["Genius", `https://genius.com/search?q=${encoded}`],
+      ["Musixmatch", `https://www.musixmatch.com/search/${encoded}`],
+      ["Lyrics.com", `https://www.lyrics.com/serp.php?st=${encoded}&qtype=2`],
+    ].map(([name, sourceUrl]) => ({ id: `${this.id}-${name.toLowerCase()}`, title: `Search ${name}`, artist: text, album: "", duration: null, plainLyrics: "", syncedLyrics: "", sourceUrl, providerId: this.id, providerName: name, resultKind: "link" }));
+  }
+
+  async fetchLyrics(result) { return normalizeResult(result); }
+}
+
 export function normalizeResult(result = {}) {
   return {
     id: result.id ?? null,
@@ -73,9 +113,25 @@ export function normalizeResult(result = {}) {
     plainLyrics: typeof result.plainLyrics === "string" ? result.plainLyrics : "",
     syncedLyrics: typeof result.syncedLyrics === "string" ? result.syncedLyrics : "",
     sourceUrl: typeof result.url === "string" ? result.url : "",
+    providerId: result.providerId || "lrclib",
+    providerName: result.providerName || "LRCLIB",
+    resultKind: result.resultKind || (result.syncedLyrics ? "timed" : result.plainLyrics ? "plain" : "unknown"),
   };
 }
 
 export function createDefaultOnlineProvider(options) {
   return new LrcLibProvider(options);
+}
+
+export function createOnlineProviders(options = {}) {
+  const { lrcLib, lyricsOvh, ...shared } = options;
+  return [new LrcLibProvider({ ...shared, ...(lrcLib || {}) }), new LyricsOvhProvider({ ...shared, ...(lyricsOvh || {}) }), new WebLyricsSearchProvider()];
+}
+
+export function parseArtistTitle(query, context = {}) {
+  const artist = String(context.artist || "").trim();
+  const title = String(context.title || "").trim();
+  if (artist && title) return { artist, title };
+  const parts = String(query || "").split(/\s+[-|]\s+/u).map((part) => part.trim()).filter(Boolean);
+  return parts.length >= 2 ? { artist: parts[0], title: parts.slice(1).join(" - ") } : { artist: "", title: "" };
 }

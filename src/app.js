@@ -6,12 +6,12 @@ import { ProjectLogger } from "./logger.js";
 import { DEFAULT_SETTINGS, applySettings, loadSettings, saveSettings } from "./settings.js";
 import { createEnergyInitialTimeline } from "./energy-aligner.js";
 import { parseEditorTime } from "./time-utils.js";
-import { canUseOnlineSearch, createDefaultOnlineProvider } from "./online-provider.js";
+import { canUseOnlineSearch, createOnlineProviders } from "./online-provider.js";
 
 const $ = (id) => document.getElementById(id);
 let project = createProject(); let audioUrl = null; let audioFile = null; let selectedId = null; let peaks = []; let energyProfile = []; let waveformDragging = false; let scanTimer = null; let scanWasPlaying = false; let toastTimer = null; let settings = loadSettings(); let onlineResults = []; let onlineSearchBusy = false; let referenceAudio = null; let referenceLyrics = null; let alignmentWorker = null; let alignmentRequestId = null;
 const log = new ProjectLogger(renderLog); const audio = $("audio");
-const onlineProvider = createDefaultOnlineProvider();
+const onlineProviders = createOnlineProviders();
 const timelineLines = () => project.timeline.lines;
 const timestamp = (time) => Number.isFinite(time) ? secondsToLrc(time) : "—";
 const safeName = (value) => (value || "lyricsync-project").replace(/[<>:"/\\|?*]+/gu, "-").trim() || "lyricsync-project";
@@ -118,7 +118,7 @@ async function runReferenceAlignment() {
 }
 
 function onlineQuery() {
-  return [project.metadata.title, project.metadata.artist].filter(Boolean).join(" - ");
+  return [project.metadata.artist, project.metadata.title].filter(Boolean).join(" - ");
 }
 
 function renderOnlineSearch() {
@@ -128,12 +128,21 @@ function renderOnlineSearch() {
   if (!query.value.trim() && onlineQuery()) query.value = onlineQuery();
   button.disabled = !enabled || onlineSearchBusy;
   button.textContent = onlineSearchBusy ? "Searching…" : "Search lyrics online";
-  status.textContent = !settings.onlineSearchEnabled ? "Disabled by default" : (globalThis.navigator?.onLine === false ? "Offline" : "Enabled · LRCLIB");
+  status.textContent = !settings.onlineSearchEnabled ? "Disabled by default" : (globalThis.navigator?.onLine === false ? "Offline" : "Enabled · LRCLIB + lyrics.ovh + web links");
   results.replaceChildren(...onlineResults.map((result, index) => {
     const item = document.createElement("div"); item.className = "online-result";
-    const details = document.createElement("div"); const title = document.createElement("strong"); title.textContent = result.title || "Untitled"; const meta = document.createElement("span"); meta.textContent = [result.artist, result.album].filter(Boolean).join(" · ") || "Unknown artist"; details.append(title, meta);
-    const use = document.createElement("button"); use.type = "button"; use.textContent = result.syncedLyrics ? "Use timed lyrics" : "Use lyrics"; use.disabled = !result.syncedLyrics && !result.plainLyrics; use.addEventListener("click", () => useOnlineResult(result)); item.append(details, use); return item;
+    const details = document.createElement("div"); const title = document.createElement("strong"); title.textContent = result.title || "Untitled"; const meta = document.createElement("span"); meta.textContent = [result.providerName, result.artist, result.album].filter(Boolean).join(" · ") || "Unknown source"; details.append(title, meta);
+    const actions = document.createElement("div"); actions.className = "result-actions"; const use = document.createElement("button"); use.type = "button"; use.textContent = result.resultKind === "link" ? "Open source" : result.syncedLyrics ? `Use timed lyrics · ${result.providerName}` : "Use lyrics"; use.disabled = result.resultKind !== "link" && !result.syncedLyrics && !result.plainLyrics; use.addEventListener("click", () => result.resultKind === "link" ? window.open(result.sourceUrl, "_blank", "noopener,noreferrer") : useOnlineResult(result)); actions.append(use);
+    if (result.plainLyrics || result.syncedLyrics) { const copy = document.createElement("button"); copy.type = "button"; copy.textContent = "Copy text"; copy.addEventListener("click", () => copyOnlineResult(result)); actions.append(copy); }
+    item.append(details, actions); return item;
   }));
+}
+
+async function copyOnlineResult(result) {
+  const text = result.syncedLyrics || result.plainLyrics || "";
+  if (!text) return;
+  try { await navigator.clipboard.writeText(text); showToast(`Copied lyrics from ${result.providerName}.`); }
+  catch { showToast("Clipboard access was unavailable. Use the import button instead.", "warning"); }
 }
 
 async function searchOnlineLyrics() {
@@ -142,7 +151,13 @@ async function searchOnlineLyrics() {
   const query = $("online-query").value.trim() || onlineQuery();
   if (!query) { showToast("Enter a song title or artist to search.", "warning"); return; }
   onlineSearchBusy = true; onlineResults = []; renderOnlineSearch();
-  try { onlineResults = await onlineProvider.search(query); if (!onlineResults.length) showToast("No online lyric matches found.", "warning"); else log.info(`Found ${onlineResults.length} optional online lyric result(s).`); }
+  try {
+    const context = { artist: project.metadata.artist, title: project.metadata.title };
+    const responses = await Promise.allSettled(onlineProviders.map((provider) => provider.search(query, context)));
+    onlineResults = responses.flatMap((response) => response.status === "fulfilled" ? response.value : []);
+    responses.forEach((response, index) => { if (response.status === "rejected") log.warning(`${onlineProviders[index].displayName} search failed: ${response.reason?.message || "request failed"}`); });
+    if (!onlineResults.length) showToast("No online lyric matches found. Try Artist - Title.", "warning"); else log.info(`Found ${onlineResults.length} optional result(s) across ${onlineProviders.length} sources.`);
+  }
   catch (error) { log.warning(`Online lyric search failed: ${error.message}`); showToast(`Online search failed: ${error.message}`, "warning"); }
   finally { onlineSearchBusy = false; renderOnlineSearch(); }
 }
@@ -156,7 +171,7 @@ function useOnlineResult(result) {
   if (result.album) project.metadata.album = result.album;
   loadLyrics(text, result.syncedLyrics ? "online-lrc" : "online-txt");
   onlineResults = [];
-  showToast(result.syncedLyrics ? "Timed lyrics imported from LRCLIB." : "Plain lyrics imported from LRCLIB. Review and timestamp them.");
+  showToast(result.syncedLyrics ? `Timed lyrics imported from ${result.providerName || "the online source"}.` : `Plain lyrics imported from ${result.providerName || "the online source"}. Review and timestamp them.`);
   log.info(`Imported optional online lyrics for ${result.title || "selected result"}.`);
   render();
 }
