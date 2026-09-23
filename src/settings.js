@@ -4,6 +4,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   theme: "midnight",
   waveformColor: "#4ca2f7",
   textScale: "medium",
+  onlineSearchEnabled: false,
   shortcuts: Object.freeze({ playToggle: "Space", stamp: "T", playbackEarlier: "ArrowLeft", playbackLater: "ArrowRight" }),
 });
 

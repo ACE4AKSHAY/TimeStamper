@@ -6,10 +6,12 @@ import { ProjectLogger } from "./logger.js";
 import { DEFAULT_SETTINGS, applySettings, loadSettings, saveSettings } from "./settings.js";
 import { createEnergyInitialTimeline } from "./energy-aligner.js";
 import { parseEditorTime } from "./time-utils.js";
+import { canUseOnlineSearch, createDefaultOnlineProvider } from "./online-provider.js";
 
 const $ = (id) => document.getElementById(id);
-let project = createProject(); let audioUrl = null; let selectedId = null; let peaks = []; let energyProfile = []; let waveformDragging = false; let scanTimer = null; let scanWasPlaying = false; let toastTimer = null; let settings = loadSettings();
+let project = createProject(); let audioUrl = null; let selectedId = null; let peaks = []; let energyProfile = []; let waveformDragging = false; let scanTimer = null; let scanWasPlaying = false; let toastTimer = null; let settings = loadSettings(); let onlineResults = []; let onlineSearchBusy = false;
 const log = new ProjectLogger(renderLog); const audio = $("audio");
+const onlineProvider = createDefaultOnlineProvider();
 const timelineLines = () => project.timeline.lines;
 const timestamp = (time) => Number.isFinite(time) ? secondsToLrc(time) : "—";
 const safeName = (value) => (value || "lyricsync-project").replace(/[<>:"/\\|?*]+/gu, "-").trim() || "lyricsync-project";
@@ -42,7 +44,51 @@ function render() {
   $("remove-lyrics").disabled = !timelineLines().length;
   ["reset-audio", "rewind", "play-toggle", "fast-forward", "seek", "jump-to-time", "stamp", "shift-earlier", "shift-later"].forEach((id) => { $(id).disabled = !enabled; });
   $("auto-timestamp").disabled = !enabled || !timelineLines().length || !energyProfile.length;
-  renderTimeline(); renderWaveform(); updatePositionDisplays();
+  renderTimeline(); renderWaveform(); updatePositionDisplays(); renderOnlineSearch();
+}
+
+function onlineQuery() {
+  return [project.metadata.title, project.metadata.artist].filter(Boolean).join(" - ");
+}
+
+function renderOnlineSearch() {
+  const status = $("online-status"); const button = $("online-search"); const query = $("online-query"); const results = $("online-results");
+  if (!status || !button || !query || !results) return;
+  const enabled = canUseOnlineSearch(settings);
+  if (!query.value.trim() && onlineQuery()) query.value = onlineQuery();
+  button.disabled = !enabled || onlineSearchBusy;
+  button.textContent = onlineSearchBusy ? "Searching…" : "Search lyrics online";
+  status.textContent = !settings.onlineSearchEnabled ? "Disabled by default" : (globalThis.navigator?.onLine === false ? "Offline" : "Enabled · LRCLIB");
+  results.replaceChildren(...onlineResults.map((result, index) => {
+    const item = document.createElement("div"); item.className = "online-result";
+    const details = document.createElement("div"); const title = document.createElement("strong"); title.textContent = result.title || "Untitled"; const meta = document.createElement("span"); meta.textContent = [result.artist, result.album].filter(Boolean).join(" · ") || "Unknown artist"; details.append(title, meta);
+    const use = document.createElement("button"); use.type = "button"; use.textContent = result.syncedLyrics ? "Use timed lyrics" : "Use lyrics"; use.disabled = !result.syncedLyrics && !result.plainLyrics; use.addEventListener("click", () => useOnlineResult(result)); item.append(details, use); return item;
+  }));
+}
+
+async function searchOnlineLyrics() {
+  if (!settings.onlineSearchEnabled) { showToast("Enable online lyrics search in Settings first.", "warning"); return; }
+  if (globalThis.navigator?.onLine === false) { showToast("No internet connection. Offline editing is still available.", "warning"); return; }
+  const query = $("online-query").value.trim() || onlineQuery();
+  if (!query) { showToast("Enter a song title or artist to search.", "warning"); return; }
+  onlineSearchBusy = true; onlineResults = []; renderOnlineSearch();
+  try { onlineResults = await onlineProvider.search(query); if (!onlineResults.length) showToast("No online lyric matches found.", "warning"); else log.info(`Found ${onlineResults.length} optional online lyric result(s).`); }
+  catch (error) { log.warning(`Online lyric search failed: ${error.message}`); showToast(`Online search failed: ${error.message}`, "warning"); }
+  finally { onlineSearchBusy = false; renderOnlineSearch(); }
+}
+
+function useOnlineResult(result) {
+  const text = result.syncedLyrics || result.plainLyrics;
+  if (!text) { showToast("This result has no lyrics to import.", "warning"); return; }
+  if (timelineLines().length && !confirm("Replace the current lyrics and timeline with this online result?")) return;
+  if (result.title) project.metadata.title = result.title;
+  if (result.artist) project.metadata.artist = result.artist;
+  if (result.album) project.metadata.album = result.album;
+  loadLyrics(text, result.syncedLyrics ? "online-lrc" : "online-txt");
+  onlineResults = [];
+  showToast(result.syncedLyrics ? "Timed lyrics imported from LRCLIB." : "Plain lyrics imported from LRCLIB. Review and timestamp them.");
+  log.info(`Imported optional online lyrics for ${result.title || "selected result"}.`);
+  render();
 }
 
 function renderTimeline() {
@@ -167,6 +213,7 @@ function stopScan(direction) { if (direction > 0) { audio.playbackRate = 1; if (
 $("audio-file").addEventListener("change", async (event) => { const file = event.target.files[0]; if (file) { await loadAudio(file); extractWaveform(file); } });
 $("lyrics-file").addEventListener("change", async (event) => { const file = event.target.files[0]; if (file) { const text = await file.text(); $("lyrics-text").value = text; loadLyrics(text, file.name.toLowerCase().endsWith(".lrc") ? "lrc" : "txt"); } });
 $("remove-audio").addEventListener("click", removeAudio); $("remove-lyrics").addEventListener("click", removeLyrics);
+$("online-search").addEventListener("click", searchOnlineLyrics); $("online-query").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); searchOnlineLyrics(); } });
 $("load-lyrics").addEventListener("click", () => loadLyrics($("lyrics-text").value)); $("clear-timestamps").addEventListener("click", () => { timelineLines().forEach((line) => { line.startTime = null; }); log.info("Cleared all timestamps."); render(); });
 $("play-toggle").addEventListener("click", togglePlayback); $("seek").addEventListener("input", (event) => { const seconds = Number(event.target.value); audio.currentTime = seconds; updatePositionDisplays(seconds); renderWaveform(); });
 $("reset-audio").addEventListener("click", resetAudio); ["pointerup", "pointerleave", "pointercancel"].forEach((eventName) => $("rewind").addEventListener(eventName, () => stopScan(-1))); $("rewind").addEventListener("pointerdown", () => startScan(-1)); ["pointerup", "pointerleave", "pointercancel"].forEach((eventName) => $("fast-forward").addEventListener(eventName, () => stopScan(1))); $("fast-forward").addEventListener("pointerdown", () => startScan(1));
@@ -182,10 +229,11 @@ $("open-project").addEventListener("click", async () => { const desktopFile = aw
 $("project-file").addEventListener("change", async (event) => { const file = event.target.files[0]; if (!file) return; try { project = deserializeProject(await file.text()); selectedId = project.timeline.lines[0]?.id || null; peaks = []; log.info(`Opened project: ${file.name}. Re-select the audio file to play it.`); render(); } catch (error) { log.error(error.message); alert(error.message); } }); $("download-log").addEventListener("click", () => downloadText(log.text(), "lyricsync.log", "text/plain;charset=utf-8"));
 function setShortcutInput(id, value) { $(id).dataset.shortcut = value; $(id).value = shortcutLabel(value); }
 function populateShortcutInputs() { setShortcutInput("shortcut-play", settings.shortcuts.playToggle); setShortcutInput("shortcut-stamp", settings.shortcuts.stamp); setShortcutInput("shortcut-earlier", settings.shortcuts.playbackEarlier); setShortcutInput("shortcut-later", settings.shortcuts.playbackLater); }
-$("open-settings").addEventListener("click", () => { $("theme-setting").value = settings.theme; $("waveform-color-setting").value = settings.waveformColor; $("text-scale-setting").value = settings.textScale; populateShortcutInputs(); $("settings-dialog").showModal(); });
-$("save-settings").addEventListener("click", (event) => { const readShortcut = (id) => $(id).dataset.shortcut || normalizedShortcut($(id).value); const shortcuts = { playToggle: readShortcut("shortcut-play"), stamp: readShortcut("shortcut-stamp"), playbackEarlier: readShortcut("shortcut-earlier"), playbackLater: readShortcut("shortcut-later") }; if (new Set(Object.values(shortcuts)).size !== Object.values(shortcuts).length) { event.preventDefault(); showToast("Each keyboard shortcut must be different.", "warning"); return; } settings = { theme: $("theme-setting").value, waveformColor: $("waveform-color-setting").value, textScale: $("text-scale-setting").value, shortcuts }; saveSettings(settings); applySettings(settings); renderWaveform(); log.info("General settings and shortcuts saved locally."); });
-$("reset-settings").addEventListener("click", () => { settings = { ...DEFAULT_SETTINGS, shortcuts: { ...DEFAULT_SETTINGS.shortcuts } }; $("theme-setting").value = settings.theme; $("waveform-color-setting").value = settings.waveformColor; $("text-scale-setting").value = settings.textScale; populateShortcutInputs(); applySettings(settings); renderWaveform(); });
+$("open-settings").addEventListener("click", () => { $("theme-setting").value = settings.theme; $("waveform-color-setting").value = settings.waveformColor; $("text-scale-setting").value = settings.textScale; $("online-search-setting").checked = settings.onlineSearchEnabled === true; populateShortcutInputs(); $("settings-dialog").showModal(); });
+$("save-settings").addEventListener("click", (event) => { const readShortcut = (id) => $(id).dataset.shortcut || normalizedShortcut($(id).value); const shortcuts = { playToggle: readShortcut("shortcut-play"), stamp: readShortcut("shortcut-stamp"), playbackEarlier: readShortcut("shortcut-earlier"), playbackLater: readShortcut("shortcut-later") }; if (new Set(Object.values(shortcuts)).size !== Object.values(shortcuts).length) { event.preventDefault(); showToast("Each keyboard shortcut must be different.", "warning"); return; } settings = { theme: $("theme-setting").value, waveformColor: $("waveform-color-setting").value, textScale: $("text-scale-setting").value, onlineSearchEnabled: $("online-search-setting").checked, shortcuts }; saveSettings(settings); applySettings(settings); renderWaveform(); renderOnlineSearch(); log.info("General settings and shortcuts saved locally."); });
+$("reset-settings").addEventListener("click", () => { settings = { ...DEFAULT_SETTINGS, shortcuts: { ...DEFAULT_SETTINGS.shortcuts } }; $("theme-setting").value = settings.theme; $("waveform-color-setting").value = settings.waveformColor; $("text-scale-setting").value = settings.textScale; $("online-search-setting").checked = false; populateShortcutInputs(); applySettings(settings); renderWaveform(); renderOnlineSearch(); });
 [["shortcut-play", "playToggle"], ["shortcut-stamp", "stamp"], ["shortcut-earlier", "playbackEarlier"], ["shortcut-later", "playbackLater"]].forEach(([id]) => $(id).addEventListener("keydown", (event) => { if (["Tab", "Shift", "Control", "Alt", "Meta"].includes(event.key)) return; event.preventDefault(); const value = normalizedShortcut(event.key); setShortcutInput(id, value); }));
 audio.addEventListener("loadedmetadata", () => { project.audio.duration = audio.duration; $("seek").max = audio.duration; log.info(`Audio duration: ${audio.duration.toFixed(3)} seconds.`); render(); }); audio.addEventListener("timeupdate", () => { updatePositionDisplays(); renderWaveform(); }); audio.addEventListener("play", () => setPlayButton(true)); audio.addEventListener("pause", () => setPlayButton(false)); audio.addEventListener("ended", () => { audio.currentTime = 0; });
+window.addEventListener("online", renderOnlineSearch); window.addEventListener("offline", renderOnlineSearch);
 window.addEventListener("keydown", (event) => { if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName) || $("settings-dialog").open) return; const key = normalizedShortcut(event.key); if (key === settings.shortcuts.playToggle) { event.preventDefault(); togglePlayback(); } else if (key === settings.shortcuts.stamp) { event.preventDefault(); stamp(); } else if (key === settings.shortcuts.playbackEarlier) { event.preventDefault(); seekToTime((audio.currentTime || 0) - adjustmentSeconds()); } else if (key === settings.shortcuts.playbackLater) { event.preventDefault(); seekToTime((audio.currentTime || 0) + adjustmentSeconds()); } });
 applySettings(settings); log.info("LyricSync v0.3 initialized. Processing remains local on this device."); render();

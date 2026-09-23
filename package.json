@@ -53,7 +53,7 @@
   },
   "main": "desktop/main.cjs",
   "devDependencies": {
-    "electron": "^37.0.0"
+    "electron": "^44.4.4"
   },
   "engines": {
     "node": ">=18"

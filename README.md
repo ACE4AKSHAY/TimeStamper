@@ -6,7 +6,7 @@ An offline-first, desktop-first foundation for the **Lightweight Offline Audio-T
 
 All required capabilities work with no network connection: importing audio and lyrics, waveform generation, playback, manual timing, project storage, logging and LRC export. No files are uploaded or sent to a server.
 
-Online lyrics/LRC discovery is deliberately a future **optional connector**, not a dependency. It will be behind an explicit user action and setting, return text to the same local parser, and must fail harmlessly when offline. The reusable `OnlineLyricsProvider` boundary exists in `src/online-provider.js`; no provider or network request is enabled in v0.1.
+Online lyrics/LRC discovery is an explicit opt-in connector, not a dependency. Settings keep it disabled by default; when enabled, the LRCLIB adapter sends only the title/artist query and returns text to the same local parser. It fails harmlessly when offline, and audio/project data never leaves the device. See [`ONLINE_SEARCH.md`](benchmarks/ONLINE_SEARCH.md).
 
 ## Included in v0.1
 
@@ -15,6 +15,7 @@ Online lyrics/LRC discovery is deliberately a future **optional connector**, not
 - Edit a line-level timeline: select a line and stamp either the current position or a typed time, use the configurable stamp shortcut (default `T`), or adjust by a user-chosen millisecond value (100 ms by default). Clicking a timestamp or lyric row seeks the audio and waveform to that point; stamping scrolls the next selected line into view, and a short toast prevents out-of-order timestamps.
 - Click or drag the waveform to seek, with millisecond time feedback. Use a direct time field for exact navigation.
 - General Settings provide built-in themes, waveform colour and text-size preferences, plus user-editable shortcuts for play/stop, stamping and playback nudging. Settings are stored locally and isolated from the synchronization engine.
+- Optional online lyric search can find timed or plain lyrics after the user enables it in Settings; imported text remains editable and must be reviewed before export.
 - Transport includes hold-to-rewind and hold-to-fast-forward controls, a separate reset-to-start control, and a stop button that preserves the current position.
 - The next research layer is available as **Initial timing**: a local RMS-energy baseline that distributes existing lyric lines through active audio. It is intentionally labelled as a low-confidence editable estimate—not lyric recognition—and should be reviewed line by line.
 - The reusable engine also exposes a deterministic **combined-profile** experiment that fuses normalized RMS energy and spectral flux with explicit weights. It is isolated from the UI and contains no AI/ML model or network dependency.
@@ -57,6 +58,10 @@ $env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
 & 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' run desktop
 ```
 
+The one-time runtime inventory and offline reinstall instructions are in
+[`OFFLINE_SETUP.md`](OFFLINE_SETUP.md). Electron is pinned through the lockfile
+and local FFmpeg is only needed for compressed-audio evaluation scripts.
+
 The installed application itself loads local files only; it does not need the internet to operate. Native Save/Open dialogs are used in desktop mode.
 
 ## Run in a browser during development
@@ -88,7 +93,7 @@ The v0.1 browser UI is a thin client over reusable ES modules:
 - `src/logger.js` — human-readable project logger
 - `src/app.js` — UI, playback, waveform visualization and manual editor
 - `desktop/` — minimal secure Electron shell; the renderer has no Node.js access
-- `src/online-provider.js` — optional online-search contract, intentionally unused by core functionality
+- `src/online-provider.js` — optional LRCLIB search/fetch adapter; isolated from the offline core
 - `src/engine.js` — platform-neutral `synchronize()` entry point for reusable alignment engines
 - `src/project-store.mjs` — structured local project directory storage for desktop/CLI workflows
 - `src/feature-cache.mjs` — file-backed, content-identity/config-keyed cache for reusable decoded features and alignment inputs

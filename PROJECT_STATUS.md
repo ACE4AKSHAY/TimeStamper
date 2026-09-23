@@ -223,6 +223,9 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 173 | Cooperative alignment cancellation | 🟡 | Reference-template and ensemble paths now accept an optional AbortSignal and throw AbortError cooperatively during long DTW work; worker/UI wiring remains future scope. |
 | 174 | Alignment progress callbacks | 🟡 | Added optional transport-neutral line and ensemble progress events; callback failures are isolated and no default output changes. |
 | 175 | Public progress/cancellation forwarding | 🟡 | The platform-neutral `synchronize()` API now forwards `signal` and `onProgress` to reference-template MFCC-DTW and ensemble engines for future worker/UI adapters. |
+| 176 | Optional online lyrics discovery | 🟡 | Added an explicit opt-in LRCLIB connector and UI workflow; only title/artist queries leave the device, while offline editing and export remain independent. |
+| 177 | Offline runtime readiness | 🟡 | Installed and documented NVM Node 22, Electron 44.4.4, and the local FFmpeg path; npm audit reports no production vulnerabilities and offline reinstall instructions are recorded. |
+| 178 | Optional provider compatibility | 🟡 | The isolated online lyrics adapter is included in the portable-module smoke check; network access remains outside the offline engine path. |
 
 ## Recommended next steps
 
