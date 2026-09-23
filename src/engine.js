@@ -93,7 +93,7 @@ export function synchronize({ lyrics, duration, energyProfile, engine = "energy-
       targetSampleRate: parameters.targetSampleRate,
       targetDuration: parameters.targetDuration ?? duration,
       lyrics: lines,
-      options: parameters.options || parameters,
+      options: { ...(parameters.options || parameters), signal: parameters.signal, onProgress: parameters.onProgress },
     });
     const alignedLines = alignment.lines.map((line) => ({ ...line }));
     return {

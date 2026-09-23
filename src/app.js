@@ -9,7 +9,7 @@ import { parseEditorTime } from "./time-utils.js";
 import { canUseOnlineSearch, createDefaultOnlineProvider } from "./online-provider.js";
 
 const $ = (id) => document.getElementById(id);
-let project = createProject(); let audioUrl = null; let selectedId = null; let peaks = []; let energyProfile = []; let waveformDragging = false; let scanTimer = null; let scanWasPlaying = false; let toastTimer = null; let settings = loadSettings(); let onlineResults = []; let onlineSearchBusy = false;
+let project = createProject(); let audioUrl = null; let audioFile = null; let selectedId = null; let peaks = []; let energyProfile = []; let waveformDragging = false; let scanTimer = null; let scanWasPlaying = false; let toastTimer = null; let settings = loadSettings(); let onlineResults = []; let onlineSearchBusy = false; let referenceAudio = null; let referenceLyrics = null; let alignmentWorker = null; let alignmentRequestId = null;
 const log = new ProjectLogger(renderLog); const audio = $("audio");
 const onlineProvider = createDefaultOnlineProvider();
 const timelineLines = () => project.timeline.lines;
@@ -45,6 +45,76 @@ function render() {
   ["reset-audio", "rewind", "play-toggle", "fast-forward", "seek", "jump-to-time", "stamp", "shift-earlier", "shift-later"].forEach((id) => { $(id).disabled = !enabled; });
   $("auto-timestamp").disabled = !enabled || !timelineLines().length || !energyProfile.length;
   renderTimeline(); renderWaveform(); updatePositionDisplays(); renderOnlineSearch();
+  renderReferenceAlignment();
+}
+
+function renderReferenceAlignment() {
+  const run = $("run-reference-alignment"); const cancel = $("cancel-reference-alignment"); const progress = $("alignment-progress"); const status = $("alignment-status");
+  if (!run || !cancel || !progress || !status) return;
+  const ready = Boolean(audioFile && referenceAudio && referenceLyrics?.starts?.length && timelineLines().length === referenceLyrics.starts.length);
+  run.disabled = alignmentRequestId !== null || !ready;
+  cancel.disabled = alignmentRequestId === null;
+  if (alignmentRequestId === null && !ready) status.textContent = referenceLyrics && timelineLines().length !== referenceLyrics.starts.length ? `Line count mismatch: target ${timelineLines().length}, reference ${referenceLyrics.starts.length}` : "Waiting for verified reference inputs";
+  $("reference-audio-status").textContent = referenceAudio ? `${referenceAudio.name} · ${formatClock(referenceAudio.duration)}` : "No reference selected";
+  $("reference-lyrics-status").textContent = referenceLyrics ? `${referenceLyrics.starts.length} timestamped line(s)` : "No reference timestamps selected";
+}
+
+async function decodeMono(file) {
+  const context = new AudioContext();
+  try {
+    const buffer = await context.decodeAudioData(await file.arrayBuffer());
+    const samples = new Float32Array(buffer.length);
+    for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+      const data = buffer.getChannelData(channel);
+      for (let index = 0; index < data.length; index++) samples[index] += data[index] / buffer.numberOfChannels;
+    }
+    return { samples, sampleRate: buffer.sampleRate, duration: buffer.duration, name: file.name };
+  } finally { await context.close(); }
+}
+
+async function loadReferenceAudio(file) {
+  try { referenceAudio = await decodeMono(file); log.info(`Reference audio decoded: ${file.name}.`); renderReferenceAlignment(); }
+  catch (error) { referenceAudio = null; log.warning(`Reference audio could not be decoded: ${error.message}`); showToast(`Reference audio could not be decoded: ${error.message}`, "warning"); renderReferenceAlignment(); }
+}
+
+async function loadReferenceLyrics(file) {
+  try {
+    const parsed = parseLyrics(await file.text(), "reference-lrc");
+    const starts = parsed.lines.map((line) => line.startTime);
+    if (!starts.length || starts.some((value, index) => !Number.isFinite(value) || (index > 0 && value < starts[index - 1]))) throw new Error("Reference lyrics must contain ordered timestamps on every line.");
+    referenceLyrics = { name: file.name, starts }; log.info(`Verified reference LRC loaded: ${file.name}.`); renderReferenceAlignment();
+  } catch (error) { referenceLyrics = null; log.warning(`Reference LRC could not be loaded: ${error.message}`); showToast(`Reference LRC could not be loaded: ${error.message}`, "warning"); renderReferenceAlignment(); }
+}
+
+function clearReferenceAudio() { referenceAudio = null; $("reference-audio-file").value = ""; log.info("Reference audio removed."); renderReferenceAlignment(); }
+function clearReferenceLyrics() { referenceLyrics = null; $("reference-lyrics-file").value = ""; log.info("Reference LRC removed."); renderReferenceAlignment(); }
+
+function finishReferenceAlignment() {
+  alignmentWorker?.terminate(); alignmentWorker = null; alignmentRequestId = null; renderReferenceAlignment();
+}
+
+function cancelReferenceAlignment() {
+  if (!alignmentWorker || !alignmentRequestId) return;
+  alignmentWorker.terminate(); alignmentWorker = null; alignmentRequestId = null;
+  $("alignment-status").textContent = "Alignment cancelled"; log.info("Reference-assisted alignment cancelled."); renderReferenceAlignment();
+}
+
+async function runReferenceAlignment() {
+  if (!audioFile || !referenceAudio || !referenceLyrics?.starts?.length) { showToast("Choose target audio, reference audio and a fully timestamped reference LRC first.", "warning"); return; }
+  if (timelineLines().length !== referenceLyrics.starts.length) { showToast(`Reference and target must have the same line count (${referenceLyrics.starts.length} required).`, "warning"); return; }
+  try {
+    const target = await decodeMono(audioFile); const requestId = crypto.randomUUID(); alignmentRequestId = requestId; $("alignment-progress").value = 0; $("alignment-status").textContent = "Preparing MFCC templates…"; renderReferenceAlignment();
+    alignmentWorker = new Worker(new URL("./alignment-worker.js", import.meta.url), { type: "module" });
+    alignmentWorker.onmessage = (event) => {
+      const message = event.data || {}; if (message.requestId !== alignmentRequestId) return;
+      if (message.type === "progress") { $("alignment-progress").value = Math.max(0, Math.min(1, Number(message.progress?.fraction) || 0)); $("alignment-status").textContent = message.progress?.phase === "template-dtw" ? `Aligning line ${Math.min(message.progress.completedLines + 1, message.progress.totalLines)} of ${message.progress.totalLines}…` : "Aligning reference…"; return; }
+      if (message.type === "complete") { const current = timelineLines(); project.timeline.lines = message.result.lines.map((line, index) => ({ ...current[index], ...line, manuallyCorrected: false })); project.lyrics.lines = project.timeline.lines; selectedId = project.timeline.lines[0]?.id || null; $("alignment-progress").value = 1; $("alignment-status").textContent = "Reference-assisted alignment complete. Review before export."; log.info(`Reference-assisted MFCC/DTW alignment completed for ${project.timeline.lines.length} line(s).`); finishReferenceAlignment(); render(); return; }
+      if (message.type === "error") { const cancelled = message.error?.name === "AbortError"; $("alignment-status").textContent = cancelled ? "Alignment cancelled" : "Alignment failed"; if (cancelled) log.info("Reference-assisted alignment cancelled."); else { log.warning(`Reference-assisted alignment failed: ${message.error?.message || "unknown error"}`); showToast(`Alignment failed: ${message.error?.message || "unknown error"}`, "warning"); } finishReferenceAlignment(); }
+    };
+    alignmentWorker.onerror = (event) => { log.warning(`Alignment worker failed: ${event.message || "unknown error"}`); showToast("Alignment worker failed. The manual workflow is still available.", "warning"); finishReferenceAlignment(); };
+    const referenceBuffer = referenceAudio.samples.slice().buffer; const targetBuffer = target.samples.buffer;
+    alignmentWorker.postMessage({ type: "align-reference", requestId, payload: { lyrics: timelineLines(), duration: target.duration, referenceSamples: referenceBuffer, targetSamples: targetBuffer, referenceSampleRate: referenceAudio.sampleRate, targetSampleRate: target.sampleRate, referenceStarts: referenceLyrics.starts, referenceDuration: referenceAudio.duration, parameters: { options: { dtwImplementation: "banded", useReferenceAnchors: true } } } }, [referenceBuffer, targetBuffer]);
+  } catch (error) { log.warning(`Reference alignment preparation failed: ${error.message}`); showToast(`Reference alignment preparation failed: ${error.message}`, "warning"); finishReferenceAlignment(); }
 }
 
 function onlineQuery() {
@@ -156,14 +226,15 @@ function createInitialTiming() {
 }
 
 async function loadAudio(file) {
-  if (audioUrl) URL.revokeObjectURL(audioUrl); audioUrl = URL.createObjectURL(file); audio.src = audioUrl;
+  if (audioUrl) URL.revokeObjectURL(audioUrl); audioFile = file; audioUrl = URL.createObjectURL(file); audio.src = audioUrl;
   peaks = []; energyProfile = [];
   project.audio = { name: file.name, type: file.type, duration: null, sourceHint: "Select this audio file again after reopening the project." }; log.info(`Audio selected: ${file.name}`); render();
 }
 
 function removeAudio() {
+  if (alignmentWorker) cancelReferenceAlignment();
   if (audioUrl) URL.revokeObjectURL(audioUrl);
-  audioUrl = null; audio.pause(); audio.removeAttribute("src"); audio.load();
+  audioUrl = null; audioFile = null; audio.pause(); audio.removeAttribute("src"); audio.load();
   project.audio = { name: "", type: "", duration: null, sourceHint: "" }; peaks = []; energyProfile = [];
   $("audio-file").value = ""; log.info("Audio removed from the project."); showToast("Audio removed."); render();
 }
@@ -211,6 +282,7 @@ function startScan(direction) { if (scanTimer) return; scanWasPlaying = !audio.p
 function stopScan(direction) { if (direction > 0) { audio.playbackRate = 1; if (!scanWasPlaying) audio.pause(); } else if (scanTimer) { clearInterval(scanTimer); scanTimer = null; if (scanWasPlaying) audio.play(); } }
 
 $("audio-file").addEventListener("change", async (event) => { const file = event.target.files[0]; if (file) { await loadAudio(file); extractWaveform(file); } });
+$("reference-audio-file").addEventListener("change", async (event) => { const file = event.target.files[0]; if (file) await loadReferenceAudio(file); }); $("reference-lyrics-file").addEventListener("change", async (event) => { const file = event.target.files[0]; if (file) await loadReferenceLyrics(file); }); $("remove-reference-audio").addEventListener("click", clearReferenceAudio); $("remove-reference-lyrics").addEventListener("click", clearReferenceLyrics); $("run-reference-alignment").addEventListener("click", runReferenceAlignment); $("cancel-reference-alignment").addEventListener("click", cancelReferenceAlignment);
 $("lyrics-file").addEventListener("change", async (event) => { const file = event.target.files[0]; if (file) { const text = await file.text(); $("lyrics-text").value = text; loadLyrics(text, file.name.toLowerCase().endsWith(".lrc") ? "lrc" : "txt"); } });
 $("remove-audio").addEventListener("click", removeAudio); $("remove-lyrics").addEventListener("click", removeLyrics);
 $("online-search").addEventListener("click", searchOnlineLyrics); $("online-query").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); searchOnlineLyrics(); } });
@@ -222,7 +294,7 @@ $("jump-to-time").addEventListener("click", jumpToTypedTime); $("jump-time").add
 $("stamp").addEventListener("click", () => stamp()); $("shift-earlier").addEventListener("click", () => shiftSelected(-1)); $("shift-later").addEventListener("click", () => shiftSelected(1));
 $("auto-timestamp").addEventListener("click", createInitialTiming);
 $("waveform").addEventListener("pointerdown", (event) => { waveformDragging = true; $("waveform").setPointerCapture(event.pointerId); seekFromWaveform(event); }); $("waveform").addEventListener("pointermove", (event) => { seekFromWaveform(event, waveformDragging); }); $("waveform").addEventListener("pointerup", (event) => { waveformDragging = false; $("waveform").releasePointerCapture(event.pointerId); $("waveform-tooltip").classList.remove("visible"); }); $("waveform").addEventListener("pointerleave", () => { if (!waveformDragging) $("waveform-tooltip").classList.remove("visible"); });
-$("new-project").addEventListener("click", () => { if (confirm("Start a new project? Unsaved changes will be lost.")) { if (audioUrl) URL.revokeObjectURL(audioUrl); audioUrl = null; audio.pause(); audio.removeAttribute("src"); audio.load(); project = createProject(); selectedId = null; peaks = []; energyProfile = []; $("audio-file").value = ""; $("lyrics-file").value = ""; log.info("New project created."); render(); } });
+$("new-project").addEventListener("click", () => { if (confirm("Start a new project? Unsaved changes will be lost.")) { if (alignmentWorker) cancelReferenceAlignment(); if (audioUrl) URL.revokeObjectURL(audioUrl); audioUrl = null; audioFile = null; audio.pause(); audio.removeAttribute("src"); audio.load(); project = createProject(); selectedId = null; peaks = []; energyProfile = []; referenceAudio = null; referenceLyrics = null; $("audio-file").value = ""; $("lyrics-file").value = ""; $("reference-audio-file").value = ""; $("reference-lyrics-file").value = ""; log.info("New project created."); render(); } });
 $("save-project").addEventListener("click", async () => { updateMetadata(); const result = await saveText(serializeProject(project), `${safeName(project.metadata.title)}.lyricsync.json`, "application/json", [{ name: "LyricSync project", extensions: ["json"] }]); if (!result.canceled) log.info(result.path ? `Project saved: ${result.path}` : "Project file downloaded."); });
 $("export-lrc").addEventListener("click", async () => { updateMetadata(); const count = timelineLines().filter((line) => Number.isFinite(line.startTime)).length; if (!count) { log.warning("No timestamps to export."); return; } const result = await saveText(exportLrc(project), `${safeName(project.metadata.title)}.lrc`, "text/plain;charset=utf-8", [{ name: "LRC lyrics", extensions: ["lrc"] }]); if (!result.canceled) log.info(result.path ? `LRC exported: ${result.path}` : `Exported ${count} timestamped line(s) as LRC.`); });
 $("open-project").addEventListener("click", async () => { const desktopFile = await openText([{ name: "LyricSync project", extensions: ["json"] }]); if (!desktopFile) { if (!window.lyricSyncDesktop) $("project-file").click(); return; } try { project = deserializeProject(desktopFile.content); selectedId = project.timeline.lines[0]?.id || null; peaks = []; log.info(`Opened project: ${desktopFile.path}. Re-select the audio file to play it.`); render(); } catch (error) { log.error(error.message); alert(error.message); } });

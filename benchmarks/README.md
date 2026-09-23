@@ -42,6 +42,7 @@
 - [`ALIGNMENT_CANCELLATION.md`](./ALIGNMENT_CANCELLATION.md) — cooperative cancellation for long MFCC/DTW and ensemble runs.
 - [`ALIGNMENT_PROGRESS.md`](./ALIGNMENT_PROGRESS.md) — optional transport-neutral progress callbacks for long runs.
 - [`ONLINE_SEARCH.md`](./ONLINE_SEARCH.md) — explicit opt-in LRCLIB lookup and privacy boundary.
+- [`REFERENCE_TEMPLATE_UI.md`](./REFERENCE_TEMPLATE_UI.md) — desktop reference-assisted MFCC/DTW workflow.
 - [`../OFFLINE_SETUP.md`](../OFFLINE_SETUP.md) — one-time runtime and offline reinstall instructions.
 - [`REFERENCE_TARGET_PREFLIGHT.md`](./REFERENCE_TARGET_PREFLIGHT.md) — cheap structural checks before expensive pair alignment.
 - [`REFERENCE_PAIR_LAYOUT.md`](./REFERENCE_PAIR_LAYOUT.md) — private folder layout for alternate-recording evaluation.

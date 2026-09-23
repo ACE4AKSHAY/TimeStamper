@@ -248,6 +248,7 @@ test("reference-template adapter aligns a target recording and preserves line me
   assert.ok(Math.abs(scaled.parameters.anchorScale - 1.5) < 1e-12);
   assert.equal(scaled.parameters.expectedStarts[1], 38);
 
+  const engineProgress = [];
   const throughEngine = synchronize({
     lyrics: lines,
     duration: 0.4,
@@ -261,6 +262,7 @@ test("reference-template adapter aligns a target recording and preserves line me
       targetSampleRate: sampleRate,
       targetDuration: 0.4,
       options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, dtwImplementation: "banded" },
+      onProgress: (event) => engineProgress.push(event),
     },
   });
   assert.equal(throughEngine.engine, "reference-template-mfcc-dtw");
@@ -268,6 +270,8 @@ test("reference-template adapter aligns a target recording and preserves line me
   assert.equal(throughEngine.parameters.dtwImplementation, "banded");
   assert.equal(throughEngine.parameters.referenceSamples, undefined);
   assert.ok(throughEngine.lines.every((line) => Number.isFinite(line.startTime)));
+  assert.ok(engineProgress.length >= 2);
+  assert.equal(engineProgress.at(-1).fraction, 1);
 
   const cachedFrames = extractMfcc(samples, sampleRate, { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 });
   const fromFrames = await alignWithReferenceTemplates({

@@ -20,6 +20,7 @@ Online lyrics/LRC discovery is an explicit opt-in connector, not a dependency. S
 - The next research layer is available as **Initial timing**: a local RMS-energy baseline that distributes existing lyric lines through active audio. It is intentionally labelled as a low-confidence editable estimate—not lyric recognition—and should be reviewed line by line.
 - The reusable engine also exposes a deterministic **combined-profile** experiment that fuses normalized RMS energy and spectral flux with explicit weights. It is isolated from the UI and contains no AI/ML model or network dependency.
 - The reusable engine exposes an opt-in **reference-template-mfcc-dtw** mode for aligning a target recording from a manually verified reference recording. It is kept separate from the instant audio-only estimate because it is CPU-heavy and needs a second recording.
+- The desktop app exposes that reference-assisted MFCC/DTW mode in an isolated module worker with progress and cancellation; see [`REFERENCE_TEMPLATE_UI.md`](benchmarks/REFERENCE_TEMPLATE_UI.md).
 - Export valid centisecond LRC, including optional title, artist, album and language metadata.
 - Save/reopen a human-readable `.lyricsync.json` project. Audio is deliberately only referenced by name; reselect it after reopening so the application does not copy large private media files.
 - Human-readable activity log download.
@@ -108,6 +109,7 @@ The v0.1 browser UI is a thin client over reusable ES modules:
 - `src/audio-decoder.mjs` — dependency-free WAV decoding with optional local FFmpeg for compressed audio
 - `src/template-builder.js` — MFCC line-template extraction from a verified reference timeline
 - `src/reference-template-aligner.js` — reusable reference-assisted MFCC/constrained-DTW pipeline for aligning a target recording, with intro and duration bounds
+- `src/alignment-worker.js` — browser/Electron worker protocol for running reference-assisted alignment without freezing the editor
 - `src/vocal-separator.js` — optional, model-agnostic local vocal-separation contract; no separator model is bundled
 - `src/combined-aligner.js` — reusable combined-profile candidate generator
 - `src/text-weighted-aligner.js` — Unicode-safe lyric-length prior with a selectable Boundary-DP variant
