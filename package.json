@@ -46,6 +46,7 @@
     "experiment-silence-aware": "node scripts/run-silence-aware-experiment.mjs",
     "smoke-offline-pipeline": "node scripts/run-offline-pipeline-smoke.mjs",
     "validate-real-candidates": "node scripts/validate-real-candidates.mjs",
+    "check-runtime": "node scripts/check-runtime.mjs",
     "check-compatibility": "node scripts/check-compatibility.mjs",
     "benchmark-performance": "node scripts/run-performance-benchmark.mjs",
     "summarize-experiments": "node scripts/summarize-experiment-results.mjs",

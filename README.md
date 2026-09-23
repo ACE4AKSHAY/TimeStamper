@@ -81,6 +81,9 @@ Run the tests with:
 node --test
 ```
 
+Run `npm run check-runtime` to verify the active Node/Electron versions and
+whether optional local FFmpeg is available before starting an evaluation.
+
 For the current human-review gate, follow [`MANUAL_REVIEW_CHECKLIST.md`](MANUAL_REVIEW_CHECKLIST.md). It includes the NVM launch command, exact UI/algorithm checks, and the small report format needed for the next algorithm decision.
 
 ## Architecture

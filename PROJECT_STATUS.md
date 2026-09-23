@@ -227,6 +227,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 177 | Offline runtime readiness | 🟡 | Installed and documented NVM Node 22, Electron 44.4.4, and the local FFmpeg path; npm audit reports no production vulnerabilities and offline reinstall instructions are recorded. |
 | 178 | Optional provider compatibility | 🟡 | The isolated online lyrics adapter is included in the portable-module smoke check; network access remains outside the offline engine path. |
 | 179 | Desktop reference-assisted workflow | 🟡 | Added a module worker, verified reference audio/LRC inputs, progress, cancellation, and editable target timeline output for the MFCC/constrained-DTW engine. Alternate-recording accuracy still requires real verified pairs. |
+| 180 | Runtime self-check | 🟡 | Added `npm run check-runtime` to detect Node/Electron drift and report optional FFmpeg availability before offline work. |
 
 ## Recommended next steps
 

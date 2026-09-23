@@ -47,6 +47,7 @@ normal browser/Electron playback uses the local file directly.
 ```powershell
 & 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' test
 & 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' run check-compatibility
+& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' run check-runtime
 & 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' audit --omit=dev
 ```
 
