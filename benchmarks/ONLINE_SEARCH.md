@@ -30,6 +30,9 @@ that source while leaving the others available.
 - Network requests have a bounded timeout and accept cancellation from the
   **Cancel search** button. A failed provider does not stop the other selected
   sources.
+- Successful responses are cached locally for seven days per provider and
+  artist/title context. Use **Clear cached online results** in Settings to
+  remove them; the cache contains no audio or waveform data.
 - The provider registry is isolated in `src/online-provider.js`; replacing a
   source or adding another service does not change parsing, editing, alignment,
   or LRC export.

@@ -7,11 +7,13 @@ import { DEFAULT_SETTINGS, applySettings, loadSettings, saveSettings } from "./s
 import { createEnergyInitialTimeline } from "./energy-aligner.js";
 import { parseEditorTime } from "./time-utils.js";
 import { canUseOnlineSearch, createOnlineProviders, selectOnlineProviders } from "./online-provider.js";
+import { OnlineLyricsCache } from "./online-cache.js";
 
 const $ = (id) => document.getElementById(id);
 let project = createProject(); let audioUrl = null; let audioFile = null; let selectedId = null; let peaks = []; let energyProfile = []; let waveformDragging = false; let scanTimer = null; let scanWasPlaying = false; let toastTimer = null; let settings = loadSettings(); let onlineResults = []; let onlineSearchBusy = false; let onlineSearchAbortController = null; let referenceAudio = null; let referenceLyrics = null; let alignmentWorker = null; let alignmentRequestId = null;
 const log = new ProjectLogger(renderLog); const audio = $("audio");
 const onlineProviders = createOnlineProviders();
+const onlineCache = new OnlineLyricsCache();
 const timelineLines = () => project.timeline.lines;
 const timestamp = (time) => Number.isFinite(time) ? secondsToLrc(time) : "—";
 const safeName = (value) => (value || "lyricsync-project").replace(/[<>:"/\\|?*]+/gu, "-").trim() || "lyricsync-project";
@@ -161,7 +163,14 @@ async function searchOnlineLyrics() {
   onlineSearchAbortController = new AbortController();
   try {
     const context = { artist: project.metadata.artist, title: project.metadata.title };
-    const responses = await Promise.allSettled(providers.map((provider) => provider.search(query, context, { signal: onlineSearchAbortController.signal })));
+    const cacheQuery = [query, context.artist, context.title].join("\u0000");
+    const responses = await Promise.allSettled(providers.map(async (provider) => {
+      const cached = onlineCache.get(provider.id, cacheQuery);
+      if (cached !== null) { log.info(`Used cached ${provider.displayName} result(s).`); return cached; }
+      const results = await provider.search(query, context, { signal: onlineSearchAbortController.signal });
+      onlineCache.set(provider.id, cacheQuery, results);
+      return results;
+    }));
     if (onlineSearchAbortController.signal.aborted) { onlineResults = []; log.info("Online lyric search cancelled."); return; }
     onlineResults = responses.flatMap((response) => response.status === "fulfilled" ? response.value : []);
     responses.forEach((response, index) => { if (response.status === "rejected") log.warning(`${providers[index].displayName} search failed: ${response.reason?.message || "request failed"}`); });
@@ -317,6 +326,7 @@ $("lyrics-file").addEventListener("change", async (event) => { const file = even
 $("remove-audio").addEventListener("click", removeAudio); $("remove-lyrics").addEventListener("click", removeLyrics);
 $("online-search").addEventListener("click", searchOnlineLyrics); $("online-query").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); searchOnlineLyrics(); } });
 $("online-cancel").addEventListener("click", cancelOnlineSearch);
+$("clear-online-cache").addEventListener("click", () => { onlineCache.clear(); showToast("Cached online lyric results cleared."); log.info("Cleared optional online lyric cache."); });
 $("load-lyrics").addEventListener("click", () => loadLyrics($("lyrics-text").value)); $("clear-timestamps").addEventListener("click", () => { timelineLines().forEach((line) => { line.startTime = null; }); log.info("Cleared all timestamps."); render(); });
 $("play-toggle").addEventListener("click", togglePlayback); $("seek").addEventListener("input", (event) => { const seconds = Number(event.target.value); audio.currentTime = seconds; updatePositionDisplays(seconds); renderWaveform(); });
 $("reset-audio").addEventListener("click", resetAudio); ["pointerup", "pointerleave", "pointercancel"].forEach((eventName) => $("rewind").addEventListener(eventName, () => stopScan(-1))); $("rewind").addEventListener("pointerdown", () => startScan(-1)); ["pointerup", "pointerleave", "pointercancel"].forEach((eventName) => $("fast-forward").addEventListener(eventName, () => stopScan(1))); $("fast-forward").addEventListener("pointerdown", () => startScan(1));
