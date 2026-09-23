@@ -9,7 +9,7 @@ import { parseEditorTime } from "./time-utils.js";
 import { canUseOnlineSearch, createOnlineProviders, selectOnlineProviders } from "./online-provider.js";
 
 const $ = (id) => document.getElementById(id);
-let project = createProject(); let audioUrl = null; let audioFile = null; let selectedId = null; let peaks = []; let energyProfile = []; let waveformDragging = false; let scanTimer = null; let scanWasPlaying = false; let toastTimer = null; let settings = loadSettings(); let onlineResults = []; let onlineSearchBusy = false; let referenceAudio = null; let referenceLyrics = null; let alignmentWorker = null; let alignmentRequestId = null;
+let project = createProject(); let audioUrl = null; let audioFile = null; let selectedId = null; let peaks = []; let energyProfile = []; let waveformDragging = false; let scanTimer = null; let scanWasPlaying = false; let toastTimer = null; let settings = loadSettings(); let onlineResults = []; let onlineSearchBusy = false; let onlineSearchAbortController = null; let referenceAudio = null; let referenceLyrics = null; let alignmentWorker = null; let alignmentRequestId = null;
 const log = new ProjectLogger(renderLog); const audio = $("audio");
 const onlineProviders = createOnlineProviders();
 const timelineLines = () => project.timeline.lines;
@@ -130,6 +130,8 @@ function renderOnlineSearch() {
   if (!query.value.trim() && onlineQuery()) query.value = onlineQuery();
   button.disabled = !enabled || onlineSearchBusy;
   button.textContent = onlineSearchBusy ? "Searching…" : "Search lyrics online";
+  const cancel = $("online-cancel");
+  if (cancel) cancel.disabled = !onlineSearchBusy;
   const active = activeOnlineProviders();
   status.textContent = !settings.onlineSearchEnabled ? "Disabled by default" : (globalThis.navigator?.onLine === false ? "Offline" : active.length ? `Enabled · ${active.map((provider) => provider.displayName).join(" + ")}` : "No sources selected");
   results.replaceChildren(...onlineResults.map((result, index) => {
@@ -156,15 +158,23 @@ async function searchOnlineLyrics() {
   const query = $("online-query").value.trim() || onlineQuery();
   if (!query) { showToast("Enter a song title or artist to search.", "warning"); return; }
   onlineSearchBusy = true; onlineResults = []; renderOnlineSearch();
+  onlineSearchAbortController = new AbortController();
   try {
     const context = { artist: project.metadata.artist, title: project.metadata.title };
-    const responses = await Promise.allSettled(providers.map((provider) => provider.search(query, context)));
+    const responses = await Promise.allSettled(providers.map((provider) => provider.search(query, context, { signal: onlineSearchAbortController.signal })));
+    if (onlineSearchAbortController.signal.aborted) { onlineResults = []; log.info("Online lyric search cancelled."); return; }
     onlineResults = responses.flatMap((response) => response.status === "fulfilled" ? response.value : []);
     responses.forEach((response, index) => { if (response.status === "rejected") log.warning(`${providers[index].displayName} search failed: ${response.reason?.message || "request failed"}`); });
     if (!onlineResults.length) showToast("No online lyric matches found. Try Artist - Title.", "warning"); else log.info(`Found ${onlineResults.length} optional result(s) across ${providers.length} selected sources.`);
   }
-  catch (error) { log.warning(`Online lyric search failed: ${error.message}`); showToast(`Online search failed: ${error.message}`, "warning"); }
-  finally { onlineSearchBusy = false; renderOnlineSearch(); }
+  catch (error) { if (error.name !== "AbortError") { log.warning(`Online lyric search failed: ${error.message}`); showToast(`Online search failed: ${error.message}`, "warning"); } }
+  finally { onlineSearchBusy = false; onlineSearchAbortController = null; renderOnlineSearch(); }
+}
+
+function cancelOnlineSearch() {
+  if (!onlineSearchAbortController) return;
+  onlineSearchAbortController.abort();
+  showToast("Cancelling online search…");
 }
 
 function useOnlineResult(result) {
@@ -306,6 +316,7 @@ $("reference-audio-file").addEventListener("change", async (event) => { const fi
 $("lyrics-file").addEventListener("change", async (event) => { const file = event.target.files[0]; if (file) { const text = await file.text(); $("lyrics-text").value = text; loadLyrics(text, file.name.toLowerCase().endsWith(".lrc") ? "lrc" : "txt"); } });
 $("remove-audio").addEventListener("click", removeAudio); $("remove-lyrics").addEventListener("click", removeLyrics);
 $("online-search").addEventListener("click", searchOnlineLyrics); $("online-query").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); searchOnlineLyrics(); } });
+$("online-cancel").addEventListener("click", cancelOnlineSearch);
 $("load-lyrics").addEventListener("click", () => loadLyrics($("lyrics-text").value)); $("clear-timestamps").addEventListener("click", () => { timelineLines().forEach((line) => { line.startTime = null; }); log.info("Cleared all timestamps."); render(); });
 $("play-toggle").addEventListener("click", togglePlayback); $("seek").addEventListener("input", (event) => { const seconds = Number(event.target.value); audio.currentTime = seconds; updatePositionDisplays(seconds); renderWaveform(); });
 $("reset-audio").addEventListener("click", resetAudio); ["pointerup", "pointerleave", "pointercancel"].forEach((eventName) => $("rewind").addEventListener(eventName, () => stopScan(-1))); $("rewind").addEventListener("pointerdown", () => startScan(-1)); ["pointerup", "pointerleave", "pointercancel"].forEach((eventName) => $("fast-forward").addEventListener(eventName, () => stopScan(1))); $("fast-forward").addEventListener("pointerdown", () => startScan(1));

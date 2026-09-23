@@ -61,3 +61,22 @@ test("source selection disables only explicitly disabled providers", () => {
   assert.deepEqual(selectOnlineProviders(providers, { "lyrics-ovh": false }).map((provider) => provider.id), ["lrclib", "web-search"]);
   assert.deepEqual(selectOnlineProviders(providers, {}).map((provider) => provider.id), ["lrclib", "lyrics-ovh", "web-search"]);
 });
+
+test("LRCLIB forwards cancellation and enforces a bounded request timeout", async () => {
+  let observedSignal;
+  const fetchImpl = async (_url, init) => {
+    observedSignal = init.signal;
+    return new Promise((resolve, reject) => {
+      init.signal.addEventListener("abort", () => reject(init.signal.reason), { once: true });
+    });
+  };
+  const provider = new LrcLibProvider({ fetchImpl, timeoutMs: 100 });
+  await assert.rejects(() => provider.search("Song"), (error) => error.name === "TimeoutError");
+  assert.equal(observedSignal.aborted, true);
+
+  const parent = new AbortController();
+  const cancelProvider = new LrcLibProvider({ fetchImpl, timeoutMs: 1000 });
+  const pending = cancelProvider.search("Song", {}, { signal: parent.signal });
+  parent.abort();
+  await assert.rejects(() => pending, (error) => error.name === "AbortError");
+});

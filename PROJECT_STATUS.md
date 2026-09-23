@@ -232,6 +232,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 182 | Product smoke test | 🟡 | Added `npm run smoke-test`, a deterministic offline contract check for Unicode parsing, WAV decoding, feature extraction, monotonic synchronization, LRC export, and provider isolation. |
 | 183 | Multi-source online lyrics | 🟡 | Added LRCLIB timed/plain search, lyrics.ovh plain-lyrics lookup, labeled Genius/Musixmatch/Lyrics.com search links, and direct copy-to-clipboard for returned lyric text; all remain explicit opt-in. |
 | 184 | Online source controls | 🟡 | Added per-source Settings switches for LRCLIB, lyrics.ovh, and browser-link search; disabled sources are not queried and the default remains opt-in. |
+| 185 | Online request safety | 🟡 | Added bounded provider timeouts, AbortSignal forwarding, and a visible Cancel search action; cancellation and provider failures leave local project state unchanged. |
 
 ## Recommended next steps
 

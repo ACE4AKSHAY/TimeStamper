@@ -27,6 +27,9 @@ that source while leaving the others available.
 - Automatic providers: LRCLIB for timed/plain results and lyrics.ovh for plain
   lyrics. Search-link results open Genius, Musixmatch, or Lyrics.com for the
   user to inspect and copy manually; the app does not scrape those sites.
+- Network requests have a bounded timeout and accept cancellation from the
+  **Cancel search** button. A failed provider does not stop the other selected
+  sources.
 - The provider registry is isolated in `src/online-provider.js`; replacing a
   source or adding another service does not change parsing, editing, alignment,
   or LRC export.

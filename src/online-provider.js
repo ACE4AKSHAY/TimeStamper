@@ -30,22 +30,23 @@ export function canUseOnlineSearch(settings) {
  * alignment core; callers must explicitly enable online search first.
  */
 export class LrcLibProvider extends OnlineLyricsProvider {
-  constructor({ fetchImpl = globalThis.fetch, baseUrl = "https://lrclib.net/api" } = {}) {
+  constructor({ fetchImpl = globalThis.fetch, baseUrl = "https://lrclib.net/api", timeoutMs = 12000 } = {}) {
     super({ id: "lrclib", displayName: "LRCLIB" });
     if (typeof fetchImpl !== "function") throw new Error("Online lyric search requires a fetch implementation.");
     this.fetchImpl = fetchImpl;
     this.baseUrl = baseUrl.replace(/\/$/u, "");
+    this.timeoutMs = normalizeTimeout(timeoutMs);
   }
 
-  async search(query) {
+  async search(query, _context = {}, options = {}) {
     const text = String(query || "").trim();
     if (!text) throw new Error("Enter a song title or artist before searching.");
-    const response = await this.fetchJson(`${this.baseUrl}/search?q=${encodeURIComponent(text)}`);
+    const response = await this.fetchJson(`${this.baseUrl}/search?q=${encodeURIComponent(text)}`, options);
     if (!Array.isArray(response)) return [];
     return response.map(normalizeResult).filter((item) => item.title || item.artist);
   }
 
-  async fetchLyrics(result) {
+  async fetchLyrics(result, options = {}) {
     const normalized = normalizeResult(result);
     if (normalized.syncedLyrics || normalized.plainLyrics) return normalized;
     if (!normalized.title) throw new Error("The selected online result has no song title.");
@@ -53,29 +54,41 @@ export class LrcLibProvider extends OnlineLyricsProvider {
     if (normalized.artist) params.set("artist_name", normalized.artist);
     if (normalized.album) params.set("album_name", normalized.album);
     if (Number.isFinite(normalized.duration)) params.set("duration", String(normalized.duration));
-    return normalizeResult(await this.fetchJson(`${this.baseUrl}/get?${params}`));
+    return normalizeResult(await this.fetchJson(`${this.baseUrl}/get?${params}`, options));
   }
 
-  async fetchJson(url) {
-    const response = await this.fetchImpl(url, { headers: { Accept: "application/json" } });
-    if (!response?.ok) throw new Error(`Online lyric service returned ${response?.status || "an error"}.`);
-    return response.json();
+  async fetchJson(url, { signal } = {}) {
+    const request = createRequestSignal(this.timeoutMs, signal);
+    try {
+      const response = await this.fetchImpl(url, { headers: { Accept: "application/json" }, signal: request.signal });
+      if (!response?.ok) throw new Error(`Online lyric service returned ${response?.status || "an error"}.`);
+      return response.json();
+    } finally {
+      request.cleanup();
+    }
   }
 }
 
 /** Plain-lyrics lookup. lyrics.ovh does not provide synchronized timestamps. */
 export class LyricsOvhProvider extends OnlineLyricsProvider {
-  constructor({ fetchImpl = globalThis.fetch, baseUrl = "https://api.lyrics.ovh" } = {}) {
+  constructor({ fetchImpl = globalThis.fetch, baseUrl = "https://api.lyrics.ovh", timeoutMs = 12000 } = {}) {
     super({ id: "lyrics-ovh", displayName: "lyrics.ovh" });
     if (typeof fetchImpl !== "function") throw new Error("Online lyric search requires a fetch implementation.");
     this.fetchImpl = fetchImpl;
     this.baseUrl = baseUrl.replace(/\/$/u, "");
+    this.timeoutMs = normalizeTimeout(timeoutMs);
   }
 
-  async search(query, context = {}) {
+  async search(query, context = {}, { signal } = {}) {
     const { artist, title } = parseArtistTitle(query, context);
     if (!artist || !title) return [];
-    const response = await this.fetchImpl(`${this.baseUrl}/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`, { headers: { Accept: "application/json" } });
+    const request = createRequestSignal(this.timeoutMs, signal);
+    let response;
+    try {
+      response = await this.fetchImpl(`${this.baseUrl}/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`, { headers: { Accept: "application/json" }, signal: request.signal });
+    } finally {
+      request.cleanup();
+    }
     if (!response?.ok) return [];
     const data = await response.json();
     const lyrics = typeof data?.lyrics === "string" ? data.lyrics.trim() : "";
@@ -138,4 +151,29 @@ export function parseArtistTitle(query, context = {}) {
   if (artist && title) return { artist, title };
   const parts = String(query || "").split(/\s+[-|]\s+/u).map((part) => part.trim()).filter(Boolean);
   return parts.length >= 2 ? { artist: parts[0], title: parts.slice(1).join(" - ") } : { artist: "", title: "" };
+}
+
+function normalizeTimeout(value) {
+  return Math.max(100, Number.isFinite(Number(value)) ? Number(value) : 12000);
+}
+
+function createRequestSignal(timeoutMs, parentSignal) {
+  const controller = new AbortController();
+  const onParentAbort = () => controller.abort(parentSignal.reason || abortError("Online search cancelled."));
+  if (parentSignal?.aborted) onParentAbort();
+  else parentSignal?.addEventListener("abort", onParentAbort, { once: true });
+  const timer = setTimeout(() => controller.abort(abortError(`Online search timed out after ${timeoutMs} ms.`, "TimeoutError")), timeoutMs);
+  return {
+    signal: controller.signal,
+    cleanup() {
+      clearTimeout(timer);
+      parentSignal?.removeEventListener("abort", onParentAbort);
+    },
+  };
+}
+
+function abortError(message, name = "AbortError") {
+  const error = new Error(message);
+  error.name = name;
+  return error;
 }
