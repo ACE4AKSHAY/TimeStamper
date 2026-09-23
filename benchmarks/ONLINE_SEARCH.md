@@ -12,6 +12,10 @@
 4. Review the imported text and timestamps before export. The service result is
    a convenience source, not ground truth.
 
+The Settings dialog also exposes individual source switches. The main online
+search switch must be enabled first; disabling a source prevents requests to
+that source while leaving the others available.
+
 ## Privacy and failure behavior
 
 - The default is disabled and remains offline-first.

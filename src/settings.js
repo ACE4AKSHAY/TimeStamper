@@ -5,13 +5,14 @@ export const DEFAULT_SETTINGS = Object.freeze({
   waveformColor: "#4ca2f7",
   textScale: "medium",
   onlineSearchEnabled: false,
+  onlineSources: Object.freeze({ lrclib: true, "lyrics-ovh": true, "web-search": true }),
   shortcuts: Object.freeze({ playToggle: "Space", stamp: "T", playbackEarlier: "ArrowLeft", playbackLater: "ArrowRight" }),
 });
 
 export function loadSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-    return { ...DEFAULT_SETTINGS, ...saved, shortcuts: { ...DEFAULT_SETTINGS.shortcuts, ...(saved.shortcuts || {}) } };
+    return { ...DEFAULT_SETTINGS, ...saved, onlineSources: { ...DEFAULT_SETTINGS.onlineSources, ...(saved.onlineSources || {}) }, shortcuts: { ...DEFAULT_SETTINGS.shortcuts, ...(saved.shortcuts || {}) } };
   } catch {
     return { ...DEFAULT_SETTINGS, shortcuts: { ...DEFAULT_SETTINGS.shortcuts } };
   }

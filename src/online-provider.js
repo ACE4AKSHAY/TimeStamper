@@ -128,6 +128,10 @@ export function createOnlineProviders(options = {}) {
   return [new LrcLibProvider({ ...shared, ...(lrcLib || {}) }), new LyricsOvhProvider({ ...shared, ...(lyricsOvh || {}) }), new WebLyricsSearchProvider()];
 }
 
+export function selectOnlineProviders(providers, enabledSources = {}) {
+  return providers.filter((provider) => enabledSources[provider.id] !== false);
+}
+
 export function parseArtistTitle(query, context = {}) {
   const artist = String(context.artist || "").trim();
   const title = String(context.title || "").trim();

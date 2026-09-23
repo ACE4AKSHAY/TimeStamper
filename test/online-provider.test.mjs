@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { LrcLibProvider, LyricsOvhProvider, WebLyricsSearchProvider, canUseOnlineSearch, createOnlineProviders, normalizeResult, parseArtistTitle } from "../src/online-provider.js";
+import { LrcLibProvider, LyricsOvhProvider, WebLyricsSearchProvider, canUseOnlineSearch, createOnlineProviders, normalizeResult, parseArtistTitle, selectOnlineProviders } from "../src/online-provider.js";
 
 function fakeFetch(payload, options = {}) {
   const calls = [];
@@ -54,4 +54,10 @@ test("online provider registry and artist-title parsing expose all source classe
   assert.deepEqual(providers.map((provider) => provider.id), ["lrclib", "lyrics-ovh", "web-search"]);
   assert.equal(providers[0].baseUrl, "https://lrc.test/api");
   assert.equal(providers[1].baseUrl, "https://plain.test");
+});
+
+test("source selection disables only explicitly disabled providers", () => {
+  const providers = createOnlineProviders({ fetchImpl: fakeFetch([]) });
+  assert.deepEqual(selectOnlineProviders(providers, { "lyrics-ovh": false }).map((provider) => provider.id), ["lrclib", "web-search"]);
+  assert.deepEqual(selectOnlineProviders(providers, {}).map((provider) => provider.id), ["lrclib", "lyrics-ovh", "web-search"]);
 });

@@ -231,6 +231,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 181 | Final local regression | 🟡 | Re-ran the private metadata-only self-reference evaluator after UI integration: 20/20 cases, 1,114 lines, 27.66 ms MAE, 98.11% within 250 ms, 99.37% within 500 ms, 100% within 1 s; no private output is tracked. |
 | 182 | Product smoke test | 🟡 | Added `npm run smoke-test`, a deterministic offline contract check for Unicode parsing, WAV decoding, feature extraction, monotonic synchronization, LRC export, and provider isolation. |
 | 183 | Multi-source online lyrics | 🟡 | Added LRCLIB timed/plain search, lyrics.ovh plain-lyrics lookup, labeled Genius/Musixmatch/Lyrics.com search links, and direct copy-to-clipboard for returned lyric text; all remain explicit opt-in. |
+| 184 | Online source controls | 🟡 | Added per-source Settings switches for LRCLIB, lyrics.ovh, and browser-link search; disabled sources are not queried and the default remains opt-in. |
 
 ## Recommended next steps
 
