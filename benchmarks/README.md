@@ -52,6 +52,7 @@
 - [`TEXT_UNIT_EXPERIMENT.md`](./TEXT_UNIT_EXPERIMENT.md) — Experiment 25, Unicode grapheme versus codepoint duration priors.
 - [`DTW_MEMORY_EXPERIMENT.md`](./DTW_MEMORY_EXPERIMENT.md) — Experiment 26, rolling-cost constrained DTW memory optimization.
 - [`OFFLINE_PIPELINE_SMOKE.md`](./OFFLINE_PIPELINE_SMOKE.md) — Decoder-to-features-to-alignment end-to-end smoke path using generated WAV bytes.
+- [`SMOKE_TEST.md`](./SMOKE_TEST.md) — one-command offline product smoke test covering the core contracts.
 - [`REAL_FILE_REQUIREMENTS.md`](./REAL_FILE_REQUIREMENTS.md) — Exact private audio, lyrics, pairing, and verification requirements.
 - [`REAL_CANDIDATE_VALIDATION.md`](./REAL_CANDIDATE_VALIDATION.md) — Metadata-only validator for collected MP3/LRC candidates.
 - [`REAL_CASE_EVALUATION.md`](./REAL_CASE_EVALUATION.md) — Private batch evaluator for verified case folders and all selectable engines.
