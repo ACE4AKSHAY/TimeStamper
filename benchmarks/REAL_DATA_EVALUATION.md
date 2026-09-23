@@ -143,11 +143,18 @@ semantic ground truth for each recording; automated evaluation checks that the
 parser, decoder, feature extraction, and engine reproduce measurable results
 across all cases. It does not override the user’s musical judgment.
 
-## Next engineering step
+## Current completion state
 
-The decoder/profile adapter is now exercised against real MP3 files. The next
-research step is to build and measure reference-assisted acoustic line
-templates (MFCC/constrained-DTW) and stronger vocal evidence, then compare them
-against the baseline above. Keep the decoder optional so browser playback and
-future mobile ports remain modular. No songs, lyrics, or private manifests
-should ever be committed.
+The desktop reference-assisted MFCC/constrained-DTW workflow is now integrated
+through a disposable module worker with progress and cancellation. It accepts a
+verified reference recording plus a fully timestamped reference LRC, then
+returns an editable target timeline. A 20-case self-reference regression after
+this integration evaluated all 1,114 reviewed lines with 27.66 ms aggregate
+MAE, 10.98 ms median absolute error, 98.11% within 250 ms, 99.37% within 500
+ms, and 100% within one second. This remains an implementation sanity check:
+the reference and target are the same recording.
+
+The only accuracy work still requiring user media is held-out validation with a
+second recording (cover, live, remix, alternate mix, or other version). Keep
+the decoder optional so browser playback and future mobile ports remain
+modular. No songs, lyrics, or private manifests should ever be committed.
