@@ -4,6 +4,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   theme: "midnight",
   waveformColor: "#4ca2f7",
   textScale: "medium",
+  reduceMotion: false,
   onlineSearchEnabled: false,
   onlineSources: Object.freeze({ lrclib: true, "lyrics-ovh": true, "web-search": true }),
   shortcuts: Object.freeze({ playToggle: "Space", stamp: "T", playbackEarlier: "ArrowLeft", playbackLater: "ArrowRight" }),
@@ -26,5 +27,6 @@ export function applySettings(settings) {
   const root = document.documentElement;
   root.dataset.theme = settings.theme;
   root.dataset.textScale = settings.textScale;
+  root.dataset.reduceMotion = settings.reduceMotion === true ? "true" : "false";
   root.style.setProperty("--wave-color", settings.waveformColor);
 }

@@ -14,6 +14,10 @@ Every selected engine remains separately callable and the result records the
 route, reason, and voicedness summary. No existing engine was removed or
 silently changed.
 
+The desktop **Automatic timing** action currently receives the local RMS energy
+profile and therefore uses the transparent energy fallback. Additional profile
+extractors can be connected later without changing the route contract.
+
 ## Run
 
 ```powershell
