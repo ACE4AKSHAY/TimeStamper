@@ -6,7 +6,7 @@ An offline-first, desktop-first foundation for the **Lightweight Offline Audio-T
 
 All required capabilities work with no network connection: importing audio and lyrics, waveform generation, playback, manual timing, project storage, logging and LRC export. No files are uploaded or sent to a server.
 
-Online lyrics/LRC discovery is an explicit opt-in connector, not a dependency. Settings keep it disabled by default; when enabled, the provider registry searches LRCLIB for timed/plain results, lyrics.ovh for plain copyable text, and gives labeled Genius/Musixmatch/Lyrics.com search links. It fails harmlessly when offline, and audio/project data never leaves the device. See [`ONLINE_SEARCH.md`](benchmarks/ONLINE_SEARCH.md).
+Online lyrics/LRC discovery is an explicit opt-in connector, not a dependency. Settings keep it disabled by default; when enabled, the provider registry searches LRCLIB for timed/plain results, lyrics.ovh for plain copyable text, and gives labeled Genius/Musixmatch/Lyrics.com search links. It fails harmlessly when offline, and audio/project data never leaves the device. The reusable engine also exposes an explainable automatic route that selects among existing deterministic profile methods without AI/ML. See [`ONLINE_SEARCH.md`](benchmarks/ONLINE_SEARCH.md).
 
 ## Included in v0.1
 

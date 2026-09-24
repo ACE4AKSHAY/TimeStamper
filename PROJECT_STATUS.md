@@ -235,6 +235,8 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 185 | Online request safety | 🟡 | Added bounded provider timeouts, AbortSignal forwarding, and a visible Cancel search action; cancellation and provider failures leave local project state unchanged. |
 | 186 | Local online-result cache | 🟡 | Added a seven-day, provider-scoped localStorage cache with expiry, bounded entry count, and a clear-cache action; cached data contains lyric responses only. |
 | 187 | Online import provenance | 🟡 | Imported online lyrics now retain provider, result kind, source URL, query context, and retrieval time in the project file and show the source beside the loaded lyrics. |
+| 188 | Automatic engine routing | 🟡 | Added a reusable non-ML `automatic` route that selects vocal-gated, combined-profile, or adaptive Boundary-DP from available explainable profiles and records its reason; underlying engines remain isolated. |
+| 189 | Automated algorithm benchmark refresh | 🟡 | Re-ran the seeded 60-case comparison across 10 deterministic engines: vocal-gated Boundary-DP ranked first at 0.745 s MAE, followed by combined profile at 0.792 s; all 10 completed without failures. This remains synthetic evidence only. |
 
 ## Recommended next steps
 

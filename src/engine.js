@@ -13,6 +13,7 @@ import { alignByAdaptiveVocalBoundaryDp } from "./adaptive-vocal-aligner.js";
 import { alignBySilenceAwareBoundaryDp } from "./silence-aware-aligner.js";
 import { alignWithReferenceTemplates } from "./reference-template-aligner.js";
 import { alignWithReferenceTemplateEnsemble } from "./reference-template-ensemble.js";
+import { alignAutomatically } from "./automatic-aligner.js";
 
 export const ENGINE_VERSION = "0.3.0";
 
@@ -27,6 +28,10 @@ export function synchronize({ lyrics, duration, energyProfile, engine = "energy-
   if (engine === "combined-profile") {
     const alignment = createCombinedInitialTimeline(lines, parameters.profiles || { energy: energyProfile || [] }, duration, parameters);
     return { engine, engineVersion: ENGINE_VERSION, parameters: alignment.parameters, profileFusion: alignment.fusion, lines: alignment.lines, generatedAt: new Date().toISOString() };
+  }
+  if (engine === "automatic") {
+    const alignment = alignAutomatically(lines, parameters.profiles || { energy: energyProfile || [] }, duration, parameters);
+    return { engine, engineVersion: ENGINE_VERSION, selectedEngine: alignment.selectedEngine, selection: alignment.selection, parameters: { ...parameters, profiles: undefined }, lines: alignment.lines, alignment, generatedAt: new Date().toISOString() };
   }
   if (engine === "boundary-dp") {
     const alignment = alignByBoundaryDp(lines, parameters.profile || energyProfile || [], duration, parameters);
