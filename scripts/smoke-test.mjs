@@ -6,7 +6,7 @@ import { extractExplainableProfiles } from "../src/audio-profiles.js";
 import { synchronize } from "../src/engine.js";
 import { exportLrc } from "../src/lrc.js";
 import { parseLyrics } from "../src/lyrics.js";
-import { normalizeResult } from "../src/online-provider.js";
+import { normalizeResult } from "../src/online/online-provider.js";
 
 const outputPath = resolve(process.argv[2] || "benchmarks/results/smoke-test.json");
 const started = performance.now();

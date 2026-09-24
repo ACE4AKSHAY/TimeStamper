@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { OnlineLyricsCache } from "../src/online-cache.js";
+import { OnlineLyricsCache } from "../src/online/online-cache.js";
 
 function memoryStorage() {
   const values = new Map();

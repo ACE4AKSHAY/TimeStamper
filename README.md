@@ -92,6 +92,10 @@ For the current human-review gate, follow [`MANUAL_REVIEW_CHECKLIST.md`](MANUAL_
 
 ## Architecture
 
+For the actual execution path, stable public API, module grouping, and a
+minimal recreation example, see [`ARCHITECTURE.md`](ARCHITECTURE.md). The
+short map below lists the implementation modules.
+
 The v0.1 browser UI is a thin client over reusable ES modules:
 
 - `src/domain.js` — lyric/project models and text normalization
@@ -99,9 +103,10 @@ The v0.1 browser UI is a thin client over reusable ES modules:
 - `src/lrc.js` — LRC timestamp conversion and export
 - `src/storage.js` — project serialization and file downloads
 - `src/logger.js` — human-readable project logger
-- `src/app.js` — UI, playback, waveform visualization and manual editor
+- `src/ui/app.js` — UI, playback, waveform visualization and manual editor
 - `desktop/` — minimal secure Electron shell; the renderer has no Node.js access
-- `src/online-provider.js` — optional LRCLIB search/fetch adapter; isolated from the offline core
+- `src/online/online-provider.js` and `src/online/online-cache.js` — optional online adapters and local result cache; isolated from the offline core
+- `src/index.js` — stable public API facade for recreation by another client
 - `src/engine.js` — platform-neutral `synchronize()` entry point for reusable alignment engines
 - `src/project-store.mjs` — structured local project directory storage for desktop/CLI workflows
 - `src/feature-cache.mjs` — file-backed, content-identity/config-keyed cache for reusable decoded features and alignment inputs

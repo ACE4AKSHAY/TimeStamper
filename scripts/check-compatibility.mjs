@@ -8,8 +8,8 @@ const portableModules = [
   "mfcc-dtw.js", "dtw-banded.js", "template-aligner.js", "template-builder.js", "template-boundary-refiner.js", "template-diagnostics.js", "feature-normalizer.js", "reference-template-aligner.js", "reference-template-ensemble.js", "reference-target-validation.js", "mfcc-feature-cache.mjs", "vocal-separator.js", "profile-fusion.js",
   "audio-profiles.js", "pitch-profile.js", "run-config.mjs", "combined-aligner.js", "boundary-dp-aligner.js",
   "intro-aware-aligner.js", "adaptive-boundary-aligner.js", "text-weighted-aligner.js", "boundary-refiner.js", "ensemble-aligner.js", "vocal-gated-aligner.js", "adaptive-vocal-aligner.js", "silence-aware-aligner.js", "evaluation.js", "multi-profile-aligner.js", "consensus-aligner.js",
-  "engine.js", "metrics.js",
-  "online-provider.js", "alignment-worker.js",
+  "engine.js", "metrics.js", "automatic-aligner.js", "index.js",
+  "online/online-provider.js", "alignment-worker.js",
 ];
 const forbiddenImport = /(?:from\s+["']node:|import\s*\(["']node:|require\s*\(["']node:)/u;
 

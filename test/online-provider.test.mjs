@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { LrcLibProvider, LyricsOvhProvider, WebLyricsSearchProvider, canUseOnlineSearch, createOnlineProviders, normalizeResult, parseArtistTitle, selectOnlineProviders } from "../src/online-provider.js";
+import { LrcLibProvider, LyricsOvhProvider, WebLyricsSearchProvider, canUseOnlineSearch, createOnlineProviders, normalizeResult, parseArtistTitle, selectOnlineProviders } from "../src/online/online-provider.js";
 
 function fakeFetch(payload, options = {}) {
   const calls = [];

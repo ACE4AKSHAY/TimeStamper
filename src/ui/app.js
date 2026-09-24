@@ -1,14 +1,14 @@
-import { createLine, createLyricsProvenance, createProject } from "./domain.js";
-import { parseLyrics, linesToText } from "./lyrics.js";
-import { exportLrc, secondsToLrc } from "./lrc.js";
-import { deserializeProject, downloadText, openText, saveText, serializeProject } from "./storage.js";
-import { ProjectLogger } from "./logger.js";
+import { createLine, createLyricsProvenance, createProject } from "../domain.js";
+import { parseLyrics, linesToText } from "../lyrics.js";
+import { exportLrc, secondsToLrc } from "../lrc.js";
+import { deserializeProject, downloadText, openText, saveText, serializeProject } from "../storage.js";
+import { ProjectLogger } from "../logger.js";
 import { DEFAULT_SETTINGS, applySettings, loadSettings, saveSettings } from "./settings.js";
-import { createEnergyInitialTimeline } from "./energy-aligner.js";
-import { parseEditorTime } from "./time-utils.js";
-import { canUseOnlineSearch, createOnlineProviders, selectOnlineProviders } from "./online-provider.js";
-import { OnlineLyricsCache } from "./online-cache.js";
-import { alignAutomatically } from "./automatic-aligner.js";
+import { createEnergyInitialTimeline } from "../energy-aligner.js";
+import { parseEditorTime } from "../time-utils.js";
+import { canUseOnlineSearch, createOnlineProviders, selectOnlineProviders } from "../online/online-provider.js";
+import { OnlineLyricsCache } from "../online/online-cache.js";
+import { alignAutomatically } from "../automatic-aligner.js";
 
 const $ = (id) => document.getElementById(id);
 let project = createProject(); let audioUrl = null; let audioFile = null; let selectedId = null; let peaks = []; let energyProfile = []; let waveformDragging = false; let scanTimer = null; let scanWasPlaying = false; let toastTimer = null; let settings = loadSettings(); let onlineResults = []; let onlineSearchBusy = false; let onlineSearchAbortController = null; let referenceAudio = null; let referenceLyrics = null; let alignmentWorker = null; let alignmentRequestId = null;
@@ -110,7 +110,7 @@ async function runReferenceAlignment() {
   if (timelineLines().length !== referenceLyrics.starts.length) { showToast(`Reference and target must have the same line count (${referenceLyrics.starts.length} required).`, "warning"); return; }
   try {
     const target = await decodeMono(audioFile); const requestId = crypto.randomUUID(); alignmentRequestId = requestId; $("alignment-progress").value = 0; $("alignment-status").textContent = "Preparing MFCC templates…"; renderReferenceAlignment();
-    alignmentWorker = new Worker(new URL("./alignment-worker.js", import.meta.url), { type: "module" });
+    alignmentWorker = new Worker(new URL("../alignment-worker.js", import.meta.url), { type: "module" });
     alignmentWorker.onmessage = (event) => {
       const message = event.data || {}; if (message.requestId !== alignmentRequestId) return;
       if (message.type === "progress") { $("alignment-progress").value = Math.max(0, Math.min(1, Number(message.progress?.fraction) || 0)); $("alignment-status").textContent = message.progress?.phase === "template-dtw" ? `Aligning line ${Math.min(message.progress.completedLines + 1, message.progress.totalLines)} of ${message.progress.totalLines}…` : "Aligning reference…"; return; }

@@ -35,7 +35,7 @@ that source while leaving the others available.
   remove them; the cache contains no audio or waveform data.
 - When a result is imported, the project records its provider, result type,
   source URL, query context, and retrieval time beside the lyric source.
-- The provider registry is isolated in `src/online-provider.js`; replacing a
+- The provider registry is isolated in `src/online/online-provider.js`; replacing a
   source or adding another service does not change parsing, editing, alignment,
   or LRC export.
 
