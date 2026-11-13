@@ -18,6 +18,12 @@
 - Long architecture, setup and implementation notes are grouped under `docs/`.
 - Added CI, linting and formatting scaffolding without changing the offline
   engine defaults.
+- Added the phase-gated alignment research package: literature, tools,
+  candidate engines, datasets, evaluation protocol, annotation guide, failure
+  taxonomy, experiment plan and decision memo.
+- Added a source link audit, corrections log, dependency-free research link
+  checker and private verified-case JSON schema. No real-song measurements,
+  datasets, models or packages were downloaded in this research pass.
 
 ## 0.3.0
 
