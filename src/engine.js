@@ -22,7 +22,7 @@ export const ENGINE_VERSION = "0.3.0";
  * lyric lines, audio duration and extracted features; no Electron/browser API
  * is required here, so this module can be reused by a future mobile client.
  */
-export function synchronize({ lyrics, duration, energyProfile, engine = "energy-baseline", parameters = {} }) {
+function synchronizeLegacy({ lyrics, duration, energyProfile, engine = "energy-baseline", parameters = {} }) {
   const lines = Array.isArray(lyrics) ? lyrics : lyrics?.lines;
   if (!Array.isArray(lines) || !lines.length) throw new Error("Synchronization requires at least one lyric line.");
   if (engine === "combined-profile") {
@@ -338,4 +338,62 @@ export function synchronize({ lyrics, duration, energyProfile, engine = "energy-
     lines: alignedLines,
     generatedAt: new Date().toISOString(),
   };
+}
+
+const ENGINE_DEFINITIONS = [
+  ["energy-baseline", "recommended", ["duration", "energyProfile"], "low"],
+  ["combined-profile", "recommended", ["duration", "profiles"], "low"],
+  ["automatic", "recommended", ["duration", "profiles"], "medium"],
+  ["boundary-dp", "recommended", ["duration", "profile"], "low"],
+  ["intro-aware-boundary-dp", "experimental", ["duration", "profile"], "medium"],
+  ["adaptive-boundary-dp", "recommended", ["duration", "profile"], "medium"],
+  ["text-weighted-boundary-dp", "recommended", ["duration", "profile"], "medium"],
+  ["refined-boundary-dp", "recommended", ["duration", "profile"], "medium"],
+  ["ensemble-boundary", "experimental", ["duration", "profile"], "high"],
+  ["vocal-gated-boundary-dp", "recommended", ["duration", "profiles.voicedness"], "medium"],
+  ["adaptive-vocal-boundary-dp", "recommended", ["duration", "profiles.voicedness"], "medium"],
+  ["silence-aware-boundary-dp", "recommended", ["duration", "profile"], "medium"],
+  ["multi-profile-boundary-dp", "recommended", ["duration", "profiles"], "medium"],
+  ["template-mfcc-dtw", "experimental", ["audioFrames", "lineTemplates"], "high"],
+  ["reference-template-mfcc-dtw", "experimental", ["reference", "target"], "high"],
+  ["reference-template-ensemble", "experimental", ["reference", "target", "variants"], "very-high"],
+];
+
+function createEngineDescriptor([name, maturity, requires, cost]) {
+  return Object.freeze({
+    name,
+    maturity,
+    requires: Object.freeze([...requires]),
+    cost,
+    run(request) {
+      return synchronizeLegacy({ ...request, engine: name });
+    },
+    describe() {
+      return { name, maturity, requires: [...requires], cost };
+    },
+  });
+}
+
+/**
+ * Registry of every public engine. The run adapters deliberately preserve the
+ * historical engine result shape while giving the router and UI a single
+ * inspectable source of truth.
+ */
+export const ENGINE_REGISTRY = Object.freeze(
+  Object.fromEntries(ENGINE_DEFINITIONS.map((definition) => [definition[0], createEngineDescriptor(definition)])),
+);
+
+export function listEngines() {
+  return Object.values(ENGINE_REGISTRY).map((descriptor) => descriptor.describe());
+}
+
+/**
+ * Stable synchronization facade. Existing callers continue to pass the
+ * legacy request shape; registry dispatch is transparent to them.
+ */
+export function synchronize(request = {}) {
+  const engine = request.engine || "energy-baseline";
+  const descriptor = ENGINE_REGISTRY[engine];
+  if (!descriptor) throw new Error(`Unknown synchronization engine: ${engine}`);
+  return descriptor.run(request);
 }
