@@ -23,9 +23,10 @@ cases:
 3. **Known lyrics plus a different recording:** use a verified reference
    recording, acoustic templates and constrained DTW.
 4. **Word/phoneme timing in a dense mix:** isolate vocals if possible, then use
-   a singing-adapted phoneme/CTC forced aligner. This is the most accurate
-   research direction, but introduces models, language resources, compute and
-   licensing questions.
+   a singing-adapted phoneme/CTC forced aligner. This has the highest potential
+   precision in the reviewed literature, but introduces models, language
+   resources, compute and licensing questions. This is a research conclusion,
+   not a measured LyricSync result.
 
 The recommended LyricSync engine is a **cascade and fusion system**:
 
@@ -49,25 +50,25 @@ lyrics be an ordered sequence of units (L=(\ell_1,\ldots,\ell_N)). A unit can
 be a line, phrase, word, syllable or phoneme. The output is a pair of times for
 each unit:
 
-\[
+$$
   B_i=(s_i,e_i), \quad 0\le s_i\le e_i\le T,
-\]
+$$
 
 where (T) is the recording duration. At minimum we require monotonic starts:
 
-\[
+$$
   s_1\le s_2\le\cdots\le s_N.
-\]
+$$
 
 The observed audio does not say which lyric generated each frame. It contains
 instrumental accompaniment, drums, backing vocals, reverberation, breaths,
 ad-libs, repeated choruses and possible edits. The real problem is therefore
 latent-variable inference:
 
-\[
+$$
   \hat B=\arg\min_B\; D(F(x),B,L)+\lambda_{order}R_{order}(B)
        +\lambda_{gap}R_{gap}(B)+\lambda_{text}R_{text}(B),
-\]
+$$
 
 where (F(x)) is one or more audio feature streams, (D) measures how well
 each proposed segment explains the audio, (R_{order}) enforces monotonicity,
@@ -98,22 +99,22 @@ experiment can show which stream helped.
 **Boundary dynamic programming.** If lines are ordered but not acoustically
 labelled, define a cost for assigning line (i) to frames (k{:}j):
 
-\[
+$$
 C_i(k,j)=w_E C_E+w_O C_O+w_V C_V+w_P C_P
          +\lambda_d\phi(j-k,\ell_i)+\lambda_g G(k,j).
-\]
+$$
 
 Then solve (D(i,j)=\min_{k<j}\{D(i-1,k)+C_i(k,j)\}). This is the
 mathematical core of the current Boundary-DP family. It is language-neutral
-when (phi) uses Unicode/grapheme length only, but it cannot prove that the
+when $\phi$ uses Unicode/grapheme length only, but it cannot prove that the
 singer said a particular word.
 
 **DTW / constrained DTW.** For two feature sequences (A_{1:n}) and
 (B_{1:m}), the standard recurrence is:
 
-\[
+$$
 D(i,j)=d(A_i,B_j)+\min(D(i-1,j),D(i,j-1),D(i-1,j-1)).
-\]
+$$
 
 A Sakoe–Chiba band or slope constraint prevents impossible time warps. A
 coarse-to-fine path first finds a broad alignment and then refines it at high
@@ -123,29 +124,39 @@ mapping arbitrary text to audio by itself.
 **HMM/Viterbi or CTC forced alignment.** Text is converted to states (usually
 phonemes or characters), audio produces per-frame likelihoods, and Viterbi
 finds the most likely monotonic state path. A CTC trellis is a practical modern
-variant. This directly addresses word or phoneme timing, but requires a
-pronunciation representation and an acoustic model that tolerates singing.
+variant (engineering interpretation of the reviewed CTC papers, not a claim that
+this repository has measured it). This directly addresses word or phoneme
+timing, but requires a pronunciation representation and an acoustic model that
+tolerates singing.
 
 ## 2. What the literature says
 
+Evidence labels for this section: **published evidence** means the linked paper
+or official abstract was opened and checked on 2026-11-13; **inference** is an
+engineering interpretation; **own measurement** is not available yet because
+this phase is research-only.
+
 ### 2.1 Classical non-neural and hybrid systems
 
-- **LyricAlly** combines hierarchical rhythm/structure analysis, singing-voice
-  detection and chorus detection before lyric synchronization. It reported
-  under one bar average line error on a 20-song test bed. This is the closest
-  precedent for a structure-aware, explainable cascade.
+- **LyricAlly** combines multimodal audio and text processing and reports an
+  average per-line error of less than one bar on a 20-song test bed. The source
+  page explicitly describes rhythm structure, singing-voice detection and
+  chorus detection. **Published evidence; verified 2026-11-13.**
   [LyricAlly paper page](https://www.comp.nus.edu.sg/~kanmy/wing/publication/10-1109-tasl-2007-911559/)
-- **Mesaros and Virtanen (DAFx 2008)** use an HMM speech recognizer adapted to
-  singing voice. This explains why a phonetic model is powerful and why
-  adaptation to singing matters.
+- **Mesaros and Virtanen (DAFx 2008)** use voice separation, a speech HMM
+  adapted to singing, a phoneme/pause/instrumental-break language model and
+  Viterbi decoding. Their abstract reports 1.40 seconds mean absolute line
+  error on 17 commercial recordings. **Published evidence; verified
+  2026-11-13.**
   [Automatic alignment of music audio and lyrics](https://homepages.tuni.fi/annamaria.mesaros/pubs/autalign_cr.pdf)
-- **Segmentation-based lyrics/audio alignment (ISMIR 2008)** uses song
-  segmentation, vocal/non-vocal information and dynamic programming. It is a
-  strong precedent for solving line/phrase timing before word timing.
+- **Segmentation-based lyrics/audio alignment (ISMIR 2008)** first segments the
+  audio, labels similar segments, and then applies dynamic programming between
+  segments and lyric paragraphs. **Published evidence; verified 2026-11-13.**
   [ISMIR 2008 paper](https://ismir2008.ismir.net/papers/ISMIR2008_126.pdf)
-- **Fujihara and Goto (2012)** survey the relationship to speech forced
-  alignment using MFCCs, phonetic HMMs and Viterbi, and discuss karaoke and
-  lyrics applications.
+- **Fujihara and Goto (2012)** provide a survey chapter on lyrics-to-audio
+  alignment and its applications. **Published evidence; verified 2026-11-13.**
+  Specific MFCC/HMM/Viterbi details should be checked against the PDF before
+  being treated as a quotation from that chapter.
   [Lyrics-to-Audio Alignment and its Application](https://drops.dagstuhl.de/entities/document/10.4230/DFU.Vol3.11041.23)
 
 ### 2.2 Non-ASR acoustic correspondence
@@ -155,10 +166,10 @@ pronunciation representation and an acoustic model that tolerates singing.
   Warping (CTW). This is relevant when long vowels are more stable than
   consonants and a singer differs from speech-model training data.
   [Paper](https://arxiv.org/abs/1701.06078)
-- **Word-level synchronization using separated vocals** compares synthesized
-  speech with a separated vocal track and applies DTW. It supports a modular
-  “vocal preparation -> acoustic alignment” path, while making separation
-  quality part of alignment quality.
+- **Word-level synchronization using separated vocals** is retained as a lead
+  for a modular “vocal preparation -> acoustic alignment” path. The IEEE record
+  was blocked during this audit, so the specific method and result are **not
+  verified in this phase**.
   [IEEE paper record](https://ieeexplore.ieee.org/abstract/document/7952235)
 
 ### 2.3 Multilingual and modern learned systems
@@ -168,10 +179,10 @@ pronunciation representation and an acoustic model that tolerates singing.
   end is possible, but a universal phoneme route and training data still matter
   for high precision.
   [Paper PDF](https://program.ismir2020.net/static/final_papers/101.pdf)
-- **Phoneme-level lyrics alignment and text-informed separation (2021)** uses a
-  monotonic DTW-attention mechanism and jointly exploits lyrics for separation.
-  It is a frontier reference for combining, rather than strictly sequencing,
-  separation and alignment.
+- **Phoneme-level lyrics alignment and text-informed separation (2021)** is
+  retained as a frontier lead for combining separation and alignment. The IEEE
+  record returned an access error during this audit, so the detailed method and
+  result are **not verified in this phase**.
   [IEEE paper record](https://ieeexplore.ieee.org/abstract/document/9463691)
 - **Improving lyrics alignment through joint pitch detection (2022)** argues
   that pitch is useful because musical note timing can be more precise than
@@ -208,17 +219,21 @@ reported as lyric-alignment accuracy.
 
 ## 3. Open-source tools and how they fit
 
+The linked official documentation or repository page for each row was opened
+on 2026-11-13. “Use in LyricSync” and “Main risk” are engineering inferences;
+they are not claims that the dependency has been adopted.
+
 | Tool/project | What it provides | Use in LyricSync | Main risk |
 | --- | --- | --- | --- |
 | [librosa DTW](https://librosa.org/doc/latest/_modules/librosa/sequence.html) | Python STFT/chroma/MFCC and DTW references | Reproduce experiments and compare our JS math | Python dependency and numerical conventions. |
 | [Sync Toolbox](https://groupmm.github.io/synctoolbox/build/html/index.html) | Multiscale DTW, memory-restricted DTW and high-resolution synchronization | Port algorithmic ideas to the reference branch | Designed for audio-to-audio, not text semantics. |
-| [Essentia](https://essentia.upf.edu/documentation.html) | C++/Python/JS audio/MIR descriptors: onset, pitch, HPCP/chroma | Optional feature adapter or offline oracle | Official implementation is AGPLv3; no dependency decision made. |
+| [Essentia](https://essentia.upf.edu/documentation.html) | C++/Python/JS audio/MIR descriptors: onset, pitch, HPCP/chroma | Optional feature adapter or offline oracle | Official documentation states Affero GPLv3 and a proprietary license is available on request; no dependency decision made. |
 | [aubio](https://aubio.org/documentation) | Lightweight onset, pitch and beat extraction | Compare CPU onset/voicedness profiles | Native build/runtime packaging. |
 | [Sonic Visualiser](https://www.sonicvisualiser.org/) + [MATCH Vamp](https://vamp-plugins.org/download.html) | Human annotation, visual inspection and audio timeline alignment | External ground-truth review and reference experiments | External desktop tool, not Electron core. |
-| [Demucs](https://github.com/facebookresearch/demucs) | Vocal/drum/bass/other source separation | Optional local vocal stem before phonetic alignment | Model cost, artifacts and model terms. |
-| [Open-Unmix](https://github.com/sigsep/open-unmix-pytorch) | Reference source-separation implementation | Independent separation baseline | PyTorch/model/runtime and license review. |
+| [Demucs](https://github.com/facebookresearch/demucs) | Vocal/drum/bass/other source separation | Optional local vocal stem before phonetic alignment | Repository code is MIT, but the repository is archived/not actively maintained and model/data terms still need a separate audit. |
+| [Open-Unmix](https://github.com/sigsep/open-unmix-pytorch) | Reference source-separation implementation | Independent separation baseline | Repository states MIT; PyTorch/model/runtime and model-data terms still need a separate audit. |
 | [WhisperX](https://github.com/m-bain/whisperX) | ASR plus VAD and phoneme forced alignment | Optional transcript/phoneme plugin | Speech-trained models can fail on singing. |
-| [Torchaudio FABundle](https://docs.pytorch.org/audio/stable/tutorials/forced_alignment_tutorial.html) | CTC forced-alignment API and pretrained speech bundles | Reference implementation for a CTC plugin | Torch runtime and model/singing mismatch. |
+| [Torchaudio FABundle](https://docs.pytorch.org/audio/stable/tutorials/forced_alignment_tutorial.html) | CTC forced-alignment API and pretrained speech bundles | Reference implementation for a CTC plugin | The current tutorial warns that the API is deprecated during TorchAudio's maintenance transition; Torch runtime and model/singing mismatch remain risks. |
 | [Montreal Forced Aligner](https://montreal-forced-aligner.readthedocs.io/en/latest/user_guide/index.html) | Kaldi-based trainable text/speech forced alignment | Speech-like vocal and pronunciation experiments | Dictionaries and speech assumptions. |
 | [Gentle](https://github.com/strob/gentle) | Lenient Kaldi forced aligner | Spoken/rap-like baseline | Older speech resources, weaker singing support. |
 | [AutoLyrixAlign](https://github.com/chitralekha18/AutoLyrixAlign) | Pretrained polyphonic lyrics aligner | Optional external comparison | Model/data compatibility and language coverage. |
@@ -231,18 +246,22 @@ isolated adapter, runtime measurement and license/model audit first.
 
 ## 4. Datasets and evaluation resources
 
+The linked dataset or project pages were opened on 2026-11-13. Dataset sizes,
+language labels and access statements below are source facts; the recommended
+use and privacy guidance are engineering decisions for this repository.
+
 The user’s private, manually reviewed songs are valuable product evidence, but
 they should remain private. Public resources are useful for reproducibility only
 after checking access and terms:
 
 | Resource | What it contains | Best use | Caveat |
 | --- | --- | --- | --- |
-| [JamendoLyrics](https://github.com/f90/jamendolyrics) | About 80 songs, multiple languages, word start/end alignment | Multilingual word-level benchmark | Original repository is marked deprecated; check current access/terms. |
-| [DALI](https://zenodo.org/records/1492443) | 5,358 full tracks with synchronized lyrics and vocal notes at multiple granularities | Large-scale lyrics/notes research | Annotations are automatically created and audio access is link-based. |
-| [MIR-MLPop](https://github.com/york135/MIRMLPop) | Multilingual pop audio/lyrics annotations, including Cantonese and Taiwanese Hokkien | Cross-language evaluation | Audio and annotation access conditions must be checked. |
-| [MIR-1K](https://zenodo.org/records/3532216) | Singing/accompaniment channels, lyrics and speech recordings | Separation and mono/poly comparisons | Mandarin karaoke domain, not all commercial songs. |
+| [JamendoLyrics](https://github.com/f90/jamendolyrics) | 80 songs in different genres/languages with word-level start/end and line-level annotations | Multilingual word-level benchmark | The repository README says the GitHub copy is deprecated, moved to Hugging Face, and should no longer be updated; check current access/terms. |
+| [DALI](https://zenodo.org/records/1492443) | 5,358 audio tracks with time-aligned vocal melody notes and lyrics at four granularities | Large-scale lyrics/notes research | The record describes teacher-student automatic creation and web-retrieved audio; access and downstream terms must be checked. |
+| [MIR-MLPop](https://github.com/york135/MIRMLPop) | Time-aligned multilingual pop annotations for Mandarin, Taiwanese Hokkien and Cantonese; the repository includes code to obtain audio | Cross-language evaluation | The README says non-commercial use only and audio access may require an academic-use request. |
+| [MIR-1K](https://zenodo.org/records/3532216) | 1,000 short clips from 110 Chinese karaoke songs with separate channels, lyrics, pitch/unvoiced labels and speech recordings | Separation and singing/non-singing comparisons | Restricted Zenodo record; Chinese karaoke domain, not a general commercial-song benchmark. |
 | [MUSDB18](https://sigsep.github.io/datasets/musdb.html) | 150 tracks with vocals/drums/bass/other stems | Separation quality and vocal-stem ablations | Separation benchmark, not lyric ground truth. |
-| [MIREX ALA](https://music-ir.org/mirex/wiki/2024%3ALyrics-to-Audio_Alignment) | Standard task format, submissions and metrics | Compare with published alignment systems | Challenge data/results and access change over time. |
+| [MIREX ALA](https://music-ir.org/mirex/wiki/2024%3ALyrics-to-Audio_Alignment) | Intended source for task format, submissions and metrics | Compare with published alignment systems | The page returned a 502 during this audit, so its current details are not verified. |
 | [MIREX evaluation repo](https://github.com/ismir-mirex/mirex-evaluation) | Open evaluation pipelines | Reproduce metrics and output formats | Python tooling and task conventions. |
 
 Recommended evaluation hierarchy:
@@ -302,10 +321,10 @@ large “super-aligner” until ablations show that a combination helps.
 Extract normalized (E,O,V,P), and optionally (C,M). Keep original profiles
 and extraction configuration in diagnostics. A first fusion is:
 
-\[
+$$
 S_t=\alpha E_t+\beta O_t+\gamma V_t+\delta P_t,
 \quad \alpha+\beta+\gamma+\delta=1.
-\]
+$$
 
 Weights must be tuned by ablation, not intuition. Use robust percentile
 normalization so one loud chorus does not dominate the recording.
@@ -314,9 +333,9 @@ normalization so one loud chorus does not dominate the recording.
 
 Use a robust affine model against candidate vocal/onset evidence:
 
-\[
+$$
 \hat t_i=a r_i+b, \quad a\in[a_{min},a_{max}],
-\]
+$$
 
 where (r_i) is the imported reference start. Estimate (a,b) with bounded
 search or robust regression, discard impossible matches, snap only when local
