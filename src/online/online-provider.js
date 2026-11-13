@@ -1,3 +1,5 @@
+import { parseTimedLyrics, timingLevel } from "./lyric-normalizer.js";
+
 /**
  * Boundary for deliberately optional online integrations.
  *
@@ -110,25 +112,34 @@ export class WebLyricsSearchProvider extends OnlineLyricsProvider {
       ["Genius", `https://genius.com/search?q=${encoded}`],
       ["Musixmatch", `https://www.musixmatch.com/search/${encoded}`],
       ["Lyrics.com", `https://www.lyrics.com/serp.php?st=${encoded}&qtype=2`],
-    ].map(([name, sourceUrl]) => ({ id: `${this.id}-${name.toLowerCase()}`, title: `Search ${name}`, artist: text, album: "", duration: null, plainLyrics: "", syncedLyrics: "", sourceUrl, providerId: this.id, providerName: name, resultKind: "link" }));
+      ["Better Lyrics", `https://better-lyrics.com/search?query=${encoded}`],
+      ["Apple Music", `https://music.apple.com/us/search?term=${encoded}`],
+      ["YouTube captions", `https://www.youtube.com/results?search_query=${encoded}`],
+    ].map(([name, sourceUrl]) => ({ id: `${this.id}-${name.toLowerCase().replace(/\s+/gu, "-")}`, title: `Search ${name}`, artist: text, album: "", duration: null, plainLyrics: "", syncedLyrics: "", sourceUrl, providerId: this.id, providerName: name, resultKind: "link" }));
   }
 
   async fetchLyrics(result) { return normalizeResult(result); }
 }
 
 export function normalizeResult(result = {}) {
+  const syncedLyrics = typeof result.syncedLyrics === "string" ? result.syncedLyrics : typeof result.lrc === "string" ? result.lrc : "";
+  const plainLyrics = typeof result.plainLyrics === "string" ? result.plainLyrics : typeof result.lyrics === "string" ? result.lyrics : "";
+  const parsedTiming = result.timedLines || result.timedWords ? { timedLines: result.timedLines || [], timedWords: result.timedWords || [] } : parseTimedLyrics(syncedLyrics);
   return {
     id: result.id ?? null,
     title: String(result.trackName ?? result.title ?? "").trim(),
     artist: String(result.artistName ?? result.artist ?? "").trim(),
     album: String(result.albumName ?? result.album ?? "").trim(),
     duration: Number.isFinite(Number(result.duration)) ? Number(result.duration) : null,
-    plainLyrics: typeof result.plainLyrics === "string" ? result.plainLyrics : "",
-    syncedLyrics: typeof result.syncedLyrics === "string" ? result.syncedLyrics : "",
-    sourceUrl: typeof result.url === "string" ? result.url : "",
+    plainLyrics,
+    syncedLyrics,
+    timedLines: parsedTiming.timedLines,
+    timedWords: parsedTiming.timedWords,
+    sourceUrl: typeof result.url === "string" ? result.url : typeof result.sourceUrl === "string" ? result.sourceUrl : "",
     providerId: result.providerId || "lrclib",
     providerName: result.providerName || "LRCLIB",
-    resultKind: result.resultKind || (result.syncedLyrics ? "timed" : result.plainLyrics ? "plain" : "unknown"),
+    timingLevel: result.timingLevel || timingLevel({ ...result, syncedLyrics, plainLyrics, timedLines: parsedTiming.timedLines, timedWords: parsedTiming.timedWords }),
+    resultKind: result.resultKind || (syncedLyrics ? "timed" : plainLyrics ? "plain" : "unknown"),
   };
 }
 

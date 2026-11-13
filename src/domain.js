@@ -27,7 +27,7 @@ export function createProject() {
     updatedAt: new Date().toISOString(),
     metadata: { title: "Untitled project", artist: "", album: "", language: "" },
     audio: { name: "", type: "", duration: null, sourceHint: "" },
-    lyrics: { source: "manual", provenance: null, lines: [] },
+    lyrics: { source: "manual", provenance: null, offsetMs: 0, lines: [] },
     timeline: { lines: [] },
   };
 }

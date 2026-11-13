@@ -57,6 +57,12 @@ test("parses LRC metadata and multiple timestamps", () => {
   assert.equal(result.lines[1].startTime, 3.2);
 });
 
+test("strips enhanced LRC word markers while preserving the readable line", () => {
+  const result = parseLyrics("[00:01.00]<00:01.00>hello <00:01.50>world");
+  assert.equal(result.lines[0].originalText, "hello world");
+  assert.equal(result.lines[0].startTime, 1);
+});
+
 test("preserves Unicode lyrics and accepts a single lyric line", () => {
   const result = parseLyrics("ప్రేమ వెలుగు\nदिल की बात\nஒரே வரி");
   assert.equal(result.lines.length, 3);
@@ -71,6 +77,16 @@ test("exports timestamped lines only", () => {
   project.timeline.lines = parseLyrics("One\nTwo").lines;
   project.timeline.lines[0].startTime = 1.2;
   assert.equal(exportLrc(project), "[ti:Song]\n\n[00:01.20]One\n");
+});
+
+test("exports a non-destructive per-track lyric offset", () => {
+  const project = createProject();
+  project.metadata.title = "Song";
+  project.timeline.lines = parseLyrics("One").lines;
+  project.timeline.lines[0].startTime = 1.2;
+  project.lyrics.offsetMs = 250;
+  assert.equal(project.timeline.lines[0].startTime, 1.2);
+  assert.equal(exportLrc(project), "[ti:Song]\n\n[00:01.45]One\n");
 });
 
 test("energy baseline creates ordered editable initial timestamps", () => {

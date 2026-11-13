@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added provider-neutral timed/word-timed result normalization, concurrent
+  source search, metadata/version-aware ranking, expanded manual search links,
+  and a non-destructive per-track lyric offset.
 - Recorded the maintainer decision to keep the repository unlicensed for now.
 - Repository hygiene moves user-specific paths into environment variables and
   portable commands.

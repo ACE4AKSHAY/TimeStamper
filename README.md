@@ -64,6 +64,7 @@ audio + lyrics → local feature extraction → editable line timeline → LRC
 - [Implementation plan and acceptance checks](docs/roadmap.md)
 - [Offline setup](docs/offline-setup.md)
 - [MFCC/DTW detailed notes](docs/mfcc-dtw.md)
+- [Online sources, matching and offsets](docs/online-sources.md)
 - [Online search behavior](benchmarks/ONLINE_SEARCH.md)
 - [Real-data evaluation](benchmarks/REAL_DATA_EVALUATION.md)
 - [Project status and requirements traceability](PROJECT_STATUS.md)

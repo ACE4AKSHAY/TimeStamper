@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { LrcLibProvider, LyricsOvhProvider, WebLyricsSearchProvider, canUseOnlineSearch, createOnlineProviders, normalizeResult, parseArtistTitle, selectOnlineProviders } from "../src/online/online-provider.js";
+import { extractVersionMarkers, rankLyricResults } from "../src/online/lyric-matcher.js";
+import { searchOnlineLyrics } from "../src/online/online-search.js";
 
 function fakeFetch(payload, options = {}) {
   const calls = [];
@@ -15,7 +17,10 @@ function fakeFetch(payload, options = {}) {
 
 test("normalizes LRCLIB result fields without changing Unicode lyrics", () => {
   const result = normalizeResult({ trackName: "ఊహలు", artistName: "Artist", syncedLyrics: "[00:01.00]పాట" });
-  assert.deepEqual(result, { id: null, title: "ఊహలు", artist: "Artist", album: "", duration: null, plainLyrics: "", syncedLyrics: "[00:01.00]పాట", sourceUrl: "", providerId: "lrclib", providerName: "LRCLIB", resultKind: "timed" });
+  assert.equal(result.title, "ఊహలు");
+  assert.equal(result.syncedLyrics, "[00:01.00]పాట");
+  assert.equal(result.timingLevel, "line");
+  assert.deepEqual(result.timedLines[0], { text: "పాట", startTime: 1, endTime: null, words: [] });
 });
 
 test("LRCLIB provider searches and fetches using injected transport", async () => {
@@ -44,8 +49,36 @@ test("lyrics.ovh provider returns plain copyable lyrics for artist-title context
 
 test("web source provider returns labeled manual-copy links without scraping", async () => {
   const results = await new WebLyricsSearchProvider().search("Singer - Song");
-  assert.equal(results.length, 3);
+  assert.equal(results.length, 6);
   assert.ok(results.every((result) => result.resultKind === "link" && result.sourceUrl.startsWith("https://")));
+});
+
+test("normalizes enhanced LRC word timing without translating Unicode", () => {
+  const result = normalizeResult({ title: "Song", syncedLyrics: "[00:01.00]<00:01.00>పా<00:01.40>ట" });
+  assert.equal(result.timingLevel, "word");
+  assert.deepEqual(result.timedWords.map((word) => word.text), ["పా", "ట"]);
+  assert.equal(result.timedWords[0].startTime, 1);
+});
+
+test("ranking prefers exact version-matched timed results", () => {
+  const results = rankLyricResults([
+    { providerId: "lyrics-ovh", providerName: "lyrics.ovh", title: "Song", artist: "Singer", plainLyrics: "text", syncedLyrics: "" },
+    { providerId: "lrclib", providerName: "LRCLIB", title: "Song (Live)", artist: "Singer", syncedLyrics: "[00:01.00]line", plainLyrics: "", duration: 180 },
+  ], { title: "Song (Live)", artist: "Singer", audioName: "Song (Live).mp3", duration: 180 });
+  assert.equal(results[0].providerId, "lrclib");
+  assert.ok(results[0].matchReason.includes("version"));
+  assert.deepEqual(extractVersionMarkers("Song (Instrumental)"), ["instrumental"]);
+});
+
+test("online search fans out providers and isolates one provider failure", async () => {
+  const providers = [
+    { id: "good", search: async () => [{ title: "Song", artist: "Singer", syncedLyrics: "[00:01.00]line", providerId: "good" }] },
+    { id: "bad", search: async () => { throw new Error("offline"); } },
+  ];
+  const result = await searchOnlineLyrics({ providers, query: "Singer - Song", context: { artist: "Singer", title: "Song" } });
+  assert.equal(result.results.length, 1);
+  assert.equal(result.results[0].timingLevel, "line");
+  assert.equal(result.responses.filter((response) => response.status === "rejected").length, 1);
 });
 
 test("online provider registry and artist-title parsing expose all source classes", () => {

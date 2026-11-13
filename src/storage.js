@@ -7,6 +7,7 @@ export function serializeProject(project) {
 export function deserializeProject(json) {
   const project = JSON.parse(json);
   if (!isProject(project)) throw new Error("This is not a compatible LyricSync project file.");
+  project.lyrics.offsetMs = Number.isFinite(Number(project.lyrics.offsetMs)) ? Number(project.lyrics.offsetMs) : 0;
   return project;
 }
 

@@ -16,6 +16,7 @@ export function lrcToSeconds(value) {
 
 export function exportLrc(project) {
   const { metadata, timeline } = project;
+  const offsetSeconds = Number(project.lyrics?.offsetMs || 0) / 1000;
   const header = [
     metadata.artist && `[ar:${metadata.artist}]`,
     metadata.title && `[ti:${metadata.title}]`,
@@ -25,6 +26,6 @@ export function exportLrc(project) {
   const lyricLines = [...timeline.lines]
     .filter((line) => Number.isFinite(line.startTime))
     .sort((a, b) => a.startTime - b.startTime || a.order - b.order)
-    .map((line) => `${secondsToLrc(line.startTime)}${line.originalText}`);
+    .map((line) => `${secondsToLrc(Math.max(0, line.startTime + offsetSeconds))}${line.originalText}`);
   return [...header, "", ...lyricLines].join("\n") + "\n";
 }

@@ -1,6 +1,7 @@
 import { createLine, normalizeText } from "./domain.js";
 
 const TIMESTAMP = /\[(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?\]/gu;
+const WORD_TIMESTAMP = /<(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?>/gu;
 const METADATA = /^\[([a-zA-Z]+):(.*)\]$/u;
 
 export function parseLyrics(text, source = "pasted") {
@@ -14,7 +15,7 @@ export function parseLyrics(text, source = "pasted") {
       continue;
     }
     const times = [...raw.matchAll(TIMESTAMP)].map(toSeconds);
-    const lyric = normalizeText(raw.replace(TIMESTAMP, ""));
+    const lyric = normalizeText(raw.replace(TIMESTAMP, "").replace(WORD_TIMESTAMP, ""));
     if (!lyric) continue;
     if (times.length) {
       times.forEach((startTime) => {

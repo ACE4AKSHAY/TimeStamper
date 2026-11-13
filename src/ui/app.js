@@ -8,6 +8,7 @@ import { createEnergyInitialTimeline } from "../energy-aligner.js";
 import { parseEditorTime } from "../time-utils.js";
 import { canUseOnlineSearch, createOnlineProviders, selectOnlineProviders } from "../online/online-provider.js";
 import { OnlineLyricsCache } from "../online/online-cache.js";
+import { searchOnlineLyrics as searchOnlineSources } from "../online/online-search.js";
 import { alignAutomatically } from "../automatic-aligner.js";
 
 const $ = (id) => document.getElementById(id);
@@ -17,6 +18,8 @@ const onlineProviders = createOnlineProviders();
 const onlineCache = new OnlineLyricsCache();
 const timelineLines = () => project.timeline.lines;
 const timestamp = (time) => Number.isFinite(time) ? secondsToLrc(time) : "—";
+const lyricOffsetSeconds = () => (Number(project.lyrics?.offsetMs) || 0) / 1000;
+const effectiveLineTime = (line) => Number.isFinite(line?.startTime) ? Math.max(0, line.startTime + lyricOffsetSeconds()) : null;
 const safeName = (value) => (value || "lyricsync-project").replace(/[<>:"/\\|?*]+/gu, "-").trim() || "lyricsync-project";
 
 function formatClock(seconds) {
@@ -32,13 +35,14 @@ function showToast(message, level = "info") { const toast = $("toast"); toast.te
 function normalizedShortcut(key) { if (key === " ") return "Space"; if (key.length === 1) return key.toUpperCase(); return key; }
 function shortcutLabel(key) { return key === "ArrowLeft" ? "←" : key === "ArrowRight" ? "→" : key === "Escape" ? "Esc" : key; }
 function seekToTime(seconds) { if (!audio.duration || !Number.isFinite(seconds)) return; const bounded = Math.max(0, Math.min(audio.duration, seconds)); audio.currentTime = bounded; updatePositionDisplays(bounded); renderWaveform(); return bounded; }
-function selectLine(line, seek = true) { selectedId = line.id; if (seek && Number.isFinite(line.startTime)) seekToTime(line.startTime); renderTimeline(); }
+function selectLine(line, seek = true) { selectedId = line.id; if (seek && Number.isFinite(effectiveLineTime(line))) seekToTime(effectiveLineTime(line)); renderTimeline(); }
 function scrollSelectedLineIntoView() { requestAnimationFrame(() => { const selected = $("timeline").querySelector("tr.selected"); selected?.scrollIntoView({ block: "nearest", behavior: settings.reduceMotion ? "auto" : "smooth" }); }); }
-function previousTimestamp(line) { const index = timelineLines().indexOf(line); return index > 0 ? timelineLines()[index - 1].startTime : null; }
+function previousTimestamp(line) { const index = timelineLines().indexOf(line); return index > 0 ? effectiveLineTime(timelineLines()[index - 1]) : null; }
 function acceptsTimestamp(line, seconds) { const previous = previousTimestamp(line); if (Number.isFinite(previous) && seconds < previous) { showToast(`Line ${line.order + 1} must be at or after the previous line (${formatClock(previous)}).`, "warning"); return false; } return true; }
 
 function render() {
   ["title", "artist", "album", "language"].forEach((key) => { $(key).value = project.metadata[key] || ""; });
+  $("lyric-offset").value = String(Number(project.lyrics?.offsetMs) || 0);
   $("lyrics-text").value = linesToText(project.lyrics.lines);
   $("lyrics-status").textContent = `${project.lyrics.lines.length} lyric line(s) loaded`;
   const provenance = project.lyrics.provenance;
@@ -142,7 +146,7 @@ function renderOnlineSearch() {
   status.textContent = !settings.onlineSearchEnabled ? "Disabled by default" : (globalThis.navigator?.onLine === false ? "Offline" : active.length ? `Enabled · ${active.map((provider) => provider.displayName).join(" + ")}` : "No sources selected");
   results.replaceChildren(...onlineResults.map((result, index) => {
     const item = document.createElement("div"); item.className = "online-result";
-    const details = document.createElement("div"); const title = document.createElement("strong"); title.textContent = result.title || "Untitled"; const meta = document.createElement("span"); meta.textContent = [result.providerName, result.artist, result.album].filter(Boolean).join(" · ") || "Unknown source"; details.append(title, meta);
+    const details = document.createElement("div"); const title = document.createElement("strong"); title.textContent = result.title || "Untitled"; const meta = document.createElement("span"); meta.textContent = [result.providerName, result.artist, result.album, result.timingLevel ? `${result.timingLevel}-timed` : ""].filter(Boolean).join(" · ") || "Unknown source"; details.append(title, meta); if (Number.isFinite(result.score)) { const reason = document.createElement("small"); reason.textContent = `Match ${result.score}/100 · ${result.matchReason}`; details.append(reason); }
     const actions = document.createElement("div"); actions.className = "result-actions"; const use = document.createElement("button"); use.type = "button"; use.textContent = result.resultKind === "link" ? "Open source" : result.syncedLyrics ? `Use timed lyrics · ${result.providerName}` : "Use lyrics"; use.disabled = result.resultKind !== "link" && !result.syncedLyrics && !result.plainLyrics; use.addEventListener("click", () => result.resultKind === "link" ? window.open(result.sourceUrl, "_blank", "noopener,noreferrer") : useOnlineResult(result)); actions.append(use);
     if (result.plainLyrics || result.syncedLyrics) { const copy = document.createElement("button"); copy.type = "button"; copy.textContent = "Copy text"; copy.addEventListener("click", () => copyOnlineResult(result)); actions.append(copy); }
     item.append(details, actions); return item;
@@ -166,18 +170,10 @@ async function searchOnlineLyrics() {
   onlineSearchBusy = true; onlineResults = []; renderOnlineSearch();
   onlineSearchAbortController = new AbortController();
   try {
-    const context = { artist: project.metadata.artist, title: project.metadata.title };
-    const cacheQuery = [query, context.artist, context.title].join("\u0000");
-    const responses = await Promise.allSettled(providers.map(async (provider) => {
-      const cached = onlineCache.get(provider.id, cacheQuery);
-      if (cached !== null) { log.info(`Used cached ${provider.displayName} result(s).`); return cached; }
-      const results = await provider.search(query, context, { signal: onlineSearchAbortController.signal });
-      onlineCache.set(provider.id, cacheQuery, results);
-      return results;
-    }));
+    const context = { artist: project.metadata.artist, title: project.metadata.title, duration: project.audio.duration, audioName: project.audio.name };
+    const { results } = await searchOnlineSources({ providers, cache: onlineCache, query, context, signal: onlineSearchAbortController.signal, onProviderError: (provider, error) => log.warning(`${provider.displayName} search failed: ${error?.message || "request failed"}`) });
     if (onlineSearchAbortController.signal.aborted) { onlineResults = []; log.info("Online lyric search cancelled."); return; }
-    onlineResults = responses.flatMap((response) => response.status === "fulfilled" ? response.value : []);
-    responses.forEach((response, index) => { if (response.status === "rejected") log.warning(`${providers[index].displayName} search failed: ${response.reason?.message || "request failed"}`); });
+    onlineResults = results;
     if (!onlineResults.length) showToast("No online lyric matches found. Try Artist - Title.", "warning"); else log.info(`Found ${onlineResults.length} optional result(s) across ${providers.length} selected sources.`);
   }
   catch (error) { if (error.name !== "AbortError") { log.warning(`Online lyric search failed: ${error.message}`); showToast(`Online search failed: ${error.message}`, "warning"); } }
@@ -211,11 +207,11 @@ function onlineSourceUrl(providerId) {
 function renderTimeline() {
   $("timeline").replaceChildren(...timelineLines().map((line, index) => {
     const tr = document.createElement("tr"); tr.className = line.id === selectedId ? "selected" : "";
-    tr.innerHTML = `<td>${index + 1}</td><td><input class="time-input" aria-label="Timestamp for line ${index + 1}" value="${Number.isFinite(line.startTime) ? formatClock(line.startTime) : ""}" placeholder="mm:ss.mmm" title="mm:ss.mmm or mm:ss:mmm" inputmode="numeric"></td><td class="line-text"></td><td class="row-actions"><button data-action="stamp" aria-label="Stamp chosen time" title="Stamp chosen time">⏱</button> <button data-action="clear" aria-label="Clear timestamp" title="Clear timestamp">⌫</button> <button data-action="insert" aria-label="Insert empty line after" title="Insert empty line after">＋</button> <button data-action="duplicate" aria-label="Duplicate line" title="Duplicate line">⧉</button> <button data-action="delete" aria-label="Delete lyric line" title="Delete lyric line">✕</button></td>`;
+    tr.innerHTML = `<td>${index + 1}</td><td><input class="time-input" aria-label="Timestamp for line ${index + 1}" value="${Number.isFinite(effectiveLineTime(line)) ? formatClock(effectiveLineTime(line)) : ""}" placeholder="mm:ss.mmm" title="mm:ss.mmm or mm:ss:mmm" inputmode="numeric"></td><td class="line-text"></td><td class="row-actions"><button data-action="stamp" aria-label="Stamp chosen time" title="Stamp chosen time">⏱</button> <button data-action="clear" aria-label="Clear timestamp" title="Clear timestamp">⌫</button> <button data-action="insert" aria-label="Insert empty line after" title="Insert empty line after">＋</button> <button data-action="duplicate" aria-label="Duplicate line" title="Duplicate line">⧉</button> <button data-action="delete" aria-label="Delete lyric line" title="Delete lyric line">✕</button></td>`;
     tr.querySelector(".line-text").textContent = line.originalText;
     tr.addEventListener("click", (event) => { if (!event.target.matches("input,button")) selectLine(line); });
     tr.querySelector(".line-text").addEventListener("click", () => selectLine(line));
-    tr.querySelector("input").addEventListener("click", () => { if (selectedId !== line.id) selectLine(line); else if (Number.isFinite(line.startTime)) seekToTime(line.startTime); });
+    tr.querySelector("input").addEventListener("click", () => { if (selectedId !== line.id) selectLine(line); else if (Number.isFinite(effectiveLineTime(line))) seekToTime(effectiveLineTime(line)); });
     tr.querySelector("input").addEventListener("change", (event) => setTimestamp(line, event.target.value));
     tr.querySelector('[data-action="stamp"]').addEventListener("click", () => stamp(line));
     tr.querySelector('[data-action="clear"]').addEventListener("click", () => { line.startTime = null; line.manuallyCorrected = true; log.info(`Cleared timestamp for line ${index + 1}`); showToast(`Cleared timestamp for line ${index + 1}.`); render(); });
@@ -248,7 +244,7 @@ function setTimestamp(line, value) {
   if (seconds === null) { const message = `Invalid timestamp “${value}”. Use mm:ss.mmm, mm:ss:mmm, hh:mm:ss.mmm, or seconds.`; log.warning(message); showToast(message, "warning"); renderTimeline(); return; }
   if (Number.isFinite(audio.duration) && seconds > audio.duration) { const message = `Timestamp ${formatClock(seconds)} is beyond the audio duration (${formatClock(audio.duration)}).`; log.warning(message); showToast(message, "warning"); renderTimeline(); return; }
   if (!acceptsTimestamp(line, seconds)) { renderTimeline(); return; }
-  line.startTime = seconds; line.manuallyCorrected = true; selectedId = line.id; log.info(`Set timestamp for line ${line.order + 1} to ${formatClock(seconds)}`); render();
+  line.startTime = seconds - lyricOffsetSeconds(); line.manuallyCorrected = true; selectedId = line.id; log.info(`Set timestamp for line ${line.order + 1} to ${formatClock(seconds)}`); render();
 }
 
 function stamp(line = timelineLines().find((item) => item.id === selectedId)) {
@@ -257,13 +253,13 @@ function stamp(line = timelineLines().find((item) => item.id === selectedId)) {
   if (time === null) { const message = "The stamp time is invalid. Use mm:ss.mmm, mm:ss:mmm, hh:mm:ss.mmm, or seconds."; log.warning(message); showToast(message, "warning"); return; }
   const currentIndex = timelineLines().indexOf(line);
   const boundedTime = Math.min(time, audio.duration || time); if (!acceptsTimestamp(line, boundedTime)) return;
-  line.startTime = boundedTime; line.manuallyCorrected = true; selectedId = timelineLines()[currentIndex + 1]?.id || line.id; log.info(`Stamped line ${line.order + 1} at ${formatClock(line.startTime)}${selectedId !== line.id ? "; selected the next line." : ""}`); render();
+  line.startTime = boundedTime - lyricOffsetSeconds(); line.manuallyCorrected = true; selectedId = timelineLines()[currentIndex + 1]?.id || line.id; log.info(`Stamped line ${line.order + 1} at ${formatClock(boundedTime)}${selectedId !== line.id ? "; selected the next line." : ""}`); render();
 }
 
 function shiftSelected(direction) {
   const line = timelineLines().find((item) => item.id === selectedId);
   if (!line || !Number.isFinite(line.startTime)) { log.warning("Select a timestamped line to adjust it."); return; }
-  const delta = direction * adjustmentSeconds(); const nextTime = Math.max(0, line.startTime + delta); if (!acceptsTimestamp(line, nextTime)) return; line.startTime = nextTime; line.manuallyCorrected = true; log.info(`Adjusted line ${line.order + 1} by ${Math.round(delta * 1000)} ms`); render();
+  const delta = direction * adjustmentSeconds(); const nextTime = Math.max(0, effectiveLineTime(line) + delta); if (!acceptsTimestamp(line, nextTime)) return; line.startTime = nextTime - lyricOffsetSeconds(); line.manuallyCorrected = true; log.info(`Adjusted line ${line.order + 1} by ${Math.round(delta * 1000)} ms`); render();
 }
 
 function createInitialTiming() {
@@ -298,14 +294,26 @@ function removeAudio() {
 }
 
 function removeLyrics() {
-  project.lyrics = { source: "manual", provenance: null, lines: [] }; project.timeline.lines = []; selectedId = null;
+  project.lyrics = { source: "manual", provenance: null, offsetMs: 0, lines: [] }; project.timeline.lines = []; selectedId = null;
   $("lyrics-file").value = ""; $("lyrics-text").value = ""; log.info("Lyrics removed from the project."); showToast("Lyrics removed."); render();
 }
 
 function loadLyrics(text, source = "pasted", provenance = null) {
-  const parsed = parseLyrics(text, source); project.lyrics = { source, provenance, lines: parsed.lines }; project.timeline.lines = parsed.lines;
+  const parsed = parseLyrics(text, source); project.lyrics = { source, provenance, offsetMs: 0, lines: parsed.lines }; project.timeline.lines = parsed.lines;
   project.metadata.artist ||= parsed.metadata.ar || ""; project.metadata.title ||= parsed.metadata.ti || ""; project.metadata.album ||= parsed.metadata.al || ""; project.metadata.language ||= parsed.metadata.la || "";
   selectedId = parsed.lines[0]?.id || null; log.info(`Loaded ${parsed.lines.length} lyric line(s) from ${source}.`); render();
+}
+
+function updateLyricOffset() {
+  const value = Number($("lyric-offset").value);
+  if (!Number.isFinite(value) || value < -60000 || value > 60000) {
+    showToast("Lyric offset must be between -60000 and 60000 milliseconds.", "warning");
+    render();
+    return;
+  }
+  project.lyrics.offsetMs = Math.round(value);
+  log.info(`Set lyric preview/export offset to ${project.lyrics.offsetMs} ms.`);
+  renderTimeline();
 }
 
 function updatePositionDisplays(seconds = audio.currentTime || 0) {
@@ -347,6 +355,7 @@ $("remove-audio").addEventListener("click", removeAudio); $("remove-lyrics").add
 $("online-search").addEventListener("click", searchOnlineLyrics); $("online-query").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); searchOnlineLyrics(); } });
 $("online-cancel").addEventListener("click", cancelOnlineSearch);
 $("clear-online-cache").addEventListener("click", () => { onlineCache.clear(); showToast("Cached online lyric results cleared."); log.info("Cleared optional online lyric cache."); });
+$("lyric-offset").addEventListener("change", updateLyricOffset);
 $("load-lyrics").addEventListener("click", () => loadLyrics($("lyrics-text").value)); $("clear-timestamps").addEventListener("click", () => { timelineLines().forEach((line) => { line.startTime = null; }); log.info("Cleared all timestamps."); render(); });
 $("play-toggle").addEventListener("click", togglePlayback); $("seek").addEventListener("input", (event) => { const seconds = Number(event.target.value); audio.currentTime = seconds; updatePositionDisplays(seconds); renderWaveform(); });
 $("reset-audio").addEventListener("click", resetAudio); ["pointerup", "pointerleave", "pointercancel"].forEach((eventName) => $("rewind").addEventListener(eventName, () => stopScan(-1))); $("rewind").addEventListener("pointerdown", () => startScan(-1)); ["pointerup", "pointerleave", "pointercancel"].forEach((eventName) => $("fast-forward").addEventListener(eventName, () => stopScan(1))); $("fast-forward").addEventListener("pointerdown", () => startScan(1));

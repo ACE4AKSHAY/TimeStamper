@@ -1,5 +1,9 @@
 # Optional online lyrics search
 
+The provider-neutral normalization, concurrent fan-out, result ranking,
+recording-version checks, enhanced-LRC parsing and non-destructive offset are
+documented in [`../docs/online-sources.md`](../docs/online-sources.md).
+
 ## User workflow
 
 1. Work offline normally: import audio, paste/import TXT or LRC, edit the
