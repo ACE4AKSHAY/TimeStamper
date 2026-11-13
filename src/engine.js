@@ -15,6 +15,7 @@ import { alignWithReferenceTemplates } from "./reference-template-aligner.js";
 import { alignWithReferenceTemplateEnsemble } from "./reference-template-ensemble.js";
 import { alignAutomatically } from "./automatic-aligner.js";
 import { retimeLrc } from "./retime-lrc.js";
+import { runAutoForm } from "./router/auto-form.js";
 
 export const ENGINE_VERSION = "0.3.0";
 
@@ -75,6 +76,18 @@ function synchronizeLegacy({ lyrics, duration, energyProfile, engine = "energy-b
       parameters: { ...alignment.parameters, profiles: undefined, timedLyrics: undefined },
       generatedAt: new Date().toISOString(),
     };
+  }
+  if (engine === "auto-form") {
+    return runAutoForm(
+      {
+        lines,
+        audio: { duration, profiles: parameters.profiles || { energy: energyProfile || [] } },
+        timedLyrics: parameters.timedLyrics,
+        reference: parameters.reference,
+        options: parameters,
+      },
+      synchronizeLegacy,
+    );
   }
   if (engine === "boundary-dp") {
     const alignment = alignByBoundaryDp(lines, parameters.profile || energyProfile || [], duration, parameters);
@@ -362,6 +375,7 @@ const ENGINE_DEFINITIONS = [
   ["combined-profile", "recommended", ["duration", "profiles"], "low"],
   ["automatic", "recommended", ["duration", "profiles"], "medium"],
   ["retime-lrc", "recommended", ["timedLyrics", "profiles"], "medium"],
+  ["auto-form", "recommended", ["form", "profiles"], "medium"],
   ["boundary-dp", "recommended", ["duration", "profile"], "low"],
   ["intro-aware-boundary-dp", "experimental", ["duration", "profile"], "medium"],
   ["adaptive-boundary-dp", "recommended", ["duration", "profile"], "medium"],
