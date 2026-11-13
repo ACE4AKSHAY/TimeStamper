@@ -58,6 +58,11 @@ into one large file would make it harder to compare, disable, or reuse a method.
 The UI and online files are grouped because they are product infrastructure,
 not separate alignment hypotheses.
 
+Implementation status and the ordered next steps are maintained in
+[`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md). In particular, the core
+engine is implemented, while desktop extraction of spectral flux and voicedness
+is the next code integration step.
+
 ## Minimal recreation
 
 ```js

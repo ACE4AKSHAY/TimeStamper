@@ -96,6 +96,9 @@ For the actual execution path, stable public API, module grouping, and a
 minimal recreation example, see [`ARCHITECTURE.md`](ARCHITECTURE.md). The
 short map below lists the implementation modules.
 
+For the ordered implementation stages, acceptance checks, and evidence gates,
+see [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md).
+
 The v0.1 browser UI is a thin client over reusable ES modules:
 
 - `src/domain.js` — lyric/project models and text normalization
