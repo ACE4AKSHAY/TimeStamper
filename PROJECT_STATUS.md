@@ -144,7 +144,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 94 | CLI | ⏳ | Add after platform-neutral engine API exists. |
 | 95 | Batch processing | 🔭 | Future feature after reliable non-interactive engine. |
 | 96 | Library/API | 🟡 | Platform-neutral `synchronize()` API now exists; extract/publish a formal package after more engines stabilize. |
-| 97 | License | ⚖️ | Decide only after dependency, commercial and patent strategy review. |
+| 97 | License | ⚖️ | Deliberately unlicensed for now. No reuse or redistribution permission is granted; revisit after dependency, commercial and patent strategy review. |
 | 98 | Development phases | 🟡 | Phases 1–3 foundation/RMS baseline are underway; do not jump to advanced phases prematurely. |
 | 99 | Version 0.1 | ✅ | Audio import, TXT/LRC/paste, waveform, playback, manual timestamping, LRC, project save and logs are present. |
 | 100 | Version 0.2 | ✅ | RMS, initial automatic timing, metrics and synthetic benchmark were completed. |
@@ -240,7 +240,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 190 | Lightweight accessibility and engine access | 🟡 | Added a desktop Automatic timing action, keyboard waveform seeking with ARIA position updates, skip navigation, reduced-motion/automatic-scroll preference, and preserved the original Initial timing baseline separately. |
 | 191 | Project structure guide | 🟡 | Grouped UI modules under `src/ui/`, online modules under `src/online/`, added the stable `src/index.js` API facade, and documented the actual engine/data flow in `docs/architecture.md`; algorithm candidates remain separate for reproducible comparison. |
 | 192 | Implementation roadmap | 🟡 | Added `docs/roadmap.md` with the current engine status, exact recreation path, ordered next implementation step, acceptance checks, and evidence gates for real recordings. |
-| 193 | Repository portability and contributor tooling | 🟡 | Personal machine paths were removed from active scripts/docs, long references were moved under `docs/`, and CI/lint/format scaffolding was added. A license choice and maintainer review remain. |
+| 193 | Repository portability and contributor tooling | 🟡 | Personal machine paths were removed from active scripts/docs, long references were moved under `docs/`, and CI/lint/format scaffolding was added. The repository remains intentionally unlicensed. |
 
 ## Recommended next steps
 

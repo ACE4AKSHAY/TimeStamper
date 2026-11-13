@@ -79,5 +79,6 @@ audio + lyrics → local feature extraction → editable line timeline → LRC
 
 ## License
 
-The license is intentionally undecided. A license will be added after the
-maintainer confirms the preferred option.
+This repository is currently unlicensed by maintainer decision. No permission
+to copy, modify, publish, or redistribute the code is granted by the
+repository; contact the maintainer before reusing it.

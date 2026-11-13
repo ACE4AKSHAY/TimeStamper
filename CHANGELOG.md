@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Recorded the maintainer decision to keep the repository unlicensed for now.
 - Repository hygiene moves user-specific paths into environment variables and
   portable commands.
 - Long architecture, setup and implementation notes are grouped under `docs/`.
