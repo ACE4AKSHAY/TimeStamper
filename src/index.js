@@ -11,3 +11,6 @@ export { validateAlignmentRequest, validateAlignmentResult, validateFormDescript
 export { detectForm, detectLineScript } from "./forms/index.js";
 export { retimeLrc, RETIME_LRC_VERSION } from "./retime-lrc.js";
 export { buildEnginePlan, runAutoForm } from "./router/index.js";
+export { addWordTimings, interpolateWordTimings, tokenizeWords } from "./word-timing.js";
+export { exportEnhancedLrc } from "./enhanced-lrc.js";
+export { applyStructureAwareChecks } from "./structure-check.js";

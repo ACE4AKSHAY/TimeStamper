@@ -1,6 +1,7 @@
 import { summarizeConsensus } from "../consensus-aligner.js";
 import { detectForm } from "../forms/detect-form.js";
 import { validateAlignmentResult } from "../contracts/index.js";
+import { applyStructureAwareChecks } from "../structure-check.js";
 import { buildEnginePlan } from "./rules.js";
 
 /** Run a form-derived plan using the supplied legacy engine adapter. */
@@ -32,15 +33,19 @@ export function runAutoForm(request, runEngine) {
     return refusalResult(baseLines, form, { ...plan, reason: "all_planned_engines_failed" }, candidates);
   }
   const fused = fuseCandidates(baseLines, candidates, request.audio?.duration || 0, options);
+  const structure = options.structureAware
+    ? applyStructureAwareChecks(fused.lines, request.audio?.profiles?.energy, request.audio?.duration || 0, options)
+    : { lines: fused.lines, diagnostics: { enabled: false } };
   const result = {
     engine: "auto-form",
     engineVersion: "0.1.0",
-    lines: fused.lines,
+    lines: structure.lines,
     diagnostics: {
       form,
       plan,
       candidates: summarizeCandidates(candidates),
       fusion: fused.diagnostics,
+      structure: structure.diagnostics,
     },
     timingsMs: { routing: 0, engines: 0, fusion: 0, total: 0 },
     parameters: { mode: options.mode || "auto", budgetMs: plan.budgetMs },
