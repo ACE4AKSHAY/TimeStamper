@@ -73,6 +73,7 @@ audio + lyrics → local feature extraction → editable line timeline → LRC
 - [Project status and requirements traceability](PROJECT_STATUS.md)
 - [Phase-by-phase implementation and file map](docs/phases.md)
 - [Local correction calibration](docs/correction-learning.md)
+- [Lyrics-alignment research review](docs/lyrics-alignment-research.md)
 - [Internal learning and manual-review notes](docs/internal/)
 
 ## Development principles
