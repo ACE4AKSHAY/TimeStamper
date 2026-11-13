@@ -21,7 +21,7 @@ export function createEnergyInitialTimeline(lines, energyProfile, duration) {
     const localStrength = energyProfile[cursor] / (maximum || 1);
     return {
       ...line,
-      startTime: Math.min(duration, cursor / Math.max(1, energyProfile.length - 1) * duration),
+      startTime: Math.min(duration, (cursor / Math.max(1, energyProfile.length - 1)) * duration),
       confidence: Math.round((0.12 + localStrength * 0.23) * 100) / 100,
       alignmentMethod: "energy_baseline",
       manuallyCorrected: false,

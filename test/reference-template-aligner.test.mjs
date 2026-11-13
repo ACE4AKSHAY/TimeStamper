@@ -9,7 +9,11 @@ import { alignWithReferenceTemplateEnsemble } from "../src/reference-template-en
 import { summarizeClusteredConsensus } from "../src/consensus-aligner.js";
 
 test("feature normalization is deterministic and keeps disabled mode lossless", () => {
-  const frames = [[1, 2], [3, 4], [5, 6]];
+  const frames = [
+    [1, 2],
+    [3, 4],
+    [5, 6],
+  ];
   const stats = fitFeatureNormalization([frames], { mode: "global-zscore" });
   const normalized = transformFeatureFrames(frames, stats);
   assert.equal(stats.mode, "global-zscore");
@@ -28,17 +32,21 @@ test("clustered consensus keeps a selected timing hypothesis away from outliers"
 test("reference-template alignment cooperatively aborts before expensive work", () => {
   const controller = new AbortController();
   controller.abort();
-  assert.throws(() => alignWithReferenceTemplates({
-    referenceSamples: [0, 1, 0, -1],
-    referenceSampleRate: 20,
-    referenceStarts: [0],
-    referenceDuration: 0.2,
-    targetSamples: [0, 1, 0, -1],
-    targetSampleRate: 20,
-    targetDuration: 0.2,
-    lyrics: [{ originalText: "one", order: 0 }],
-    options: { signal: controller.signal },
-  }), (error) => error?.name === "AbortError");
+  assert.throws(
+    () =>
+      alignWithReferenceTemplates({
+        referenceSamples: [0, 1, 0, -1],
+        referenceSampleRate: 20,
+        referenceStarts: [0],
+        referenceDuration: 0.2,
+        targetSamples: [0, 1, 0, -1],
+        targetSampleRate: 20,
+        targetDuration: 0.2,
+        lyrics: [{ originalText: "one", order: 0 }],
+        options: { signal: controller.signal },
+      }),
+    (error) => error?.name === "AbortError",
+  );
 });
 
 test("vocal separator contract validates PCM and preserves a deterministic passthrough", async () => {
@@ -46,7 +54,10 @@ test("vocal separator contract validates PCM and preserves a deterministic passt
   const separated = await createPassthroughSeparator().separate(input);
   assert.ok(separated.samples instanceof Float32Array);
   assert.equal(separated.duration, 3 / 8000);
-  const custom = createVocalSeparator({ name: "test-separator", separate: async () => ({ samples: [1], sampleRate: 4000 }) });
+  const custom = createVocalSeparator({
+    name: "test-separator",
+    separate: async () => ({ samples: [1], sampleRate: 4000 }),
+  });
   assert.equal((await custom.separate(input)).format, "separated-pcm");
   assert.throws(() => validateSeparatedAudio({ samples: [], sampleRate: 8000 }), /empty audio/u);
 });
@@ -57,9 +68,12 @@ test("reference-template adapter aligns a target recording and preserves line me
     const frequency = index < 1600 ? 220 : 440;
     const local = index % 1600;
     const envelope = Math.min(1, local / 120, (1600 - local) / 120);
-    return 0.6 * envelope * Math.sin(2 * Math.PI * frequency * index / sampleRate);
+    return 0.6 * envelope * Math.sin((2 * Math.PI * frequency * index) / sampleRate);
   });
-  const lines = [{ id: "a", originalText: "one", order: 0 }, { id: "b", originalText: "two", order: 1 }];
+  const lines = [
+    { id: "a", originalText: "one", order: 0 },
+    { id: "b", originalText: "two", order: 1 },
+  ];
   const progressEvents = [];
   const result = alignWithReferenceTemplates({
     referenceSamples: samples,
@@ -70,7 +84,12 @@ test("reference-template adapter aligns a target recording and preserves line me
     targetSampleRate: sampleRate,
     targetDuration: 0.4,
     lyrics: lines,
-    options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, onProgress: (event) => progressEvents.push(event) },
+    options: {
+      mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 },
+      maxLength: 40,
+      window: 4,
+      onProgress: (event) => progressEvents.push(event),
+    },
   });
   assert.equal(result.method, "reference_template_mfcc_dtw");
   assert.equal(result.lines.length, 2);
@@ -78,8 +97,16 @@ test("reference-template adapter aligns a target recording and preserves line me
   assert.equal(result.lines[0].startTime, 0);
   assert.ok(result.lines[1].startTime >= result.lines[0].startTime);
   assert.ok(Number.isFinite(result.alignment.cost));
-  assert.ok(result.lines.every((line) => Number.isFinite(line.confidence) && line.confidence >= 0 && line.confidence <= 1));
-  assert.ok(result.lines.every((line) => ["stable", "high_relative_cost", "unstable_boundary", "high_relative_cost_and_unstable_boundary"].includes(line.failureCategory)));
+  assert.ok(
+    result.lines.every((line) => Number.isFinite(line.confidence) && line.confidence >= 0 && line.confidence <= 1),
+  );
+  assert.ok(
+    result.lines.every((line) =>
+      ["stable", "high_relative_cost", "unstable_boundary", "high_relative_cost_and_unstable_boundary"].includes(
+        line.failureCategory,
+      ),
+    ),
+  );
   assert.equal(result.alignment.diagnostics.reviewThreshold, 0.5);
   assert.equal(result.reference.lineCount, 2);
   assert.ok(progressEvents.length >= 2);
@@ -93,14 +120,30 @@ test("reference-template adapter aligns a target recording and preserves line me
     targetSampleRate: sampleRate,
     targetDuration: 0.4,
     lyrics: lines,
-    options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, featureNormalization: "global-zscore" },
+    options: {
+      mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 },
+      maxLength: 40,
+      window: 4,
+      featureNormalization: "global-zscore",
+    },
   });
   assert.equal(normalized.parameters.featureNormalization, "global-zscore");
   assert.ok(normalized.lines.every((line) => Number.isFinite(line.startTime)));
   const ensemble = alignWithReferenceTemplateEnsemble({
     variants: [
-      { name: "anchored", options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 } },
-      { name: "anchor-free", options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, useReferenceAnchors: false } },
+      {
+        name: "anchored",
+        options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 },
+      },
+      {
+        name: "anchor-free",
+        options: {
+          mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 },
+          maxLength: 40,
+          window: 4,
+          useReferenceAnchors: false,
+        },
+      },
     ],
     referenceSamples: samples,
     referenceSampleRate: sampleRate,
@@ -116,12 +159,25 @@ test("reference-template adapter aligns a target recording and preserves line me
   assert.equal(ensemble.candidates.length, 2);
   assert.ok(Number.isFinite(ensemble.runtimeMs) && ensemble.runtimeMs >= 0);
   assert.ok(ensemble.candidateRuntimesMs.every((item) => Number.isFinite(item.runtimeMs)));
-  assert.ok(ensemble.lines.every((line, index) => index === 0 || line.startTime >= ensemble.lines[index - 1].startTime));
+  assert.ok(
+    ensemble.lines.every((line, index) => index === 0 || line.startTime >= ensemble.lines[index - 1].startTime),
+  );
   assert.ok(ensemble.lines.every((line) => line.alignmentReview.candidateCount >= 1));
   const weightedEnsemble = alignWithReferenceTemplateEnsemble({
     variants: [
-      { name: "anchored", options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 } },
-      { name: "anchor-free", options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, useReferenceAnchors: false } },
+      {
+        name: "anchored",
+        options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 },
+      },
+      {
+        name: "anchor-free",
+        options: {
+          mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 },
+          maxLength: 40,
+          window: 4,
+          useReferenceAnchors: false,
+        },
+      },
     ],
     referenceSamples: samples,
     referenceSampleRate: sampleRate,
@@ -138,7 +194,10 @@ test("reference-template adapter aligns a target recording and preserves line me
   assert.ok(weightedEnsemble.lines.every((line) => Number.isFinite(line.startTime)));
   const clusteredEnsemble = alignWithReferenceTemplateEnsemble({
     variants: [
-      { name: "a", options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 } },
+      {
+        name: "a",
+        options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 },
+      },
     ],
     referenceSamples: samples,
     referenceSampleRate: sampleRate,
@@ -154,8 +213,14 @@ test("reference-template adapter aligns a target recording and preserves line me
   assert.equal(clusteredEnsemble.clusterToleranceSeconds, 0.1);
   const limitedEnsemble = alignWithReferenceTemplateEnsemble({
     variants: [
-      { name: "first", options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 } },
-      { name: "second", options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 } },
+      {
+        name: "first",
+        options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 },
+      },
+      {
+        name: "second",
+        options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 },
+      },
     ],
     referenceSamples: samples,
     referenceSampleRate: sampleRate,
@@ -183,7 +248,12 @@ test("reference-template adapter aligns a target recording and preserves line me
       targetSamples: samples,
       targetSampleRate: sampleRate,
       targetDuration: 0.4,
-      variants: [{ name: "default", options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 } }],
+      variants: [
+        {
+          name: "default",
+          options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 },
+        },
+      ],
       onProgress: (event) => ensembleProgress.push(event),
     },
   });
@@ -203,7 +273,12 @@ test("reference-template adapter aligns a target recording and preserves line me
       targetSamples: samples,
       targetSampleRate: sampleRate,
       targetDuration: 0.4,
-      variants: [{ name: "default", options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 } }],
+      variants: [
+        {
+          name: "default",
+          options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 },
+        },
+      ],
     },
   });
   assert.equal(ensembleEngineWithoutProgress.engine, "reference-template-ensemble");
@@ -216,9 +291,17 @@ test("reference-template adapter aligns a target recording and preserves line me
     targetSampleRate: sampleRate,
     targetDuration: 0.4,
     lyrics: lines,
-    options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, dtwImplementation: "banded" },
+    options: {
+      mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 },
+      maxLength: 40,
+      window: 4,
+      dtwImplementation: "banded",
+    },
   });
-  assert.deepEqual(banded.lines.map((line) => line.startTime), result.lines.map((line) => line.startTime));
+  assert.deepEqual(
+    banded.lines.map((line) => line.startTime),
+    result.lines.map((line) => line.startTime),
+  );
   assert.equal(banded.parameters.dtwImplementation, "banded");
   const anchorFree = alignWithReferenceTemplates({
     referenceSamples: samples,
@@ -229,7 +312,13 @@ test("reference-template adapter aligns a target recording and preserves line me
     targetSampleRate: sampleRate,
     targetDuration: 0.4,
     lyrics: lines,
-    options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, useReferenceAnchors: false, searchStride: 2 },
+    options: {
+      mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 },
+      maxLength: 40,
+      window: 4,
+      useReferenceAnchors: false,
+      searchStride: 2,
+    },
   });
   assert.equal(anchorFree.parameters.useReferenceAnchors, false);
   assert.equal(anchorFree.parameters.expectedStarts, null);
@@ -243,7 +332,12 @@ test("reference-template adapter aligns a target recording and preserves line me
     targetSampleRate: sampleRate,
     targetDuration: 0.6,
     lyrics: lines,
-    options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 80, window: 4, anchorScale: "duration-ratio" },
+    options: {
+      mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 },
+      maxLength: 80,
+      window: 4,
+      anchorScale: "duration-ratio",
+    },
   });
   assert.ok(Math.abs(scaled.parameters.anchorScale - 1.5) < 1e-12);
   assert.equal(scaled.parameters.expectedStarts[1], 38);
@@ -261,7 +355,12 @@ test("reference-template adapter aligns a target recording and preserves line me
       targetSamples: samples,
       targetSampleRate: sampleRate,
       targetDuration: 0.4,
-      options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, dtwImplementation: "banded" },
+      options: {
+        mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 },
+        maxLength: 40,
+        window: 4,
+        dtwImplementation: "banded",
+      },
       onProgress: (event) => engineProgress.push(event),
     },
   });
@@ -283,9 +382,18 @@ test("reference-template adapter aligns a target recording and preserves line me
     targetSampleRate: sampleRate,
     targetDuration: 0.4,
     lyrics: lines,
-    options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, referenceMfcc: cachedFrames, targetMfcc: cachedFrames },
+    options: {
+      mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 },
+      maxLength: 40,
+      window: 4,
+      referenceMfcc: cachedFrames,
+      targetMfcc: cachedFrames,
+    },
   });
-  assert.deepEqual(fromFrames.lines.map((line) => line.startTime), result.lines.map((line) => line.startTime));
+  assert.deepEqual(
+    fromFrames.lines.map((line) => line.startTime),
+    result.lines.map((line) => line.startTime),
+  );
 
   const refined = await alignWithReferenceTemplates({
     referenceSamples: samples,
@@ -296,7 +404,12 @@ test("reference-template adapter aligns a target recording and preserves line me
     targetSampleRate: sampleRate,
     targetDuration: 0.4,
     lyrics: lines,
-    options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, templateBoundaryRadius: 1 },
+    options: {
+      mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 },
+      maxLength: 40,
+      window: 4,
+      templateBoundaryRadius: 1,
+    },
   });
   assert.equal(refined.parameters.templateBoundaryRadius, 1);
   assert.equal(refined.parameters.templateBoundaryMinImprovementRatio, 0);
@@ -315,7 +428,13 @@ test("reference-template adapter aligns a target recording and preserves line me
     targetSampleRate: sampleRate,
     targetDuration: 0.4,
     lyrics: lines,
-    options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4, templateBoundaryRadius: 1, templateBoundaryMinImprovementRatio: 1 },
+    options: {
+      mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 },
+      maxLength: 40,
+      window: 4,
+      templateBoundaryRadius: 1,
+      templateBoundaryMinImprovementRatio: 1,
+    },
   });
   assert.equal(gated.parameters.templateBoundaryMinImprovementRatio, 1);
   assert.equal(gated.alignment.templateBoundaryRefinement[0].accepted, false);
@@ -330,13 +449,28 @@ test("reference-template adapter aligns a target recording and preserves line me
     lyrics: lines,
     options: { mfcc: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 }, maxLength: 40, window: 4 },
   });
-  assert.deepEqual(separated.lines.map((line) => line.startTime), result.lines.map((line) => line.startTime));
+  assert.deepEqual(
+    separated.lines.map((line) => line.startTime),
+    result.lines.map((line) => line.startTime),
+  );
 });
 
 test("reference-template adapter rejects a lyric/reference line mismatch", () => {
-  assert.throws(() => alignWithReferenceTemplates({
-    referenceSamples: [0, 1], referenceSampleRate: 10, referenceStarts: [0], referenceDuration: 0.2,
-    targetSamples: [0, 1], targetSampleRate: 10, targetDuration: 0.2,
-    lyrics: [{ originalText: "one", order: 0 }, { originalText: "two", order: 1 }],
-  }), /line count must match/u);
+  assert.throws(
+    () =>
+      alignWithReferenceTemplates({
+        referenceSamples: [0, 1],
+        referenceSampleRate: 10,
+        referenceStarts: [0],
+        referenceDuration: 0.2,
+        targetSamples: [0, 1],
+        targetSampleRate: 10,
+        targetDuration: 0.2,
+        lyrics: [
+          { originalText: "one", order: 0 },
+          { originalText: "two", order: 1 },
+        ],
+      }),
+    /line count must match/u,
+  );
 });

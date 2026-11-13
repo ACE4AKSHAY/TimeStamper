@@ -7,7 +7,9 @@ const METADATA = /^\[([a-zA-Z]+):(.*)\]$/u;
 export function parseLyrics(text, source = "pasted") {
   const metadata = {};
   const lines = [];
-  for (const raw of String(text).replace(/^\uFEFF/u, "").split(/\r?\n/u)) {
+  for (const raw of String(text)
+    .replace(/^\uFEFF/u, "")
+    .split(/\r?\n/u)) {
     const meta = raw.match(METADATA);
     if (meta && !/\[\d/u.test(raw)) {
       const key = meta[1].toLowerCase();

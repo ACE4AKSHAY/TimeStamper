@@ -24,9 +24,29 @@ for (const scenario of scenarios) {
   const profiles = scenario.profiles;
   const results = {
     energyBaseline: synchronize({ lyrics: lines, energyProfile: profiles.energy, duration: scenario.duration }),
-    combinedProfile: synchronize({ lyrics: lines, engine: "combined-profile", energyProfile: profiles.energy, duration: scenario.duration, parameters: { profiles: { energy: profiles.energy, spectralFlux: profiles.spectralFlux }, weights: { energy: 0.65, spectralFlux: 0.35 } } }),
-    boundaryDp: synchronize({ lyrics: lines, engine: "boundary-dp", energyProfile: profiles.energy, duration: scenario.duration, parameters: { profile: profiles.energy } }),
-    multiProfileBoundaryDp: synchronize({ lyrics: lines, engine: "multi-profile-boundary-dp", duration: scenario.duration, parameters: { profiles, weights: { energy: 0.5, spectralFlux: 0.3, voicedness: 0.2 } } }),
+    combinedProfile: synchronize({
+      lyrics: lines,
+      engine: "combined-profile",
+      energyProfile: profiles.energy,
+      duration: scenario.duration,
+      parameters: {
+        profiles: { energy: profiles.energy, spectralFlux: profiles.spectralFlux },
+        weights: { energy: 0.65, spectralFlux: 0.35 },
+      },
+    }),
+    boundaryDp: synchronize({
+      lyrics: lines,
+      engine: "boundary-dp",
+      energyProfile: profiles.energy,
+      duration: scenario.duration,
+      parameters: { profile: profiles.energy },
+    }),
+    multiProfileBoundaryDp: synchronize({
+      lyrics: lines,
+      engine: "multi-profile-boundary-dp",
+      duration: scenario.duration,
+      parameters: { profiles, weights: { energy: 0.5, spectralFlux: 0.3, voicedness: 0.2 } },
+    }),
   };
   const predictions = {};
   for (const name of methodNames) {
@@ -34,11 +54,26 @@ for (const scenario of scenarios) {
     aggregate[name].predicted.push(...predictions[name]);
     aggregate[name].reference.push(...scenario.reference);
   }
-  cases.push({ id: scenario.id, description: scenario.description, duration: scenario.duration, reference: scenario.reference, predictions, profiles: scenario.profiles, profileNotes: scenario.profileNotes });
+  cases.push({
+    id: scenario.id,
+    description: scenario.description,
+    duration: scenario.duration,
+    reference: scenario.reference,
+    predictions,
+    profiles: scenario.profiles,
+    profileNotes: scenario.profileNotes,
+  });
 }
 
-const metrics = Object.fromEntries(methodNames.map((name) => [name, scoreTimestamps(aggregate[name].predicted, aggregate[name].reference)]));
-const perScenarioMetrics = Object.fromEntries(cases.map((item) => [item.id, Object.fromEntries(methodNames.map((name) => [name, scoreTimestamps(item.predictions[name], item.reference)]))]));
+const metrics = Object.fromEntries(
+  methodNames.map((name) => [name, scoreTimestamps(aggregate[name].predicted, aggregate[name].reference)]),
+);
+const perScenarioMetrics = Object.fromEntries(
+  cases.map((item) => [
+    item.id,
+    Object.fromEntries(methodNames.map((name) => [name, scoreTimestamps(item.predictions[name], item.reference)])),
+  ]),
+);
 const output = {
   datasetVersion: "robustness-synthetic-v1",
   description: "Deterministic perturbation study for known line boundaries; no copyrighted audio.",
@@ -67,7 +102,7 @@ function createScenario(id, frameCount, boundaries, duration, options) {
     description: describeScenario(id),
     duration,
     lyrics,
-    reference: boundaries.map((frame) => frame / frameCount * duration),
+    reference: boundaries.map((frame) => (frame / frameCount) * duration),
     profiles,
     profileNotes: { frameCount, peakShift: options.peakShift || 0, noiseAmplitude: options.noise || 0 },
   };

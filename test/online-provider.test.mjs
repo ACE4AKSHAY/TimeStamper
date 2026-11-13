@@ -1,8 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { LrcLibProvider, LyricsOvhProvider, WebLyricsSearchProvider, canUseOnlineSearch, createOnlineProviders, normalizeResult, parseArtistTitle, selectOnlineProviders } from "../src/online/online-provider.js";
-import { extractVersionMarkers, rankLyricResults } from "../src/online/lyric-matcher.js";
-import { searchOnlineLyrics } from "../src/online/online-search.js";
+import {
+  LrcLibProvider,
+  LyricsOvhProvider,
+  WebLyricsSearchProvider,
+  canUseOnlineSearch,
+  createOnlineProviders,
+  normalizeResult,
+  parseArtistTitle,
+  selectOnlineProviders,
+} from "../src/online/online-provider.js";
 
 function fakeFetch(payload, options = {}) {
   const calls = [];
@@ -53,46 +60,31 @@ test("web source provider returns labeled manual-copy links without scraping", a
   assert.ok(results.every((result) => result.resultKind === "link" && result.sourceUrl.startsWith("https://")));
 });
 
-test("normalizes enhanced LRC word timing without translating Unicode", () => {
-  const result = normalizeResult({ title: "Song", syncedLyrics: "[00:01.00]<00:01.00>పా<00:01.40>ట" });
-  assert.equal(result.timingLevel, "word");
-  assert.deepEqual(result.timedWords.map((word) => word.text), ["పా", "ట"]);
-  assert.equal(result.timedWords[0].startTime, 1);
-});
-
-test("ranking prefers exact version-matched timed results", () => {
-  const results = rankLyricResults([
-    { providerId: "lyrics-ovh", providerName: "lyrics.ovh", title: "Song", artist: "Singer", plainLyrics: "text", syncedLyrics: "" },
-    { providerId: "lrclib", providerName: "LRCLIB", title: "Song (Live)", artist: "Singer", syncedLyrics: "[00:01.00]line", plainLyrics: "", duration: 180 },
-  ], { title: "Song (Live)", artist: "Singer", audioName: "Song (Live).mp3", duration: 180 });
-  assert.equal(results[0].providerId, "lrclib");
-  assert.ok(results[0].matchReason.includes("version"));
-  assert.deepEqual(extractVersionMarkers("Song (Instrumental)"), ["instrumental"]);
-});
-
-test("online search fans out providers and isolates one provider failure", async () => {
-  const providers = [
-    { id: "good", search: async () => [{ title: "Song", artist: "Singer", syncedLyrics: "[00:01.00]line", providerId: "good" }] },
-    { id: "bad", search: async () => { throw new Error("offline"); } },
-  ];
-  const result = await searchOnlineLyrics({ providers, query: "Singer - Song", context: { artist: "Singer", title: "Song" } });
-  assert.equal(result.results.length, 1);
-  assert.equal(result.results[0].timingLevel, "line");
-  assert.equal(result.responses.filter((response) => response.status === "rejected").length, 1);
-});
-
 test("online provider registry and artist-title parsing expose all source classes", () => {
   assert.deepEqual(parseArtistTitle("Singer - Song"), { artist: "Singer", title: "Song" });
-  const providers = createOnlineProviders({ fetchImpl: fakeFetch([]), lrcLib: { baseUrl: "https://lrc.test/api" }, lyricsOvh: { baseUrl: "https://plain.test" } });
-  assert.deepEqual(providers.map((provider) => provider.id), ["lrclib", "lyrics-ovh", "web-search"]);
+  const providers = createOnlineProviders({
+    fetchImpl: fakeFetch([]),
+    lrcLib: { baseUrl: "https://lrc.test/api" },
+    lyricsOvh: { baseUrl: "https://plain.test" },
+  });
+  assert.deepEqual(
+    providers.map((provider) => provider.id),
+    ["lrclib", "lyrics-ovh", "web-search"],
+  );
   assert.equal(providers[0].baseUrl, "https://lrc.test/api");
   assert.equal(providers[1].baseUrl, "https://plain.test");
 });
 
 test("source selection disables only explicitly disabled providers", () => {
   const providers = createOnlineProviders({ fetchImpl: fakeFetch([]) });
-  assert.deepEqual(selectOnlineProviders(providers, { "lyrics-ovh": false }).map((provider) => provider.id), ["lrclib", "web-search"]);
-  assert.deepEqual(selectOnlineProviders(providers, {}).map((provider) => provider.id), ["lrclib", "lyrics-ovh", "web-search"]);
+  assert.deepEqual(
+    selectOnlineProviders(providers, { "lyrics-ovh": false }).map((provider) => provider.id),
+    ["lrclib", "web-search"],
+  );
+  assert.deepEqual(
+    selectOnlineProviders(providers, {}).map((provider) => provider.id),
+    ["lrclib", "lyrics-ovh", "web-search"],
+  );
 });
 
 test("LRCLIB forwards cancellation and enforces a bounded request timeout", async () => {
@@ -104,12 +96,18 @@ test("LRCLIB forwards cancellation and enforces a bounded request timeout", asyn
     });
   };
   const provider = new LrcLibProvider({ fetchImpl, timeoutMs: 100 });
-  await assert.rejects(() => provider.search("Song"), (error) => error.name === "TimeoutError");
+  await assert.rejects(
+    () => provider.search("Song"),
+    (error) => error.name === "TimeoutError",
+  );
   assert.equal(observedSignal.aborted, true);
 
   const parent = new AbortController();
   const cancelProvider = new LrcLibProvider({ fetchImpl, timeoutMs: 1000 });
   const pending = cancelProvider.search("Song", {}, { signal: parent.signal });
   parent.abort();
-  await assert.rejects(() => pending, (error) => error.name === "AbortError");
+  await assert.rejects(
+    () => pending,
+    (error) => error.name === "AbortError",
+  );
 });

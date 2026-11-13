@@ -33,7 +33,10 @@ function parseTimedWords(raw) {
   if (!tags.length) return [];
   return tags
     .map((tag, index) => ({
-      text: raw.slice(tag.index + tag[0].length, tags[index + 1]?.index ?? raw.length).replace(LINE_TAG, "").trim(),
+      text: raw
+        .slice(tag.index + tag[0].length, tags[index + 1]?.index ?? raw.length)
+        .replace(LINE_TAG, "")
+        .trim(),
       startTime: tagToSeconds(tag),
       endTime: tags[index + 1] ? tagToSeconds(tags[index + 1]) : null,
     }))

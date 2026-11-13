@@ -16,16 +16,30 @@ export class VocalSeparatorError extends Error {
 }
 
 export function validateSeparatedAudio(result) {
-  if (!result || !result.samples || typeof result.samples.length !== "number") throw new VocalSeparatorError("A separator must return a samples array.", "INVALID_RESULT");
-  if (!Number.isFinite(result.sampleRate) || result.sampleRate <= 0) throw new VocalSeparatorError("A separator must return a positive sample rate.", "INVALID_RESULT");
+  if (!result || !result.samples || typeof result.samples.length !== "number")
+    throw new VocalSeparatorError("A separator must return a samples array.", "INVALID_RESULT");
+  if (!Number.isFinite(result.sampleRate) || result.sampleRate <= 0)
+    throw new VocalSeparatorError("A separator must return a positive sample rate.", "INVALID_RESULT");
   const samples = result.samples instanceof Float32Array ? result.samples : Float32Array.from(result.samples);
   if (!samples.length) throw new VocalSeparatorError("A separator returned empty audio.", "EMPTY_RESULT");
-  return { ...result, samples, sampleRate: result.sampleRate, duration: Number.isFinite(result.duration) && result.duration > 0 ? result.duration : samples.length / result.sampleRate, format: result.format || "separated-pcm" };
+  return {
+    ...result,
+    samples,
+    sampleRate: result.sampleRate,
+    duration:
+      Number.isFinite(result.duration) && result.duration > 0 ? result.duration : samples.length / result.sampleRate,
+    format: result.format || "separated-pcm",
+  };
 }
 
 export function createVocalSeparator({ name, version = "unversioned", separate }) {
-  if (!name || typeof name !== "string") throw new VocalSeparatorError("A separator name is required.", "INVALID_CONFIGURATION");
-  if (typeof separate !== "function") throw new VocalSeparatorError("A separator must provide a separate(input, options) function.", "INVALID_CONFIGURATION");
+  if (!name || typeof name !== "string")
+    throw new VocalSeparatorError("A separator name is required.", "INVALID_CONFIGURATION");
+  if (typeof separate !== "function")
+    throw new VocalSeparatorError(
+      "A separator must provide a separate(input, options) function.",
+      "INVALID_CONFIGURATION",
+    );
   return {
     name,
     version,

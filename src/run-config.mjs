@@ -5,7 +5,14 @@ export const RUN_CONFIG_SCHEMA_VERSION = 1;
  * Timestamps and generatedAt are intentionally excluded so this describes a
  * reproducible method rather than one particular run's output.
  */
-export function createRunConfiguration({ workflow, engine = null, engines = [], decoder = {}, featureExtraction = {}, cache = {} }) {
+export function createRunConfiguration({
+  workflow,
+  engine = null,
+  engines = [],
+  decoder = {},
+  featureExtraction = {},
+  cache = {},
+}) {
   return {
     schemaVersion: RUN_CONFIG_SCHEMA_VERSION,
     workflow: workflow || "unspecified",

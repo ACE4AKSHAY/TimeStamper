@@ -8,14 +8,25 @@ const inputPath = process.argv[2] || "benchmarks/example.synthetic.json";
 const outputPath = process.argv[3] || "benchmarks/results/energy-baseline.json";
 const dataset = JSON.parse(await readFile(resolve(inputPath), "utf8"));
 const started = performance.now();
-const allPredicted = []; const allReference = []; let peakHeapBytes = 0;
+const allPredicted = [];
+const allReference = [];
+let peakHeapBytes = 0;
 for (const item of dataset.cases) {
   const lines = item.lyrics.map((originalText, order) => ({ id: `${item.id}-${order}`, originalText, order }));
   const result = synchronize({ lyrics: lines, energyProfile: item.energy, duration: item.duration });
-  allPredicted.push(...result.lines.map((line) => line.startTime)); allReference.push(...item.reference);
+  allPredicted.push(...result.lines.map((line) => line.startTime));
+  allReference.push(...item.reference);
   peakHeapBytes = Math.max(peakHeapBytes, process.memoryUsage().heapUsed);
 }
-const output = { datasetVersion: dataset.datasetVersion, caseCount: dataset.cases.length, metrics: scoreTimestamps(allPredicted, allReference), runtimeMs: performance.now() - started, peakHeapBytes, input: inputPath, generatedAt: new Date().toISOString() };
+const output = {
+  datasetVersion: dataset.datasetVersion,
+  caseCount: dataset.cases.length,
+  metrics: scoreTimestamps(allPredicted, allReference),
+  runtimeMs: performance.now() - started,
+  peakHeapBytes,
+  input: inputPath,
+  generatedAt: new Date().toISOString(),
+};
 await mkdir(dirname(resolve(outputPath)), { recursive: true });
 await writeFile(resolve(outputPath), JSON.stringify(output, null, 2) + "\n", "utf8");
 await writeFile(resolve(outputPath).replace(/\.json$/u, ".md"), formatMetricsMarkdown(output), "utf8");

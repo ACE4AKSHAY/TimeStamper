@@ -5,7 +5,11 @@ import { constrainedDtwBanded } from "../src/dtw-banded.js";
 
 test("rolling-cost DTW matches full-matrix path and cost", () => {
   const left = Array.from({ length: 28 }, (_, row) => [Math.sin(row / 4), Math.cos(row / 7), row / 30]);
-  const right = Array.from({ length: 31 }, (_, row) => [Math.sin((row + 1) / 4), Math.cos((row + 1) / 7), (row + 1) / 30]);
+  const right = Array.from({ length: 31 }, (_, row) => [
+    Math.sin((row + 1) / 4),
+    Math.cos((row + 1) / 7),
+    (row + 1) / 30,
+  ]);
   const full = constrainedDtw(left, right, { window: 6 });
   const banded = constrainedDtwBanded(left, right, { window: 6 });
   assert.deepEqual(banded.path, full.path);

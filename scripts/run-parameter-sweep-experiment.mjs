@@ -42,25 +42,77 @@ const output = {
 
 await mkdir(dirname(resolve(outputPath)), { recursive: true });
 await writeFile(resolve(outputPath), JSON.stringify(output, null, 2) + "\n", "utf8");
-console.log(JSON.stringify({ output: outputPath, best: Object.fromEntries(Object.entries(output.results).map(([name, result]) => [name, result.best])) }, null, 2));
+console.log(
+  JSON.stringify(
+    {
+      output: outputPath,
+      best: Object.fromEntries(Object.entries(output.results).map(([name, result]) => [name, result.best])),
+    },
+    null,
+    2,
+  ),
+);
 
 function evaluateBoundary(candidates) {
-  return rank(candidates.map((parameters) => ({ parameters, metrics: scoreMethods((item, lines) => synchronize({ lyrics: lines, engine: "boundary-dp", energyProfile: item.profiles.energy, duration: item.duration, parameters: { profile: item.profiles.energy, ...parameters } })) })));
+  return rank(
+    candidates.map((parameters) => ({
+      parameters,
+      metrics: scoreMethods((item, lines) =>
+        synchronize({
+          lyrics: lines,
+          engine: "boundary-dp",
+          energyProfile: item.profiles.energy,
+          duration: item.duration,
+          parameters: { profile: item.profiles.energy, ...parameters },
+        }),
+      ),
+    })),
+  );
 }
 
 function evaluateCombined(candidates) {
-  return rank(candidates.map((weights) => ({ weights, metrics: scoreMethods((item, lines) => synchronize({ lyrics: lines, engine: "combined-profile", energyProfile: item.profiles.energy, duration: item.duration, parameters: { profiles: item.profiles, weights } })) })));
+  return rank(
+    candidates.map((weights) => ({
+      weights,
+      metrics: scoreMethods((item, lines) =>
+        synchronize({
+          lyrics: lines,
+          engine: "combined-profile",
+          energyProfile: item.profiles.energy,
+          duration: item.duration,
+          parameters: { profiles: item.profiles, weights },
+        }),
+      ),
+    })),
+  );
 }
 
 function evaluateMulti(candidates) {
-  return rank(candidates.map((weights) => ({ weights, metrics: scoreMethods((item, lines) => synchronize({ lyrics: lines, engine: "multi-profile-boundary-dp", duration: item.duration, parameters: { profiles: item.profiles, weights } })) })));
+  return rank(
+    candidates.map((weights) => ({
+      weights,
+      metrics: scoreMethods((item, lines) =>
+        synchronize({
+          lyrics: lines,
+          engine: "multi-profile-boundary-dp",
+          duration: item.duration,
+          parameters: { profiles: item.profiles, weights },
+        }),
+      ),
+    })),
+  );
 }
 
 function scoreMethods(predict, collectDetails = false) {
-  const predicted = [], reference = [];
+  const predicted = [],
+    reference = [];
   for (const item of dataset.cases) {
     const lines = item.lyrics.map((originalText, order) => ({ id: `${item.id}-${order}`, originalText, order }));
-    const profiles = item.profiles || { energy: item.energy || [], spectralFlux: item.spectralFlux || item.energy || [], voicedness: item.voicedness || item.energy || [] };
+    const profiles = item.profiles || {
+      energy: item.energy || [],
+      spectralFlux: item.spectralFlux || item.energy || [],
+      voicedness: item.voicedness || item.energy || [],
+    };
     const result = predict({ ...item, profiles }, lines);
     predicted.push(...result.lines.map((line) => line.startTime));
     reference.push(...item.reference);
@@ -70,6 +122,9 @@ function scoreMethods(predict, collectDetails = false) {
 }
 
 function rank(entries) {
-  const ranked = entries.sort((left, right) => left.metrics.maeSeconds - right.metrics.maeSeconds || left.metrics.rmseSeconds - right.metrics.rmseSeconds);
+  const ranked = entries.sort(
+    (left, right) =>
+      left.metrics.maeSeconds - right.metrics.maeSeconds || left.metrics.rmseSeconds - right.metrics.rmseSeconds,
+  );
   return { candidateCount: ranked.length, best: ranked[0], topFive: ranked.slice(0, 5) };
 }

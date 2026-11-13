@@ -13,7 +13,12 @@ const inventoryPath = join(root, "private_match_inventory.csv");
 const audioRoot = join(root, "audio");
 const lyricsRoot = join(root, "lyrics");
 const rows = parseCsv(await readFile(inventoryPath, "utf8"));
-const eligibleRows = rows.filter((row) => row.annotation_status === "timestamped_lyrics_lrc" && row.match_status === "matched_high_confidence" && String(row.instrumental_or_special_version_flag).toLowerCase() !== "true");
+const eligibleRows = rows.filter(
+  (row) =>
+    row.annotation_status === "timestamped_lyrics_lrc" &&
+    row.match_status === "matched_high_confidence" &&
+    String(row.instrumental_or_special_version_flag).toLowerCase() !== "true",
+);
 
 const items = [];
 for (const row of rows) {
@@ -64,7 +69,9 @@ const document = {
   decoder: {
     ffmpeg: hasFfmpeg,
     ffprobe: hasFfprobe,
-    note: hasFfmpeg ? "A command-line PCM decoder is available for future automated runs." : "No command-line PCM decoder was found. Chromium can still play files in the app, but automated Node-side acoustic extraction needs FFmpeg or another decoder.",
+    note: hasFfmpeg
+      ? "A command-line PCM decoder is available for future automated runs."
+      : "No command-line PCM decoder was found. Chromium can still play files in the app, but automated Node-side acoustic extraction needs FFmpeg or another decoder.",
   },
   selection: "high-confidence filename matches with timestamped LRC and no special-version marker",
   summary: {
@@ -83,7 +90,9 @@ async function commandExists(command) {
   try {
     const probe = process.platform === "win32" ? "where" : "which";
     const child = (await import("node:child_process")).execFile;
-    await new Promise((resolvePromise, reject) => child(probe, [command], (error) => error ? reject(error) : resolvePromise()));
+    await new Promise((resolvePromise, reject) =>
+      child(probe, [command], (error) => (error ? reject(error) : resolvePromise())),
+    );
     return true;
   } catch {
     return false;

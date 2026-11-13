@@ -48,7 +48,7 @@ export class FeatureCache {
     } catch (error) {
       // Windows may reject replacing an existing file. The cache is derived
       // data, so replacing the old entry is safe and recoverable.
-      if (!(["EEXIST", "EPERM", "ENOTEMPTY"].includes(error.code))) throw error;
+      if (!["EEXIST", "EPERM", "ENOTEMPTY"].includes(error.code)) throw error;
       await unlink(target).catch(() => {});
       await rename(temporary, target);
     }
@@ -56,12 +56,17 @@ export class FeatureCache {
   }
 
   async delete(key) {
-    await unlink(this.pathFor(key)).catch((error) => { if (error.code !== "ENOENT") throw error; });
+    await unlink(this.pathFor(key)).catch((error) => {
+      if (error.code !== "ENOENT") throw error;
+    });
   }
 }
 
 function stableStringify(value) {
   if (value === null || typeof value !== "object") return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
-  return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(",")}}`;
+  return `{${Object.keys(value)
+    .sort()
+    .map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`)
+    .join(",")}}`;
 }

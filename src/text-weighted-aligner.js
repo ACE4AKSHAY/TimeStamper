@@ -49,12 +49,20 @@ function segmentCost(profile, start, end, expectedLength, durationWeight, bounda
  * editable; it does not infer words from audio or use machine learning.
  */
 export function alignByTextWeightedBoundaryDp(lines, profile, duration, options = {}) {
-  if (!Array.isArray(lines) || !lines.length || !Array.isArray(profile) || !profile.length || !Number.isFinite(duration) || duration <= 0) throw new Error("Text-weighted Boundary DP requires lyric lines, a non-empty profile, and a positive duration.");
+  if (
+    !Array.isArray(lines) ||
+    !lines.length ||
+    !Array.isArray(profile) ||
+    !profile.length ||
+    !Number.isFinite(duration) ||
+    duration <= 0
+  )
+    throw new Error("Text-weighted Boundary DP requires lyric lines, a non-empty profile, and a positive duration.");
   const activity = normalizeProfile(profile);
   const lineCount = lines.length;
   const frameCount = activity.length;
   const text = estimateTextWeights(lines, options);
-  const expectedLengths = text.weights.map((weight) => frameCount * weight / text.totalWeight);
+  const expectedLengths = text.weights.map((weight) => (frameCount * weight) / text.totalWeight);
   const meanExpectedLength = frameCount / lineCount;
   const minLength = Math.max(1, Math.floor(options.minLength || meanExpectedLength * 0.35));
   const maxLength = Math.max(minLength, Math.ceil(options.maxLength || meanExpectedLength * 1.9));
@@ -71,19 +79,48 @@ export function alignByTextWeightedBoundaryDp(lines, profile, duration, options 
       const maximumStart = line === 1 ? 0 : end - minLength;
       for (let start = minimumStart; start <= maximumStart; start++) {
         if (!Number.isFinite(costs[line - 1][start])) continue;
-        const cost = costs[line - 1][start] + segmentCost(activity, start, end, expectedLengths[line - 1], durationWeight, boundaryWeight, line - 1);
-        if (cost < costs[line][end]) { costs[line][end] = cost; parents[line][end] = start; }
+        const cost =
+          costs[line - 1][start] +
+          segmentCost(activity, start, end, expectedLengths[line - 1], durationWeight, boundaryWeight, line - 1);
+        if (cost < costs[line][end]) {
+          costs[line][end] = cost;
+          parents[line][end] = start;
+        }
       }
     }
   }
-  if (!Number.isFinite(costs[lineCount][frameCount])) throw new Error("No text-weighted Boundary-DP path satisfies the line-duration constraints.");
+  if (!Number.isFinite(costs[lineCount][frameCount]))
+    throw new Error("No text-weighted Boundary-DP path satisfies the line-duration constraints.");
   const segments = [];
   let end = frameCount;
   for (let line = lineCount; line > 0; line--) {
     const start = parents[line][end];
-    segments.push({ lineIndex: line - 1, startFrame: start, endFrame: end, startTime: start / frameCount * duration, endTime: end / frameCount * duration, expectedLength: expectedLengths[line - 1], cost: costs[line][end] - costs[line - 1][start] });
+    segments.push({
+      lineIndex: line - 1,
+      startFrame: start,
+      endFrame: end,
+      startTime: (start / frameCount) * duration,
+      endTime: (end / frameCount) * duration,
+      expectedLength: expectedLengths[line - 1],
+      cost: costs[line][end] - costs[line - 1][start],
+    });
     end = start;
   }
   segments.reverse();
-  return { segments, cost: costs[lineCount][frameCount], frameRate: frameCount / duration, expectedLengths, textLengths: text.textLengths, textWeights: text.weights, textUnit: text.textUnit, exponent: text.exponent, minimumWeight: text.minimumWeight, minLength, maxLength, durationWeight, boundaryWeight, method: "text_weighted_boundary_dynamic_programming" };
+  return {
+    segments,
+    cost: costs[lineCount][frameCount],
+    frameRate: frameCount / duration,
+    expectedLengths,
+    textLengths: text.textLengths,
+    textWeights: text.weights,
+    textUnit: text.textUnit,
+    exponent: text.exponent,
+    minimumWeight: text.minimumWeight,
+    minLength,
+    maxLength,
+    durationWeight,
+    boundaryWeight,
+    method: "text_weighted_boundary_dynamic_programming",
+  };
 }

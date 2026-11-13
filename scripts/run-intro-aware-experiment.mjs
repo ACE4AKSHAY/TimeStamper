@@ -14,11 +14,28 @@ const reference = [];
 const cases = [];
 
 for (const item of dataset.cases) {
-  if (!item.profiles?.energy) throw new Error("Robustness results must include profiles; rerun experiment-robustness first.");
-  const lines = item.reference.map((_, order) => ({ id: `${item.id}-${order}`, originalText: `line-${order + 1}`, order }));
+  if (!item.profiles?.energy)
+    throw new Error("Robustness results must include profiles; rerun experiment-robustness first.");
+  const lines = item.reference.map((_, order) => ({
+    id: `${item.id}-${order}`,
+    originalText: `line-${order + 1}`,
+    order,
+  }));
   const results = {
-    boundaryDp: synchronize({ lyrics: lines, engine: "boundary-dp", energyProfile: item.profiles.energy, duration: item.duration, parameters: { profile: item.profiles.energy } }),
-    introAwareBoundaryDp: synchronize({ lyrics: lines, engine: "intro-aware-boundary-dp", energyProfile: item.profiles.energy, duration: item.duration, parameters: { profile: item.profiles.energy } }),
+    boundaryDp: synchronize({
+      lyrics: lines,
+      engine: "boundary-dp",
+      energyProfile: item.profiles.energy,
+      duration: item.duration,
+      parameters: { profile: item.profiles.energy },
+    }),
+    introAwareBoundaryDp: synchronize({
+      lyrics: lines,
+      engine: "intro-aware-boundary-dp",
+      energyProfile: item.profiles.energy,
+      duration: item.duration,
+      parameters: { profile: item.profiles.energy },
+    }),
   };
   const casePredictions = {};
   for (const name of methods) {
@@ -26,11 +43,37 @@ for (const item of dataset.cases) {
     predictions[name].push(...casePredictions[name]);
   }
   reference.push(...item.reference);
-  cases.push({ id: item.id, reference: item.reference, introFrame: results.introAwareBoundaryDp.alignment.introFrame, introTime: results.introAwareBoundaryDp.alignment.introTime, predictions: casePredictions });
+  cases.push({
+    id: item.id,
+    reference: item.reference,
+    introFrame: results.introAwareBoundaryDp.alignment.introFrame,
+    introTime: results.introAwareBoundaryDp.alignment.introTime,
+    predictions: casePredictions,
+  });
 }
 
 const metrics = Object.fromEntries(methods.map((name) => [name, scoreTimestamps(predictions[name], reference)]));
-const output = { datasetVersion: "intro-aware-synthetic-v1", input: inputPath, description: "Comparison of existing Boundary-DP with an intro-aware variant on deterministic robustness cases.", caseCount: cases.length, methods, metrics, cases, runtimeMs: performance.now() - started, generatedAt: new Date().toISOString() };
+const output = {
+  datasetVersion: "intro-aware-synthetic-v1",
+  input: inputPath,
+  description: "Comparison of existing Boundary-DP with an intro-aware variant on deterministic robustness cases.",
+  caseCount: cases.length,
+  methods,
+  metrics,
+  cases,
+  runtimeMs: performance.now() - started,
+  generatedAt: new Date().toISOString(),
+};
 await mkdir(dirname(resolve(outputPath)), { recursive: true });
 await writeFile(resolve(outputPath), JSON.stringify(output, null, 2) + "\n", "utf8");
-console.log(JSON.stringify({ output: outputPath, metrics, cases: cases.map(({ id, introFrame, introTime }) => ({ id, introFrame, introTime })) }, null, 2));
+console.log(
+  JSON.stringify(
+    {
+      output: outputPath,
+      metrics,
+      cases: cases.map(({ id, introFrame, introTime }) => ({ id, introFrame, introTime })),
+    },
+    null,
+    2,
+  ),
+);

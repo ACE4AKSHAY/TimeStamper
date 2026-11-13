@@ -13,61 +13,172 @@ import { alignAutomatically } from "../automatic-aligner.js";
 import { extractSpectralFluxProfile, extractVoicednessProfile } from "../audio-profiles.js";
 
 const $ = (id) => document.getElementById(id);
-let project = createProject(); let audioUrl = null; let audioFile = null; let selectedId = null; let peaks = []; let energyProfile = []; let spectralFluxProfile = []; let voicednessProfile = []; let waveformDragging = false; let scanTimer = null; let scanWasPlaying = false; let toastTimer = null; let settings = loadSettings(); let onlineResults = []; let onlineSearchBusy = false; let onlineSearchAbortController = null; let referenceAudio = null; let referenceLyrics = null; let alignmentWorker = null; let alignmentRequestId = null;
-const log = new ProjectLogger(renderLog); const audio = $("audio");
+let project = createProject();
+let audioUrl = null;
+let audioFile = null;
+let selectedId = null;
+let peaks = [];
+let energyProfile = [];
+let spectralFluxProfile = [];
+let voicednessProfile = [];
+let waveformDragging = false;
+let scanTimer = null;
+let scanWasPlaying = false;
+let toastTimer = null;
+let settings = loadSettings();
+let onlineResults = [];
+let onlineSearchBusy = false;
+let onlineSearchAbortController = null;
+let referenceAudio = null;
+let referenceLyrics = null;
+let alignmentWorker = null;
+let alignmentRequestId = null;
+const log = new ProjectLogger(renderLog);
+const audio = $("audio");
 const onlineProviders = createOnlineProviders();
 const onlineCache = new OnlineLyricsCache();
 const timelineLines = () => project.timeline.lines;
-const timestamp = (time) => Number.isFinite(time) ? secondsToLrc(time) : "—";
+const timestamp = (time) => (Number.isFinite(time) ? secondsToLrc(time) : "—");
 const lyricOffsetSeconds = () => (Number(project.lyrics?.offsetMs) || 0) / 1000;
-const effectiveLineTime = (line) => Number.isFinite(line?.startTime) ? Math.max(0, line.startTime + lyricOffsetSeconds()) : null;
-const safeName = (value) => (value || "lyricsync-project").replace(/[<>:"/\\|?*]+/gu, "-").trim() || "lyricsync-project";
+const effectiveLineTime = (line) =>
+  Number.isFinite(line?.startTime) ? Math.max(0, line.startTime + lyricOffsetSeconds()) : null;
+const safeName = (value) =>
+  (value || "lyricsync-project").replace(/[<>:"/\\|?*]+/gu, "-").trim() || "lyricsync-project";
 
 function formatClock(seconds) {
   const safe = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
-  const hours = Math.floor(safe / 3600), minutes = Math.floor(safe / 60) % 60, wholeSeconds = Math.floor(safe) % 60, milliseconds = Math.floor((safe % 1) * 1000);
+  const hours = Math.floor(safe / 3600),
+    minutes = Math.floor(safe / 60) % 60,
+    wholeSeconds = Math.floor(safe) % 60,
+    milliseconds = Math.floor((safe % 1) * 1000);
   return `${hours ? `${String(hours).padStart(2, "0")}:` : ""}${String(minutes).padStart(2, "0")}:${String(wholeSeconds).padStart(2, "0")}.${String(milliseconds).padStart(3, "0")}`;
 }
 
-function activeStampTime() { const typed = $("stamp-time").value.trim(); return typed ? parseEditorTime(typed) : audio.currentTime; }
-function adjustmentSeconds() { return Math.max(0.001, Number($("adjust-ms").value) / 1000 || 0.1); }
-function updateMetadata() { ["title", "artist", "album", "language"].forEach((key) => { project.metadata[key] = $(key).value.trim(); }); }
-function showToast(message, level = "info") { const toast = $("toast"); toast.textContent = message; toast.className = `toast visible ${level}`; clearTimeout(toastTimer); toastTimer = setTimeout(() => { toast.className = "toast"; }, 2600); }
-function normalizedShortcut(key) { if (key === " ") return "Space"; if (key.length === 1) return key.toUpperCase(); return key; }
-function shortcutLabel(key) { return key === "ArrowLeft" ? "←" : key === "ArrowRight" ? "→" : key === "Escape" ? "Esc" : key; }
-function seekToTime(seconds) { if (!audio.duration || !Number.isFinite(seconds)) return; const bounded = Math.max(0, Math.min(audio.duration, seconds)); audio.currentTime = bounded; updatePositionDisplays(bounded); renderWaveform(); return bounded; }
-function selectLine(line, seek = true) { selectedId = line.id; if (seek && Number.isFinite(effectiveLineTime(line))) seekToTime(effectiveLineTime(line)); renderTimeline(); }
-function scrollSelectedLineIntoView() { requestAnimationFrame(() => { const selected = $("timeline").querySelector("tr.selected"); selected?.scrollIntoView({ block: "nearest", behavior: settings.reduceMotion ? "auto" : "smooth" }); }); }
-function previousTimestamp(line) { const index = timelineLines().indexOf(line); return index > 0 ? effectiveLineTime(timelineLines()[index - 1]) : null; }
-function acceptsTimestamp(line, seconds) { const previous = previousTimestamp(line); if (Number.isFinite(previous) && seconds < previous) { showToast(`Line ${line.order + 1} must be at or after the previous line (${formatClock(previous)}).`, "warning"); return false; } return true; }
+function activeStampTime() {
+  const typed = $("stamp-time").value.trim();
+  return typed ? parseEditorTime(typed) : audio.currentTime;
+}
+function adjustmentSeconds() {
+  return Math.max(0.001, Number($("adjust-ms").value) / 1000 || 0.1);
+}
+function updateMetadata() {
+  ["title", "artist", "album", "language"].forEach((key) => {
+    project.metadata[key] = $(key).value.trim();
+  });
+}
+function showToast(message, level = "info") {
+  const toast = $("toast");
+  toast.textContent = message;
+  toast.className = `toast visible ${level}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.className = "toast";
+  }, 2600);
+}
+function normalizedShortcut(key) {
+  if (key === " ") return "Space";
+  if (key.length === 1) return key.toUpperCase();
+  return key;
+}
+function shortcutLabel(key) {
+  return key === "ArrowLeft" ? "←" : key === "ArrowRight" ? "→" : key === "Escape" ? "Esc" : key;
+}
+function seekToTime(seconds) {
+  if (!audio.duration || !Number.isFinite(seconds)) return;
+  const bounded = Math.max(0, Math.min(audio.duration, seconds));
+  audio.currentTime = bounded;
+  updatePositionDisplays(bounded);
+  renderWaveform();
+  return bounded;
+}
+function selectLine(line, seek = true) {
+  selectedId = line.id;
+  if (seek && Number.isFinite(effectiveLineTime(line))) seekToTime(effectiveLineTime(line));
+  renderTimeline();
+}
+function scrollSelectedLineIntoView() {
+  requestAnimationFrame(() => {
+    const selected = $("timeline").querySelector("tr.selected");
+    selected?.scrollIntoView({ block: "nearest", behavior: settings.reduceMotion ? "auto" : "smooth" });
+  });
+}
+function previousTimestamp(line) {
+  const index = timelineLines().indexOf(line);
+  return index > 0 ? effectiveLineTime(timelineLines()[index - 1]) : null;
+}
+function acceptsTimestamp(line, seconds) {
+  const previous = previousTimestamp(line);
+  if (Number.isFinite(previous) && seconds < previous) {
+    showToast(`Line ${line.order + 1} must be at or after the previous line (${formatClock(previous)}).`, "warning");
+    return false;
+  }
+  return true;
+}
 
 function render() {
-  ["title", "artist", "album", "language"].forEach((key) => { $(key).value = project.metadata[key] || ""; });
+  ["title", "artist", "album", "language"].forEach((key) => {
+    $(key).value = project.metadata[key] || "";
+  });
   $("lyric-offset").value = String(Number(project.lyrics?.offsetMs) || 0);
   $("lyrics-text").value = linesToText(project.lyrics.lines);
   $("lyrics-status").textContent = `${project.lyrics.lines.length} lyric line(s) loaded`;
   const provenance = project.lyrics.provenance;
-  $("lyrics-provenance").textContent = provenance ? `Source: ${provenance.providerName} · ${provenance.resultKind}${provenance.retrievedAt ? ` · ${new Date(provenance.retrievedAt).toLocaleString()}` : ""}` : "Source: local text or file";
-  $("audio-status").textContent = project.audio.name ? `${project.audio.name}${project.audio.duration ? ` · ${formatClock(project.audio.duration)}` : ""}` : "No audio selected";
+  $("lyrics-provenance").textContent = provenance
+    ? `Source: ${provenance.providerName} · ${provenance.resultKind}${provenance.retrievedAt ? ` · ${new Date(provenance.retrievedAt).toLocaleString()}` : ""}`
+    : "Source: local text or file";
+  $("audio-status").textContent = project.audio.name
+    ? `${project.audio.name}${project.audio.duration ? ` · ${formatClock(project.audio.duration)}` : ""}`
+    : "No audio selected";
   const enabled = Boolean(project.audio.name);
   $("remove-audio").disabled = !enabled;
   $("remove-lyrics").disabled = !timelineLines().length;
-  ["reset-audio", "rewind", "play-toggle", "fast-forward", "seek", "jump-to-time", "stamp", "shift-earlier", "shift-later"].forEach((id) => { $(id).disabled = !enabled; });
+  [
+    "reset-audio",
+    "rewind",
+    "play-toggle",
+    "fast-forward",
+    "seek",
+    "jump-to-time",
+    "stamp",
+    "shift-earlier",
+    "shift-later",
+  ].forEach((id) => {
+    $(id).disabled = !enabled;
+  });
   $("auto-timestamp").disabled = !enabled || !timelineLines().length || !energyProfile.length;
   $("automatic-timestamp").disabled = !enabled || !timelineLines().length || !energyProfile.length;
-  renderTimeline(); renderWaveform(); updatePositionDisplays(); renderOnlineSearch();
+  renderTimeline();
+  renderWaveform();
+  updatePositionDisplays();
+  renderOnlineSearch();
   renderReferenceAlignment();
 }
 
 function renderReferenceAlignment() {
-  const run = $("run-reference-alignment"); const cancel = $("cancel-reference-alignment"); const progress = $("alignment-progress"); const status = $("alignment-status");
+  const run = $("run-reference-alignment");
+  const cancel = $("cancel-reference-alignment");
+  const progress = $("alignment-progress");
+  const status = $("alignment-status");
   if (!run || !cancel || !progress || !status) return;
-  const ready = Boolean(audioFile && referenceAudio && referenceLyrics?.starts?.length && timelineLines().length === referenceLyrics.starts.length);
+  const ready = Boolean(
+    audioFile &&
+    referenceAudio &&
+    referenceLyrics?.starts?.length &&
+    timelineLines().length === referenceLyrics.starts.length,
+  );
   run.disabled = alignmentRequestId !== null || !ready;
   cancel.disabled = alignmentRequestId === null;
-  if (alignmentRequestId === null && !ready) status.textContent = referenceLyrics && timelineLines().length !== referenceLyrics.starts.length ? `Line count mismatch: target ${timelineLines().length}, reference ${referenceLyrics.starts.length}` : "Waiting for verified reference inputs";
-  $("reference-audio-status").textContent = referenceAudio ? `${referenceAudio.name} · ${formatClock(referenceAudio.duration)}` : "No reference selected";
-  $("reference-lyrics-status").textContent = referenceLyrics ? `${referenceLyrics.starts.length} timestamped line(s)` : "No reference timestamps selected";
+  if (alignmentRequestId === null && !ready)
+    status.textContent =
+      referenceLyrics && timelineLines().length !== referenceLyrics.starts.length
+        ? `Line count mismatch: target ${timelineLines().length}, reference ${referenceLyrics.starts.length}`
+        : "Waiting for verified reference inputs";
+  $("reference-audio-status").textContent = referenceAudio
+    ? `${referenceAudio.name} · ${formatClock(referenceAudio.duration)}`
+    : "No reference selected";
+  $("reference-lyrics-status").textContent = referenceLyrics
+    ? `${referenceLyrics.starts.length} timestamped line(s)`
+    : "No reference timestamps selected";
 }
 
 async function decodeMono(file) {
@@ -80,62 +191,177 @@ async function decodeMono(file) {
       for (let index = 0; index < data.length; index++) samples[index] += data[index] / buffer.numberOfChannels;
     }
     return { samples, sampleRate: buffer.sampleRate, duration: buffer.duration, name: file.name };
-  } finally { await context.close(); }
+  } finally {
+    await context.close();
+  }
 }
 
 async function loadReferenceAudio(file) {
-  try { referenceAudio = await decodeMono(file); log.info(`Reference audio decoded: ${file.name}.`); renderReferenceAlignment(); }
-  catch (error) { referenceAudio = null; log.warning(`Reference audio could not be decoded: ${error.message}`); showToast(`Reference audio could not be decoded: ${error.message}`, "warning"); renderReferenceAlignment(); }
+  try {
+    referenceAudio = await decodeMono(file);
+    log.info(`Reference audio decoded: ${file.name}.`);
+    renderReferenceAlignment();
+  } catch (error) {
+    referenceAudio = null;
+    log.warning(`Reference audio could not be decoded: ${error.message}`);
+    showToast(`Reference audio could not be decoded: ${error.message}`, "warning");
+    renderReferenceAlignment();
+  }
 }
 
 async function loadReferenceLyrics(file) {
   try {
     const parsed = parseLyrics(await file.text(), "reference-lrc");
     const starts = parsed.lines.map((line) => line.startTime);
-    if (!starts.length || starts.some((value, index) => !Number.isFinite(value) || (index > 0 && value < starts[index - 1]))) throw new Error("Reference lyrics must contain ordered timestamps on every line.");
-    referenceLyrics = { name: file.name, starts }; log.info(`Verified reference LRC loaded: ${file.name}.`); renderReferenceAlignment();
-  } catch (error) { referenceLyrics = null; log.warning(`Reference LRC could not be loaded: ${error.message}`); showToast(`Reference LRC could not be loaded: ${error.message}`, "warning"); renderReferenceAlignment(); }
+    if (
+      !starts.length ||
+      starts.some((value, index) => !Number.isFinite(value) || (index > 0 && value < starts[index - 1]))
+    )
+      throw new Error("Reference lyrics must contain ordered timestamps on every line.");
+    referenceLyrics = { name: file.name, starts };
+    log.info(`Verified reference LRC loaded: ${file.name}.`);
+    renderReferenceAlignment();
+  } catch (error) {
+    referenceLyrics = null;
+    log.warning(`Reference LRC could not be loaded: ${error.message}`);
+    showToast(`Reference LRC could not be loaded: ${error.message}`, "warning");
+    renderReferenceAlignment();
+  }
 }
 
-function clearReferenceAudio() { referenceAudio = null; $("reference-audio-file").value = ""; log.info("Reference audio removed."); renderReferenceAlignment(); }
-function clearReferenceLyrics() { referenceLyrics = null; $("reference-lyrics-file").value = ""; log.info("Reference LRC removed."); renderReferenceAlignment(); }
+function clearReferenceAudio() {
+  referenceAudio = null;
+  $("reference-audio-file").value = "";
+  log.info("Reference audio removed.");
+  renderReferenceAlignment();
+}
+function clearReferenceLyrics() {
+  referenceLyrics = null;
+  $("reference-lyrics-file").value = "";
+  log.info("Reference LRC removed.");
+  renderReferenceAlignment();
+}
 
 function finishReferenceAlignment() {
-  alignmentWorker?.terminate(); alignmentWorker = null; alignmentRequestId = null; renderReferenceAlignment();
+  alignmentWorker?.terminate();
+  alignmentWorker = null;
+  alignmentRequestId = null;
+  renderReferenceAlignment();
 }
 
 function cancelReferenceAlignment() {
   if (!alignmentWorker || !alignmentRequestId) return;
-  alignmentWorker.terminate(); alignmentWorker = null; alignmentRequestId = null;
-  $("alignment-status").textContent = "Alignment cancelled"; log.info("Reference-assisted alignment cancelled."); renderReferenceAlignment();
+  alignmentWorker.terminate();
+  alignmentWorker = null;
+  alignmentRequestId = null;
+  $("alignment-status").textContent = "Alignment cancelled";
+  log.info("Reference-assisted alignment cancelled.");
+  renderReferenceAlignment();
 }
 
 async function runReferenceAlignment() {
-  if (!audioFile || !referenceAudio || !referenceLyrics?.starts?.length) { showToast("Choose target audio, reference audio and a fully timestamped reference LRC first.", "warning"); return; }
-  if (timelineLines().length !== referenceLyrics.starts.length) { showToast(`Reference and target must have the same line count (${referenceLyrics.starts.length} required).`, "warning"); return; }
+  if (!audioFile || !referenceAudio || !referenceLyrics?.starts?.length) {
+    showToast("Choose target audio, reference audio and a fully timestamped reference LRC first.", "warning");
+    return;
+  }
+  if (timelineLines().length !== referenceLyrics.starts.length) {
+    showToast(
+      `Reference and target must have the same line count (${referenceLyrics.starts.length} required).`,
+      "warning",
+    );
+    return;
+  }
   try {
-    const target = await decodeMono(audioFile); const requestId = crypto.randomUUID(); alignmentRequestId = requestId; $("alignment-progress").value = 0; $("alignment-status").textContent = "Preparing MFCC templates…"; renderReferenceAlignment();
+    const target = await decodeMono(audioFile);
+    const requestId = crypto.randomUUID();
+    alignmentRequestId = requestId;
+    $("alignment-progress").value = 0;
+    $("alignment-status").textContent = "Preparing MFCC templates…";
+    renderReferenceAlignment();
     alignmentWorker = new Worker(new URL("../alignment-worker.js", import.meta.url), { type: "module" });
     alignmentWorker.onmessage = (event) => {
-      const message = event.data || {}; if (message.requestId !== alignmentRequestId) return;
-      if (message.type === "progress") { $("alignment-progress").value = Math.max(0, Math.min(1, Number(message.progress?.fraction) || 0)); $("alignment-status").textContent = message.progress?.phase === "template-dtw" ? `Aligning line ${Math.min(message.progress.completedLines + 1, message.progress.totalLines)} of ${message.progress.totalLines}…` : "Aligning reference…"; return; }
-      if (message.type === "complete") { const current = timelineLines(); project.timeline.lines = message.result.lines.map((line, index) => ({ ...current[index], ...line, manuallyCorrected: false })); project.lyrics.lines = project.timeline.lines; selectedId = project.timeline.lines[0]?.id || null; $("alignment-progress").value = 1; $("alignment-status").textContent = "Reference-assisted alignment complete. Review before export."; log.info(`Reference-assisted MFCC/DTW alignment completed for ${project.timeline.lines.length} line(s).`); finishReferenceAlignment(); render(); return; }
-      if (message.type === "error") { const cancelled = message.error?.name === "AbortError"; $("alignment-status").textContent = cancelled ? "Alignment cancelled" : "Alignment failed"; if (cancelled) log.info("Reference-assisted alignment cancelled."); else { log.warning(`Reference-assisted alignment failed: ${message.error?.message || "unknown error"}`); showToast(`Alignment failed: ${message.error?.message || "unknown error"}`, "warning"); } finishReferenceAlignment(); }
+      const message = event.data || {};
+      if (message.requestId !== alignmentRequestId) return;
+      if (message.type === "progress") {
+        $("alignment-progress").value = Math.max(0, Math.min(1, Number(message.progress?.fraction) || 0));
+        $("alignment-status").textContent =
+          message.progress?.phase === "template-dtw"
+            ? `Aligning line ${Math.min(message.progress.completedLines + 1, message.progress.totalLines)} of ${message.progress.totalLines}…`
+            : "Aligning reference…";
+        return;
+      }
+      if (message.type === "complete") {
+        const current = timelineLines();
+        project.timeline.lines = message.result.lines.map((line, index) => ({
+          ...current[index],
+          ...line,
+          manuallyCorrected: false,
+        }));
+        project.lyrics.lines = project.timeline.lines;
+        selectedId = project.timeline.lines[0]?.id || null;
+        $("alignment-progress").value = 1;
+        $("alignment-status").textContent = "Reference-assisted alignment complete. Review before export.";
+        log.info(`Reference-assisted MFCC/DTW alignment completed for ${project.timeline.lines.length} line(s).`);
+        finishReferenceAlignment();
+        render();
+        return;
+      }
+      if (message.type === "error") {
+        const cancelled = message.error?.name === "AbortError";
+        $("alignment-status").textContent = cancelled ? "Alignment cancelled" : "Alignment failed";
+        if (cancelled) log.info("Reference-assisted alignment cancelled.");
+        else {
+          log.warning(`Reference-assisted alignment failed: ${message.error?.message || "unknown error"}`);
+          showToast(`Alignment failed: ${message.error?.message || "unknown error"}`, "warning");
+        }
+        finishReferenceAlignment();
+      }
     };
-    alignmentWorker.onerror = (event) => { log.warning(`Alignment worker failed: ${event.message || "unknown error"}`); showToast("Alignment worker failed. The manual workflow is still available.", "warning"); finishReferenceAlignment(); };
-    const referenceBuffer = referenceAudio.samples.slice().buffer; const targetBuffer = target.samples.buffer;
-    alignmentWorker.postMessage({ type: "align-reference", requestId, payload: { lyrics: timelineLines(), duration: target.duration, referenceSamples: referenceBuffer, targetSamples: targetBuffer, referenceSampleRate: referenceAudio.sampleRate, targetSampleRate: target.sampleRate, referenceStarts: referenceLyrics.starts, referenceDuration: referenceAudio.duration, parameters: { options: { dtwImplementation: "banded", useReferenceAnchors: true } } } }, [referenceBuffer, targetBuffer]);
-  } catch (error) { log.warning(`Reference alignment preparation failed: ${error.message}`); showToast(`Reference alignment preparation failed: ${error.message}`, "warning"); finishReferenceAlignment(); }
+    alignmentWorker.onerror = (event) => {
+      log.warning(`Alignment worker failed: ${event.message || "unknown error"}`);
+      showToast("Alignment worker failed. The manual workflow is still available.", "warning");
+      finishReferenceAlignment();
+    };
+    const referenceBuffer = referenceAudio.samples.slice().buffer;
+    const targetBuffer = target.samples.buffer;
+    alignmentWorker.postMessage(
+      {
+        type: "align-reference",
+        requestId,
+        payload: {
+          lyrics: timelineLines(),
+          duration: target.duration,
+          referenceSamples: referenceBuffer,
+          targetSamples: targetBuffer,
+          referenceSampleRate: referenceAudio.sampleRate,
+          targetSampleRate: target.sampleRate,
+          referenceStarts: referenceLyrics.starts,
+          referenceDuration: referenceAudio.duration,
+          parameters: { options: { dtwImplementation: "banded", useReferenceAnchors: true } },
+        },
+      },
+      [referenceBuffer, targetBuffer],
+    );
+  } catch (error) {
+    log.warning(`Reference alignment preparation failed: ${error.message}`);
+    showToast(`Reference alignment preparation failed: ${error.message}`, "warning");
+    finishReferenceAlignment();
+  }
 }
 
 function onlineQuery() {
   return [project.metadata.artist, project.metadata.title].filter(Boolean).join(" - ");
 }
 
-function activeOnlineProviders() { return selectOnlineProviders(onlineProviders, settings.onlineSources); }
+function activeOnlineProviders() {
+  return selectOnlineProviders(onlineProviders, settings.onlineSources);
+}
 
 function renderOnlineSearch() {
-  const status = $("online-status"); const button = $("online-search"); const query = $("online-query"); const results = $("online-results");
+  const status = $("online-status");
+  const button = $("online-search");
+  const query = $("online-query");
+  const results = $("online-results");
   if (!status || !button || !query || !results) return;
   const enabled = canUseOnlineSearch(settings);
   if (!query.value.trim() && onlineQuery()) query.value = onlineQuery();
@@ -144,41 +370,129 @@ function renderOnlineSearch() {
   const cancel = $("online-cancel");
   if (cancel) cancel.disabled = !onlineSearchBusy;
   const active = activeOnlineProviders();
-  status.textContent = !settings.onlineSearchEnabled ? "Disabled by default" : (globalThis.navigator?.onLine === false ? "Offline" : active.length ? `Enabled · ${active.map((provider) => provider.displayName).join(" + ")}` : "No sources selected");
-  results.replaceChildren(...onlineResults.map((result, index) => {
-    const item = document.createElement("div"); item.className = "online-result";
-    const details = document.createElement("div"); const title = document.createElement("strong"); title.textContent = result.title || "Untitled"; const meta = document.createElement("span"); meta.textContent = [result.providerName, result.artist, result.album, result.timingLevel ? `${result.timingLevel}-timed` : ""].filter(Boolean).join(" · ") || "Unknown source"; details.append(title, meta); if (Number.isFinite(result.score)) { const reason = document.createElement("small"); reason.textContent = `Match ${result.score}/100 · ${result.matchReason}`; details.append(reason); }
-    const actions = document.createElement("div"); actions.className = "result-actions"; const use = document.createElement("button"); use.type = "button"; use.textContent = result.resultKind === "link" ? "Open source" : result.syncedLyrics ? `Use timed lyrics · ${result.providerName}` : "Use lyrics"; use.disabled = result.resultKind !== "link" && !result.syncedLyrics && !result.plainLyrics; use.addEventListener("click", () => result.resultKind === "link" ? window.open(result.sourceUrl, "_blank", "noopener,noreferrer") : useOnlineResult(result)); actions.append(use);
-    if (result.plainLyrics || result.syncedLyrics) { const copy = document.createElement("button"); copy.type = "button"; copy.textContent = "Copy text"; copy.addEventListener("click", () => copyOnlineResult(result)); actions.append(copy); }
-    item.append(details, actions); return item;
-  }));
+  status.textContent = !settings.onlineSearchEnabled
+    ? "Disabled by default"
+    : globalThis.navigator?.onLine === false
+      ? "Offline"
+      : active.length
+        ? `Enabled · ${active.map((provider) => provider.displayName).join(" + ")}`
+        : "No sources selected";
+  results.replaceChildren(
+    ...onlineResults.map((result, index) => {
+      const item = document.createElement("div");
+      item.className = "online-result";
+      const details = document.createElement("div");
+      const title = document.createElement("strong");
+      title.textContent = result.title || "Untitled";
+      const meta = document.createElement("span");
+      meta.textContent =
+        [result.providerName, result.artist, result.album, result.timingLevel ? `${result.timingLevel}-timed` : ""]
+          .filter(Boolean)
+          .join(" · ") || "Unknown source";
+      details.append(title, meta);
+      if (Number.isFinite(result.score)) {
+        const reason = document.createElement("small");
+        reason.textContent = `Match ${result.score}/100 · ${result.matchReason}`;
+        details.append(reason);
+      }
+      const actions = document.createElement("div");
+      actions.className = "result-actions";
+      const use = document.createElement("button");
+      use.type = "button";
+      use.textContent =
+        result.resultKind === "link"
+          ? "Open source"
+          : result.syncedLyrics
+            ? `Use timed lyrics · ${result.providerName}`
+            : "Use lyrics";
+      use.disabled = result.resultKind !== "link" && !result.syncedLyrics && !result.plainLyrics;
+      use.addEventListener("click", () =>
+        result.resultKind === "link"
+          ? window.open(result.sourceUrl, "_blank", "noopener,noreferrer")
+          : useOnlineResult(result),
+      );
+      actions.append(use);
+      if (result.plainLyrics || result.syncedLyrics) {
+        const copy = document.createElement("button");
+        copy.type = "button";
+        copy.textContent = "Copy text";
+        copy.addEventListener("click", () => copyOnlineResult(result));
+        actions.append(copy);
+      }
+      item.append(details, actions);
+      return item;
+    }),
+  );
 }
 
 async function copyOnlineResult(result) {
   const text = result.syncedLyrics || result.plainLyrics || "";
   if (!text) return;
-  try { await navigator.clipboard.writeText(text); showToast(`Copied lyrics from ${result.providerName}.`); }
-  catch { showToast("Clipboard access was unavailable. Use the import button instead.", "warning"); }
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast(`Copied lyrics from ${result.providerName}.`);
+  } catch {
+    showToast("Clipboard access was unavailable. Use the import button instead.", "warning");
+  }
 }
 
 async function searchOnlineLyrics() {
-  if (!settings.onlineSearchEnabled) { showToast("Enable online lyrics search in Settings first.", "warning"); return; }
-  if (globalThis.navigator?.onLine === false) { showToast("No internet connection. Offline editing is still available.", "warning"); return; }
+  if (!settings.onlineSearchEnabled) {
+    showToast("Enable online lyrics search in Settings first.", "warning");
+    return;
+  }
+  if (globalThis.navigator?.onLine === false) {
+    showToast("No internet connection. Offline editing is still available.", "warning");
+    return;
+  }
   const providers = activeOnlineProviders();
-  if (!providers.length) { showToast("Select at least one online source in Settings.", "warning"); return; }
+  if (!providers.length) {
+    showToast("Select at least one online source in Settings.", "warning");
+    return;
+  }
   const query = $("online-query").value.trim() || onlineQuery();
-  if (!query) { showToast("Enter a song title or artist to search.", "warning"); return; }
-  onlineSearchBusy = true; onlineResults = []; renderOnlineSearch();
+  if (!query) {
+    showToast("Enter a song title or artist to search.", "warning");
+    return;
+  }
+  onlineSearchBusy = true;
+  onlineResults = [];
+  renderOnlineSearch();
   onlineSearchAbortController = new AbortController();
   try {
-    const context = { artist: project.metadata.artist, title: project.metadata.title, duration: project.audio.duration, audioName: project.audio.name };
-    const { results } = await searchOnlineSources({ providers, cache: onlineCache, query, context, signal: onlineSearchAbortController.signal, onProviderError: (provider, error) => log.warning(`${provider.displayName} search failed: ${error?.message || "request failed"}`) });
-    if (onlineSearchAbortController.signal.aborted) { onlineResults = []; log.info("Online lyric search cancelled."); return; }
+    const context = {
+      artist: project.metadata.artist,
+      title: project.metadata.title,
+      duration: project.audio.duration,
+      audioName: project.audio.name,
+    };
+    const { results } = await searchOnlineSources({
+      providers,
+      cache: onlineCache,
+      query,
+      context,
+      signal: onlineSearchAbortController.signal,
+      onProviderError: (provider, error) =>
+        log.warning(`${provider.displayName} search failed: ${error?.message || "request failed"}`),
+    });
+    if (onlineSearchAbortController.signal.aborted) {
+      onlineResults = [];
+      log.info("Online lyric search cancelled.");
+      return;
+    }
     onlineResults = results;
-    if (!onlineResults.length) showToast("No online lyric matches found. Try Artist - Title.", "warning"); else log.info(`Found ${onlineResults.length} optional result(s) across ${providers.length} selected sources.`);
+    if (!onlineResults.length) showToast("No online lyric matches found. Try Artist - Title.", "warning");
+    else log.info(`Found ${onlineResults.length} optional result(s) across ${providers.length} selected sources.`);
+  } catch (error) {
+    if (error.name !== "AbortError") {
+      log.warning(`Online lyric search failed: ${error.message}`);
+      showToast(`Online search failed: ${error.message}`, "warning");
+    }
+  } finally {
+    onlineSearchBusy = false;
+    onlineSearchAbortController = null;
+    renderOnlineSearch();
   }
-  catch (error) { if (error.name !== "AbortError") { log.warning(`Online lyric search failed: ${error.message}`); showToast(`Online search failed: ${error.message}`, "warning"); } }
-  finally { onlineSearchBusy = false; onlineSearchAbortController = null; renderOnlineSearch(); }
 }
 
 function cancelOnlineSearch() {
@@ -189,14 +503,31 @@ function cancelOnlineSearch() {
 
 function useOnlineResult(result) {
   const text = result.syncedLyrics || result.plainLyrics;
-  if (!text) { showToast("This result has no lyrics to import.", "warning"); return; }
+  if (!text) {
+    showToast("This result has no lyrics to import.", "warning");
+    return;
+  }
   if (timelineLines().length && !confirm("Replace the current lyrics and timeline with this online result?")) return;
   if (result.title) project.metadata.title = result.title;
   if (result.artist) project.metadata.artist = result.artist;
   if (result.album) project.metadata.album = result.album;
-  loadLyrics(text, result.syncedLyrics ? "online-lrc" : "online-txt", createLyricsProvenance({ providerId: result.providerId, providerName: result.providerName, sourceUrl: result.sourceUrl || onlineSourceUrl(result.providerId), resultKind: result.resultKind, query: `${result.artist || ""} - ${result.title || ""}`.replace(/^ - | - $/gu, "") }));
+  loadLyrics(
+    text,
+    result.syncedLyrics ? "online-lrc" : "online-txt",
+    createLyricsProvenance({
+      providerId: result.providerId,
+      providerName: result.providerName,
+      sourceUrl: result.sourceUrl || onlineSourceUrl(result.providerId),
+      resultKind: result.resultKind,
+      query: `${result.artist || ""} - ${result.title || ""}`.replace(/^ - | - $/gu, ""),
+    }),
+  );
   onlineResults = [];
-  showToast(result.syncedLyrics ? `Timed lyrics imported from ${result.providerName || "the online source"}.` : `Plain lyrics imported from ${result.providerName || "the online source"}. Review and timestamp them.`);
+  showToast(
+    result.syncedLyrics
+      ? `Timed lyrics imported from ${result.providerName || "the online source"}.`
+      : `Plain lyrics imported from ${result.providerName || "the online source"}. Review and timestamp them.`,
+  );
   log.info(`Imported optional online lyrics for ${result.title || "selected result"}.`);
   render();
 }
@@ -206,27 +537,46 @@ function onlineSourceUrl(providerId) {
 }
 
 function renderTimeline() {
-  $("timeline").replaceChildren(...timelineLines().map((line, index) => {
-    const tr = document.createElement("tr"); tr.className = line.id === selectedId ? "selected" : "";
-    tr.innerHTML = `<td>${index + 1}</td><td><input class="time-input" aria-label="Timestamp for line ${index + 1}" value="${Number.isFinite(effectiveLineTime(line)) ? formatClock(effectiveLineTime(line)) : ""}" placeholder="mm:ss.mmm" title="mm:ss.mmm or mm:ss:mmm" inputmode="numeric"></td><td class="line-text"></td><td class="row-actions"><button data-action="stamp" aria-label="Stamp chosen time" title="Stamp chosen time">⏱</button> <button data-action="clear" aria-label="Clear timestamp" title="Clear timestamp">⌫</button> <button data-action="insert" aria-label="Insert empty line after" title="Insert empty line after">＋</button> <button data-action="duplicate" aria-label="Duplicate line" title="Duplicate line">⧉</button> <button data-action="delete" aria-label="Delete lyric line" title="Delete lyric line">✕</button></td>`;
-    tr.querySelector(".line-text").textContent = line.originalText;
-    tr.addEventListener("click", (event) => { if (!event.target.matches("input,button")) selectLine(line); });
-    tr.querySelector(".line-text").addEventListener("click", () => selectLine(line));
-    tr.querySelector("input").addEventListener("click", () => { if (selectedId !== line.id) selectLine(line); else if (Number.isFinite(effectiveLineTime(line))) seekToTime(effectiveLineTime(line)); });
-    tr.querySelector("input").addEventListener("change", (event) => setTimestamp(line, event.target.value));
-    tr.querySelector('[data-action="stamp"]').addEventListener("click", () => stamp(line));
-    tr.querySelector('[data-action="clear"]').addEventListener("click", () => { line.startTime = null; line.manuallyCorrected = true; log.info(`Cleared timestamp for line ${index + 1}`); showToast(`Cleared timestamp for line ${index + 1}.`); render(); });
-    tr.querySelector('[data-action="insert"]').addEventListener("click", () => insertLineAfter(index, ""));
-    tr.querySelector('[data-action="duplicate"]').addEventListener("click", () => insertLineAfter(index, line.originalText, line.startTime));
-    tr.querySelector('[data-action="delete"]').addEventListener("click", () => deleteLine(index));
-    return tr;
-  })); scrollSelectedLineIntoView();
+  $("timeline").replaceChildren(
+    ...timelineLines().map((line, index) => {
+      const tr = document.createElement("tr");
+      tr.className = line.id === selectedId ? "selected" : "";
+      tr.innerHTML = `<td>${index + 1}</td><td><input class="time-input" aria-label="Timestamp for line ${index + 1}" value="${Number.isFinite(effectiveLineTime(line)) ? formatClock(effectiveLineTime(line)) : ""}" placeholder="mm:ss.mmm" title="mm:ss.mmm or mm:ss:mmm" inputmode="numeric"></td><td class="line-text"></td><td class="row-actions"><button data-action="stamp" aria-label="Stamp chosen time" title="Stamp chosen time">⏱</button> <button data-action="clear" aria-label="Clear timestamp" title="Clear timestamp">⌫</button> <button data-action="insert" aria-label="Insert empty line after" title="Insert empty line after">＋</button> <button data-action="duplicate" aria-label="Duplicate line" title="Duplicate line">⧉</button> <button data-action="delete" aria-label="Delete lyric line" title="Delete lyric line">✕</button></td>`;
+      tr.querySelector(".line-text").textContent = line.originalText;
+      tr.addEventListener("click", (event) => {
+        if (!event.target.matches("input,button")) selectLine(line);
+      });
+      tr.querySelector(".line-text").addEventListener("click", () => selectLine(line));
+      tr.querySelector("input").addEventListener("click", () => {
+        if (selectedId !== line.id) selectLine(line);
+        else if (Number.isFinite(effectiveLineTime(line))) seekToTime(effectiveLineTime(line));
+      });
+      tr.querySelector("input").addEventListener("change", (event) => setTimestamp(line, event.target.value));
+      tr.querySelector('[data-action="stamp"]').addEventListener("click", () => stamp(line));
+      tr.querySelector('[data-action="clear"]').addEventListener("click", () => {
+        line.startTime = null;
+        line.manuallyCorrected = true;
+        log.info(`Cleared timestamp for line ${index + 1}`);
+        showToast(`Cleared timestamp for line ${index + 1}.`);
+        render();
+      });
+      tr.querySelector('[data-action="insert"]').addEventListener("click", () => insertLineAfter(index, ""));
+      tr.querySelector('[data-action="duplicate"]').addEventListener("click", () =>
+        insertLineAfter(index, line.originalText, line.startTime),
+      );
+      tr.querySelector('[data-action="delete"]').addEventListener("click", () => deleteLine(index));
+      return tr;
+    }),
+  );
+  scrollSelectedLineIntoView();
 }
 
 function deleteLine(index) {
   const lines = timelineLines();
   const [removed] = lines.splice(index, 1);
-  lines.forEach((item, order) => { item.order = order; });
+  lines.forEach((item, order) => {
+    item.order = order;
+  });
   project.lyrics.lines = lines;
   selectedId = lines[index]?.id || lines[index - 1]?.id || null;
   log.info(`Deleted lyric line ${index + 1}: ${removed?.originalText || "(empty)"}`);
@@ -235,74 +585,184 @@ function deleteLine(index) {
 }
 
 function insertLineAfter(index, text, startTime = null) {
-  const line = createLine(text, index + 1); line.startTime = startTime; line.source = "manual"; line.manuallyCorrected = true;
-  timelineLines().splice(index + 1, 0, line); timelineLines().forEach((item, order) => { item.order = order; }); project.lyrics.lines = timelineLines(); selectedId = line.id;
-  log.info(text ? `Duplicated line ${index + 1}.` : `Inserted empty line after line ${index + 1}.`); render();
+  const line = createLine(text, index + 1);
+  line.startTime = startTime;
+  line.source = "manual";
+  line.manuallyCorrected = true;
+  timelineLines().splice(index + 1, 0, line);
+  timelineLines().forEach((item, order) => {
+    item.order = order;
+  });
+  project.lyrics.lines = timelineLines();
+  selectedId = line.id;
+  log.info(text ? `Duplicated line ${index + 1}.` : `Inserted empty line after line ${index + 1}.`);
+  render();
 }
 
 function setTimestamp(line, value) {
   const seconds = parseEditorTime(value);
-  if (seconds === null) { const message = `Invalid timestamp “${value}”. Use mm:ss.mmm, mm:ss:mmm, hh:mm:ss.mmm, or seconds.`; log.warning(message); showToast(message, "warning"); renderTimeline(); return; }
-  if (Number.isFinite(audio.duration) && seconds > audio.duration) { const message = `Timestamp ${formatClock(seconds)} is beyond the audio duration (${formatClock(audio.duration)}).`; log.warning(message); showToast(message, "warning"); renderTimeline(); return; }
-  if (!acceptsTimestamp(line, seconds)) { renderTimeline(); return; }
-  line.startTime = seconds - lyricOffsetSeconds(); line.manuallyCorrected = true; selectedId = line.id; log.info(`Set timestamp for line ${line.order + 1} to ${formatClock(seconds)}`); render();
+  if (seconds === null) {
+    const message = `Invalid timestamp “${value}”. Use mm:ss.mmm, mm:ss:mmm, hh:mm:ss.mmm, or seconds.`;
+    log.warning(message);
+    showToast(message, "warning");
+    renderTimeline();
+    return;
+  }
+  if (Number.isFinite(audio.duration) && seconds > audio.duration) {
+    const message = `Timestamp ${formatClock(seconds)} is beyond the audio duration (${formatClock(audio.duration)}).`;
+    log.warning(message);
+    showToast(message, "warning");
+    renderTimeline();
+    return;
+  }
+  if (!acceptsTimestamp(line, seconds)) {
+    renderTimeline();
+    return;
+  }
+  line.startTime = seconds - lyricOffsetSeconds();
+  line.manuallyCorrected = true;
+  selectedId = line.id;
+  log.info(`Set timestamp for line ${line.order + 1} to ${formatClock(seconds)}`);
+  render();
 }
 
 function stamp(line = timelineLines().find((item) => item.id === selectedId)) {
-  if (!line) { log.warning("Select a lyric line before stamping."); return; }
+  if (!line) {
+    log.warning("Select a lyric line before stamping.");
+    return;
+  }
   const time = activeStampTime();
-  if (time === null) { const message = "The stamp time is invalid. Use mm:ss.mmm, mm:ss:mmm, hh:mm:ss.mmm, or seconds."; log.warning(message); showToast(message, "warning"); return; }
+  if (time === null) {
+    const message = "The stamp time is invalid. Use mm:ss.mmm, mm:ss:mmm, hh:mm:ss.mmm, or seconds.";
+    log.warning(message);
+    showToast(message, "warning");
+    return;
+  }
   const currentIndex = timelineLines().indexOf(line);
-  const boundedTime = Math.min(time, audio.duration || time); if (!acceptsTimestamp(line, boundedTime)) return;
-  line.startTime = boundedTime - lyricOffsetSeconds(); line.manuallyCorrected = true; selectedId = timelineLines()[currentIndex + 1]?.id || line.id; log.info(`Stamped line ${line.order + 1} at ${formatClock(boundedTime)}${selectedId !== line.id ? "; selected the next line." : ""}`); render();
+  const boundedTime = Math.min(time, audio.duration || time);
+  if (!acceptsTimestamp(line, boundedTime)) return;
+  line.startTime = boundedTime - lyricOffsetSeconds();
+  line.manuallyCorrected = true;
+  selectedId = timelineLines()[currentIndex + 1]?.id || line.id;
+  log.info(
+    `Stamped line ${line.order + 1} at ${formatClock(boundedTime)}${selectedId !== line.id ? "; selected the next line." : ""}`,
+  );
+  render();
 }
 
 function shiftSelected(direction) {
   const line = timelineLines().find((item) => item.id === selectedId);
-  if (!line || !Number.isFinite(line.startTime)) { log.warning("Select a timestamped line to adjust it."); return; }
-  const delta = direction * adjustmentSeconds(); const nextTime = Math.max(0, effectiveLineTime(line) + delta); if (!acceptsTimestamp(line, nextTime)) return; line.startTime = nextTime - lyricOffsetSeconds(); line.manuallyCorrected = true; log.info(`Adjusted line ${line.order + 1} by ${Math.round(delta * 1000)} ms`); render();
+  if (!line || !Number.isFinite(line.startTime)) {
+    log.warning("Select a timestamped line to adjust it.");
+    return;
+  }
+  const delta = direction * adjustmentSeconds();
+  const nextTime = Math.max(0, effectiveLineTime(line) + delta);
+  if (!acceptsTimestamp(line, nextTime)) return;
+  line.startTime = nextTime - lyricOffsetSeconds();
+  line.manuallyCorrected = true;
+  log.info(`Adjusted line ${line.order + 1} by ${Math.round(delta * 1000)} ms`);
+  render();
 }
 
 function createInitialTiming() {
-  if (!energyProfile.length) { log.warning("Wait for the waveform and energy profile to finish loading."); return; }
-  project.timeline.lines = createEnergyInitialTimeline(timelineLines(), energyProfile, audio.duration); project.lyrics.lines = project.timeline.lines;
-  selectedId = timelineLines()[0]?.id || null; log.info("Generated editable energy-based initial timestamps. Review every line before export."); render();
+  if (!energyProfile.length) {
+    log.warning("Wait for the waveform and energy profile to finish loading.");
+    return;
+  }
+  project.timeline.lines = createEnergyInitialTimeline(timelineLines(), energyProfile, audio.duration);
+  project.lyrics.lines = project.timeline.lines;
+  selectedId = timelineLines()[0]?.id || null;
+  log.info("Generated editable energy-based initial timestamps. Review every line before export.");
+  render();
 }
 
 function createAutomaticTiming() {
-  if (!energyProfile.length) { log.warning("Wait for the waveform and energy profile to finish loading."); return; }
+  if (!energyProfile.length) {
+    log.warning("Wait for the waveform and energy profile to finish loading.");
+    return;
+  }
   try {
-    const result = alignAutomatically(timelineLines(), { energy: energyProfile, spectralFlux: spectralFluxProfile, voicedness: voicednessProfile }, audio.duration, {});
-    project.timeline.lines = result.lines; project.lyrics.lines = result.lines; selectedId = result.lines[0]?.id || null;
-    log.info(`Automatic timing selected ${result.selectedEngine} (${result.selection.reason}). Review every line before export.`);
+    const result = alignAutomatically(
+      timelineLines(),
+      { energy: energyProfile, spectralFlux: spectralFluxProfile, voicedness: voicednessProfile },
+      audio.duration,
+      {},
+    );
+    project.timeline.lines = result.lines;
+    project.lyrics.lines = result.lines;
+    selectedId = result.lines[0]?.id || null;
+    log.info(
+      `Automatic timing selected ${result.selectedEngine} (${result.selection.reason}). Review every line before export.`,
+    );
     showToast(`Automatic timing used ${result.selectedEngine}. Review before export.`);
     render();
-  } catch (error) { log.warning(`Automatic timing failed: ${error.message}`); showToast(`Automatic timing failed: ${error.message}`, "warning"); }
+  } catch (error) {
+    log.warning(`Automatic timing failed: ${error.message}`);
+    showToast(`Automatic timing failed: ${error.message}`, "warning");
+  }
 }
 
 async function loadAudio(file) {
-  if (audioUrl) URL.revokeObjectURL(audioUrl); audioFile = file; audioUrl = URL.createObjectURL(file); audio.src = audioUrl;
-  peaks = []; energyProfile = []; spectralFluxProfile = []; voicednessProfile = [];
-  project.audio = { name: file.name, type: file.type, duration: null, sourceHint: "Select this audio file again after reopening the project." }; log.info(`Audio selected: ${file.name}`); render();
+  if (audioUrl) URL.revokeObjectURL(audioUrl);
+  audioFile = file;
+  audioUrl = URL.createObjectURL(file);
+  audio.src = audioUrl;
+  peaks = [];
+  energyProfile = [];
+  spectralFluxProfile = [];
+  voicednessProfile = [];
+  project.audio = {
+    name: file.name,
+    type: file.type,
+    duration: null,
+    sourceHint: "Select this audio file again after reopening the project.",
+  };
+  log.info(`Audio selected: ${file.name}`);
+  render();
 }
 
 function removeAudio() {
   if (alignmentWorker) cancelReferenceAlignment();
   if (audioUrl) URL.revokeObjectURL(audioUrl);
-  audioUrl = null; audioFile = null; audio.pause(); audio.removeAttribute("src"); audio.load();
-  project.audio = { name: "", type: "", duration: null, sourceHint: "" }; peaks = []; energyProfile = []; spectralFluxProfile = []; voicednessProfile = [];
-  $("audio-file").value = ""; log.info("Audio removed from the project."); showToast("Audio removed."); render();
+  audioUrl = null;
+  audioFile = null;
+  audio.pause();
+  audio.removeAttribute("src");
+  audio.load();
+  project.audio = { name: "", type: "", duration: null, sourceHint: "" };
+  peaks = [];
+  energyProfile = [];
+  spectralFluxProfile = [];
+  voicednessProfile = [];
+  $("audio-file").value = "";
+  log.info("Audio removed from the project.");
+  showToast("Audio removed.");
+  render();
 }
 
 function removeLyrics() {
-  project.lyrics = { source: "manual", provenance: null, offsetMs: 0, lines: [] }; project.timeline.lines = []; selectedId = null;
-  $("lyrics-file").value = ""; $("lyrics-text").value = ""; log.info("Lyrics removed from the project."); showToast("Lyrics removed."); render();
+  project.lyrics = { source: "manual", provenance: null, offsetMs: 0, lines: [] };
+  project.timeline.lines = [];
+  selectedId = null;
+  $("lyrics-file").value = "";
+  $("lyrics-text").value = "";
+  log.info("Lyrics removed from the project.");
+  showToast("Lyrics removed.");
+  render();
 }
 
 function loadLyrics(text, source = "pasted", provenance = null) {
-  const parsed = parseLyrics(text, source); project.lyrics = { source, provenance, offsetMs: 0, lines: parsed.lines }; project.timeline.lines = parsed.lines;
-  project.metadata.artist ||= parsed.metadata.ar || ""; project.metadata.title ||= parsed.metadata.ti || ""; project.metadata.album ||= parsed.metadata.al || ""; project.metadata.language ||= parsed.metadata.la || "";
-  selectedId = parsed.lines[0]?.id || null; log.info(`Loaded ${parsed.lines.length} lyric line(s) from ${source}.`); render();
+  const parsed = parseLyrics(text, source);
+  project.lyrics = { source, provenance, offsetMs: 0, lines: parsed.lines };
+  project.timeline.lines = parsed.lines;
+  project.metadata.artist ||= parsed.metadata.ar || "";
+  project.metadata.title ||= parsed.metadata.ti || "";
+  project.metadata.album ||= parsed.metadata.al || "";
+  project.metadata.language ||= parsed.metadata.la || "";
+  selectedId = parsed.lines[0]?.id || null;
+  log.info(`Loaded ${parsed.lines.length} lyric line(s) from ${source}.`);
+  render();
 }
 
 function updateLyricOffset() {
@@ -318,67 +778,477 @@ function updateLyricOffset() {
 }
 
 function updatePositionDisplays(seconds = audio.currentTime || 0) {
-  const text = formatClock(seconds); $("playback-time").textContent = `${text} / ${formatClock(audio.duration || project.audio.duration || 0)}`; $("seek").value = seconds; $("seek-preview").textContent = text;
-  const waveform = $("waveform"); waveform.setAttribute("aria-valuenow", String(Math.round(seconds * 1000) / 1000)); waveform.setAttribute("aria-valuetext", text); waveform.setAttribute("aria-valuemax", String(audio.duration || project.audio.duration || 0));
-  const percent = audio.duration ? Math.max(0, Math.min(100, seconds / audio.duration * 100)) : 0; $("seek-preview").style.left = `${percent}%`;
+  const text = formatClock(seconds);
+  $("playback-time").textContent = `${text} / ${formatClock(audio.duration || project.audio.duration || 0)}`;
+  $("seek").value = seconds;
+  $("seek-preview").textContent = text;
+  const waveform = $("waveform");
+  waveform.setAttribute("aria-valuenow", String(Math.round(seconds * 1000) / 1000));
+  waveform.setAttribute("aria-valuetext", text);
+  waveform.setAttribute("aria-valuemax", String(audio.duration || project.audio.duration || 0));
+  const percent = audio.duration ? Math.max(0, Math.min(100, (seconds / audio.duration) * 100)) : 0;
+  $("seek-preview").style.left = `${percent}%`;
   if (document.activeElement !== $("stamp-time")) $("stamp-time").value = text;
 }
 
 function renderWaveform() {
-  const canvas = $("waveform"), ctx = canvas.getContext("2d"), width = canvas.width, height = canvas.height, styles = getComputedStyle(document.documentElement);
-  ctx.fillStyle = styles.getPropertyValue("--wave-bg"); ctx.fillRect(0, 0, width, height); ctx.strokeStyle = styles.getPropertyValue("--border"); ctx.beginPath(); ctx.moveTo(0, height / 2); ctx.lineTo(width, height / 2); ctx.stroke();
-  if (peaks.length) { ctx.strokeStyle = styles.getPropertyValue("--wave-color"); ctx.beginPath(); peaks.forEach((peak, index) => { const x = index / (peaks.length - 1) * width, y = peak * height * .42; ctx.moveTo(x, height / 2 - y); ctx.lineTo(x, height / 2 + y); }); ctx.stroke(); }
-  if (audio.duration) { const x = audio.currentTime / audio.duration * width; ctx.strokeStyle = styles.getPropertyValue("--playhead-color"); ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke(); }
+  const canvas = $("waveform"),
+    ctx = canvas.getContext("2d"),
+    width = canvas.width,
+    height = canvas.height,
+    styles = getComputedStyle(document.documentElement);
+  ctx.fillStyle = styles.getPropertyValue("--wave-bg");
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeStyle = styles.getPropertyValue("--border");
+  ctx.beginPath();
+  ctx.moveTo(0, height / 2);
+  ctx.lineTo(width, height / 2);
+  ctx.stroke();
+  if (peaks.length) {
+    ctx.strokeStyle = styles.getPropertyValue("--wave-color");
+    ctx.beginPath();
+    peaks.forEach((peak, index) => {
+      const x = (index / (peaks.length - 1)) * width,
+        y = peak * height * 0.42;
+      ctx.moveTo(x, height / 2 - y);
+      ctx.lineTo(x, height / 2 + y);
+    });
+    ctx.stroke();
+  }
+  if (audio.duration) {
+    const x = (audio.currentTime / audio.duration) * width;
+    ctx.strokeStyle = styles.getPropertyValue("--playhead-color");
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, height);
+    ctx.stroke();
+  }
 }
 
 function seekFromWaveform(event, commit = true) {
   if (!audio.duration) return;
-  const rect = $("waveform").getBoundingClientRect(), fraction = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)), seconds = fraction * audio.duration, tooltip = $("waveform-tooltip");
-  tooltip.textContent = formatClock(seconds); tooltip.style.left = `${fraction * 100}%`; tooltip.classList.add("visible");
-  if (commit) { audio.currentTime = seconds; updatePositionDisplays(seconds); renderWaveform(); }
+  const rect = $("waveform").getBoundingClientRect(),
+    fraction = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)),
+    seconds = fraction * audio.duration,
+    tooltip = $("waveform-tooltip");
+  tooltip.textContent = formatClock(seconds);
+  tooltip.style.left = `${fraction * 100}%`;
+  tooltip.classList.add("visible");
+  if (commit) {
+    audio.currentTime = seconds;
+    updatePositionDisplays(seconds);
+    renderWaveform();
+  }
 }
 
 async function extractWaveform(file) {
-  try { const context = new AudioContext(), buffer = await context.decodeAudioData(await file.arrayBuffer()), data = buffer.getChannelData(0), bins = 700, step = Math.max(1, Math.floor(data.length / bins)); peaks = Array.from({ length: bins }, (_, bin) => { let max = 0; for (let i = bin * step; i < Math.min(data.length, (bin + 1) * step); i++) max = Math.max(max, Math.abs(data[i])); return max; }); energyProfile = Array.from({ length: bins }, (_, bin) => { let sum = 0; for (let i = bin * step; i < Math.min(data.length, (bin + 1) * step); i++) sum += data[i] ** 2; return Math.sqrt(sum / step); }); const profileOptions = { frameSize: 1024, hopSize: 512, bins }; spectralFluxProfile = extractSpectralFluxProfile(data, profileOptions); voicednessProfile = extractVoicednessProfile(data, profileOptions); await context.close(); log.info(`Waveform, RMS, spectral flux and vocalness profiles extracted (${buffer.duration.toFixed(1)} seconds).`); render(); } catch (error) { peaks = []; energyProfile = []; spectralFluxProfile = []; voicednessProfile = []; log.warning(`Waveform preview unavailable: ${error.message}`); renderWaveform(); }
+  try {
+    const context = new AudioContext(),
+      buffer = await context.decodeAudioData(await file.arrayBuffer()),
+      data = buffer.getChannelData(0),
+      bins = 700,
+      step = Math.max(1, Math.floor(data.length / bins));
+    peaks = Array.from({ length: bins }, (_, bin) => {
+      let max = 0;
+      for (let i = bin * step; i < Math.min(data.length, (bin + 1) * step); i++) max = Math.max(max, Math.abs(data[i]));
+      return max;
+    });
+    energyProfile = Array.from({ length: bins }, (_, bin) => {
+      let sum = 0;
+      for (let i = bin * step; i < Math.min(data.length, (bin + 1) * step); i++) sum += data[i] ** 2;
+      return Math.sqrt(sum / step);
+    });
+    const profileOptions = { frameSize: 1024, hopSize: 512, bins };
+    spectralFluxProfile = extractSpectralFluxProfile(data, profileOptions);
+    voicednessProfile = extractVoicednessProfile(data, profileOptions);
+    await context.close();
+    log.info(`Waveform, RMS, spectral flux and vocalness profiles extracted (${buffer.duration.toFixed(1)} seconds).`);
+    render();
+  } catch (error) {
+    peaks = [];
+    energyProfile = [];
+    spectralFluxProfile = [];
+    voicednessProfile = [];
+    log.warning(`Waveform preview unavailable: ${error.message}`);
+    renderWaveform();
+  }
 }
 
-function renderLog(entries) { $("log").textContent = entries.map((entry) => `[${entry.at.slice(11, 19)}] ${entry.level}: ${entry.message}`).join("\n"); }
-function togglePlayback() { if (audio.paused) audio.play(); else audio.pause(); }
-function setPlayButton(isPlaying) { $("play-toggle").innerHTML = `<span aria-hidden="true">${isPlaying ? "■" : "▶"}</span>`; $("play-toggle").setAttribute("aria-label", isPlaying ? "Stop" : "Play"); $("play-toggle").title = isPlaying ? "Stop" : "Play"; }
-function resetAudio() { audio.pause(); audio.currentTime = 0; updatePositionDisplays(0); renderWaveform(); }
-function startScan(direction) { if (scanTimer) return; scanWasPlaying = !audio.paused; if (direction > 0) { audio.playbackRate = 3; audio.play(); } else { audio.pause(); scanTimer = setInterval(() => { audio.currentTime = Math.max(0, audio.currentTime - 0.15); }, 50); } }
-function stopScan(direction) { if (direction > 0) { audio.playbackRate = 1; if (!scanWasPlaying) audio.pause(); } else if (scanTimer) { clearInterval(scanTimer); scanTimer = null; if (scanWasPlaying) audio.play(); } }
+function renderLog(entries) {
+  $("log").textContent = entries
+    .map((entry) => `[${entry.at.slice(11, 19)}] ${entry.level}: ${entry.message}`)
+    .join("\n");
+}
+function togglePlayback() {
+  if (audio.paused) audio.play();
+  else audio.pause();
+}
+function setPlayButton(isPlaying) {
+  $("play-toggle").innerHTML = `<span aria-hidden="true">${isPlaying ? "■" : "▶"}</span>`;
+  $("play-toggle").setAttribute("aria-label", isPlaying ? "Stop" : "Play");
+  $("play-toggle").title = isPlaying ? "Stop" : "Play";
+}
+function resetAudio() {
+  audio.pause();
+  audio.currentTime = 0;
+  updatePositionDisplays(0);
+  renderWaveform();
+}
+function startScan(direction) {
+  if (scanTimer) return;
+  scanWasPlaying = !audio.paused;
+  if (direction > 0) {
+    audio.playbackRate = 3;
+    audio.play();
+  } else {
+    audio.pause();
+    scanTimer = setInterval(() => {
+      audio.currentTime = Math.max(0, audio.currentTime - 0.15);
+    }, 50);
+  }
+}
+function stopScan(direction) {
+  if (direction > 0) {
+    audio.playbackRate = 1;
+    if (!scanWasPlaying) audio.pause();
+  } else if (scanTimer) {
+    clearInterval(scanTimer);
+    scanTimer = null;
+    if (scanWasPlaying) audio.play();
+  }
+}
 
-$("audio-file").addEventListener("change", async (event) => { const file = event.target.files[0]; if (file) { await loadAudio(file); extractWaveform(file); } });
-$("reference-audio-file").addEventListener("change", async (event) => { const file = event.target.files[0]; if (file) await loadReferenceAudio(file); }); $("reference-lyrics-file").addEventListener("change", async (event) => { const file = event.target.files[0]; if (file) await loadReferenceLyrics(file); }); $("remove-reference-audio").addEventListener("click", clearReferenceAudio); $("remove-reference-lyrics").addEventListener("click", clearReferenceLyrics); $("run-reference-alignment").addEventListener("click", runReferenceAlignment); $("cancel-reference-alignment").addEventListener("click", cancelReferenceAlignment);
-$("lyrics-file").addEventListener("change", async (event) => { const file = event.target.files[0]; if (file) { const text = await file.text(); $("lyrics-text").value = text; loadLyrics(text, file.name.toLowerCase().endsWith(".lrc") ? "lrc" : "txt"); } });
-$("remove-audio").addEventListener("click", removeAudio); $("remove-lyrics").addEventListener("click", removeLyrics);
-$("online-search").addEventListener("click", searchOnlineLyrics); $("online-query").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); searchOnlineLyrics(); } });
+$("audio-file").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    await loadAudio(file);
+    extractWaveform(file);
+  }
+});
+$("reference-audio-file").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (file) await loadReferenceAudio(file);
+});
+$("reference-lyrics-file").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (file) await loadReferenceLyrics(file);
+});
+$("remove-reference-audio").addEventListener("click", clearReferenceAudio);
+$("remove-reference-lyrics").addEventListener("click", clearReferenceLyrics);
+$("run-reference-alignment").addEventListener("click", runReferenceAlignment);
+$("cancel-reference-alignment").addEventListener("click", cancelReferenceAlignment);
+$("lyrics-file").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    const text = await file.text();
+    $("lyrics-text").value = text;
+    loadLyrics(text, file.name.toLowerCase().endsWith(".lrc") ? "lrc" : "txt");
+  }
+});
+$("remove-audio").addEventListener("click", removeAudio);
+$("remove-lyrics").addEventListener("click", removeLyrics);
+$("online-search").addEventListener("click", searchOnlineLyrics);
+$("online-query").addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    searchOnlineLyrics();
+  }
+});
 $("online-cancel").addEventListener("click", cancelOnlineSearch);
-$("clear-online-cache").addEventListener("click", () => { onlineCache.clear(); showToast("Cached online lyric results cleared."); log.info("Cleared optional online lyric cache."); });
+$("clear-online-cache").addEventListener("click", () => {
+  onlineCache.clear();
+  showToast("Cached online lyric results cleared.");
+  log.info("Cleared optional online lyric cache.");
+});
 $("lyric-offset").addEventListener("change", updateLyricOffset);
-$("load-lyrics").addEventListener("click", () => loadLyrics($("lyrics-text").value)); $("clear-timestamps").addEventListener("click", () => { timelineLines().forEach((line) => { line.startTime = null; }); log.info("Cleared all timestamps."); render(); });
-$("play-toggle").addEventListener("click", togglePlayback); $("seek").addEventListener("input", (event) => { const seconds = Number(event.target.value); audio.currentTime = seconds; updatePositionDisplays(seconds); renderWaveform(); });
-$("reset-audio").addEventListener("click", resetAudio); ["pointerup", "pointerleave", "pointercancel"].forEach((eventName) => $("rewind").addEventListener(eventName, () => stopScan(-1))); $("rewind").addEventListener("pointerdown", () => startScan(-1)); ["pointerup", "pointerleave", "pointercancel"].forEach((eventName) => $("fast-forward").addEventListener(eventName, () => stopScan(1))); $("fast-forward").addEventListener("pointerdown", () => startScan(1));
-function jumpToTypedTime() { const value = $("jump-time").value; const seconds = parseEditorTime(value); if (seconds === null) { const message = `Invalid time “${value}”. Use mm:ss.mmm, mm:ss:mmm, hh:mm:ss.mmm, or seconds.`; log.warning(message); showToast(message, "warning"); return; } const bounded = seekToTime(seconds); if (Number.isFinite(bounded) && bounded !== seconds) showToast(`Moved to the end of the audio (${formatClock(bounded)}).`); }
-$("jump-to-time").addEventListener("click", jumpToTypedTime); $("jump-time").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); jumpToTypedTime(); } });
-$("stamp").addEventListener("click", () => stamp()); $("shift-earlier").addEventListener("click", () => shiftSelected(-1)); $("shift-later").addEventListener("click", () => shiftSelected(1));
+$("load-lyrics").addEventListener("click", () => loadLyrics($("lyrics-text").value));
+$("clear-timestamps").addEventListener("click", () => {
+  timelineLines().forEach((line) => {
+    line.startTime = null;
+  });
+  log.info("Cleared all timestamps.");
+  render();
+});
+$("play-toggle").addEventListener("click", togglePlayback);
+$("seek").addEventListener("input", (event) => {
+  const seconds = Number(event.target.value);
+  audio.currentTime = seconds;
+  updatePositionDisplays(seconds);
+  renderWaveform();
+});
+$("reset-audio").addEventListener("click", resetAudio);
+["pointerup", "pointerleave", "pointercancel"].forEach((eventName) =>
+  $("rewind").addEventListener(eventName, () => stopScan(-1)),
+);
+$("rewind").addEventListener("pointerdown", () => startScan(-1));
+["pointerup", "pointerleave", "pointercancel"].forEach((eventName) =>
+  $("fast-forward").addEventListener(eventName, () => stopScan(1)),
+);
+$("fast-forward").addEventListener("pointerdown", () => startScan(1));
+function jumpToTypedTime() {
+  const value = $("jump-time").value;
+  const seconds = parseEditorTime(value);
+  if (seconds === null) {
+    const message = `Invalid time “${value}”. Use mm:ss.mmm, mm:ss:mmm, hh:mm:ss.mmm, or seconds.`;
+    log.warning(message);
+    showToast(message, "warning");
+    return;
+  }
+  const bounded = seekToTime(seconds);
+  if (Number.isFinite(bounded) && bounded !== seconds)
+    showToast(`Moved to the end of the audio (${formatClock(bounded)}).`);
+}
+$("jump-to-time").addEventListener("click", jumpToTypedTime);
+$("jump-time").addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    jumpToTypedTime();
+  }
+});
+$("stamp").addEventListener("click", () => stamp());
+$("shift-earlier").addEventListener("click", () => shiftSelected(-1));
+$("shift-later").addEventListener("click", () => shiftSelected(1));
 $("auto-timestamp").addEventListener("click", createInitialTiming);
 $("automatic-timestamp").addEventListener("click", createAutomaticTiming);
-$("waveform").addEventListener("pointerdown", (event) => { waveformDragging = true; $("waveform").setPointerCapture(event.pointerId); seekFromWaveform(event); }); $("waveform").addEventListener("pointermove", (event) => { seekFromWaveform(event, waveformDragging); }); $("waveform").addEventListener("pointerup", (event) => { waveformDragging = false; $("waveform").releasePointerCapture(event.pointerId); $("waveform-tooltip").classList.remove("visible"); }); $("waveform").addEventListener("pointerleave", () => { if (!waveformDragging) $("waveform-tooltip").classList.remove("visible"); });
-$("waveform").addEventListener("keydown", (event) => { if (!audio.duration) return; const step = event.shiftKey ? 0.1 : 1; if (event.key === "ArrowLeft") seekToTime(audio.currentTime - step); else if (event.key === "ArrowRight") seekToTime(audio.currentTime + step); else if (event.key === "Home") seekToTime(0); else if (event.key === "End") seekToTime(audio.duration); else if (event.key === " " || event.key === "Enter") togglePlayback(); else return; event.preventDefault(); event.stopPropagation(); });
-$("new-project").addEventListener("click", () => { if (confirm("Start a new project? Unsaved changes will be lost.")) { if (alignmentWorker) cancelReferenceAlignment(); if (audioUrl) URL.revokeObjectURL(audioUrl); audioUrl = null; audioFile = null; audio.pause(); audio.removeAttribute("src"); audio.load(); project = createProject(); selectedId = null; peaks = []; energyProfile = []; spectralFluxProfile = []; voicednessProfile = []; referenceAudio = null; referenceLyrics = null; $("audio-file").value = ""; $("lyrics-file").value = ""; $("reference-audio-file").value = ""; $("reference-lyrics-file").value = ""; log.info("New project created."); render(); } });
-$("save-project").addEventListener("click", async () => { updateMetadata(); const result = await saveText(serializeProject(project), `${safeName(project.metadata.title)}.lyricsync.json`, "application/json", [{ name: "LyricSync project", extensions: ["json"] }]); if (!result.canceled) log.info(result.path ? `Project saved: ${result.path}` : "Project file downloaded."); });
-$("export-lrc").addEventListener("click", async () => { updateMetadata(); const count = timelineLines().filter((line) => Number.isFinite(line.startTime)).length; if (!count) { log.warning("No timestamps to export."); return; } const result = await saveText(exportLrc(project), `${safeName(project.metadata.title)}.lrc`, "text/plain;charset=utf-8", [{ name: "LRC lyrics", extensions: ["lrc"] }]); if (!result.canceled) log.info(result.path ? `LRC exported: ${result.path}` : `Exported ${count} timestamped line(s) as LRC.`); });
-$("open-project").addEventListener("click", async () => { const desktopFile = await openText([{ name: "LyricSync project", extensions: ["json"] }]); if (!desktopFile) { if (!window.lyricSyncDesktop) $("project-file").click(); return; } try { project = deserializeProject(desktopFile.content); selectedId = project.timeline.lines[0]?.id || null; peaks = []; energyProfile = []; spectralFluxProfile = []; voicednessProfile = []; log.info(`Opened project: ${desktopFile.path}. Re-select the audio file to play it.`); render(); } catch (error) { log.error(error.message); alert(error.message); } });
-$("project-file").addEventListener("change", async (event) => { const file = event.target.files[0]; if (!file) return; try { project = deserializeProject(await file.text()); selectedId = project.timeline.lines[0]?.id || null; peaks = []; energyProfile = []; spectralFluxProfile = []; voicednessProfile = []; log.info(`Opened project: ${file.name}. Re-select the audio file to play it.`); render(); } catch (error) { log.error(error.message); alert(error.message); } }); $("download-log").addEventListener("click", () => downloadText(log.text(), "lyricsync.log", "text/plain;charset=utf-8"));
-function setShortcutInput(id, value) { $(id).dataset.shortcut = value; $(id).value = shortcutLabel(value); }
-function populateShortcutInputs() { setShortcutInput("shortcut-play", settings.shortcuts.playToggle); setShortcutInput("shortcut-stamp", settings.shortcuts.stamp); setShortcutInput("shortcut-earlier", settings.shortcuts.playbackEarlier); setShortcutInput("shortcut-later", settings.shortcuts.playbackLater); }
-$("open-settings").addEventListener("click", () => { $("theme-setting").value = settings.theme; $("waveform-color-setting").value = settings.waveformColor; $("text-scale-setting").value = settings.textScale; $("reduce-motion-setting").checked = settings.reduceMotion === true; $("online-search-setting").checked = settings.onlineSearchEnabled === true; $("source-lrclib").checked = settings.onlineSources.lrclib !== false; $("source-lyrics-ovh").checked = settings.onlineSources["lyrics-ovh"] !== false; $("source-web-search").checked = settings.onlineSources["web-search"] !== false; populateShortcutInputs(); $("settings-dialog").showModal(); });
-$("save-settings").addEventListener("click", (event) => { const readShortcut = (id) => $(id).dataset.shortcut || normalizedShortcut($(id).value); const shortcuts = { playToggle: readShortcut("shortcut-play"), stamp: readShortcut("shortcut-stamp"), playbackEarlier: readShortcut("shortcut-earlier"), playbackLater: readShortcut("shortcut-later") }; if (new Set(Object.values(shortcuts)).size !== Object.values(shortcuts).length) { event.preventDefault(); showToast("Each keyboard shortcut must be different.", "warning"); return; } settings = { theme: $("theme-setting").value, waveformColor: $("waveform-color-setting").value, textScale: $("text-scale-setting").value, reduceMotion: $("reduce-motion-setting").checked, onlineSearchEnabled: $("online-search-setting").checked, onlineSources: { lrclib: $("source-lrclib").checked, "lyrics-ovh": $("source-lyrics-ovh").checked, "web-search": $("source-web-search").checked }, shortcuts }; saveSettings(settings); applySettings(settings); renderWaveform(); renderOnlineSearch(); log.info("General settings and shortcuts saved locally."); });
-$("reset-settings").addEventListener("click", () => { settings = { ...DEFAULT_SETTINGS, onlineSources: { ...DEFAULT_SETTINGS.onlineSources }, shortcuts: { ...DEFAULT_SETTINGS.shortcuts } }; $("theme-setting").value = settings.theme; $("waveform-color-setting").value = settings.waveformColor; $("text-scale-setting").value = settings.textScale; $("reduce-motion-setting").checked = false; $("online-search-setting").checked = false; $("source-lrclib").checked = true; $("source-lyrics-ovh").checked = true; $("source-web-search").checked = true; populateShortcutInputs(); applySettings(settings); renderWaveform(); renderOnlineSearch(); });
-[["shortcut-play", "playToggle"], ["shortcut-stamp", "stamp"], ["shortcut-earlier", "playbackEarlier"], ["shortcut-later", "playbackLater"]].forEach(([id]) => $(id).addEventListener("keydown", (event) => { if (["Tab", "Shift", "Control", "Alt", "Meta"].includes(event.key)) return; event.preventDefault(); const value = normalizedShortcut(event.key); setShortcutInput(id, value); }));
-audio.addEventListener("loadedmetadata", () => { project.audio.duration = audio.duration; $("seek").max = audio.duration; log.info(`Audio duration: ${audio.duration.toFixed(3)} seconds.`); render(); }); audio.addEventListener("timeupdate", () => { updatePositionDisplays(); renderWaveform(); }); audio.addEventListener("play", () => setPlayButton(true)); audio.addEventListener("pause", () => setPlayButton(false)); audio.addEventListener("ended", () => { audio.currentTime = 0; });
-window.addEventListener("online", renderOnlineSearch); window.addEventListener("offline", renderOnlineSearch);
-window.addEventListener("keydown", (event) => { if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName) || $("settings-dialog").open) return; const key = normalizedShortcut(event.key); if (key === settings.shortcuts.playToggle) { event.preventDefault(); togglePlayback(); } else if (key === settings.shortcuts.stamp) { event.preventDefault(); stamp(); } else if (key === settings.shortcuts.playbackEarlier) { event.preventDefault(); seekToTime((audio.currentTime || 0) - adjustmentSeconds()); } else if (key === settings.shortcuts.playbackLater) { event.preventDefault(); seekToTime((audio.currentTime || 0) + adjustmentSeconds()); } });
-applySettings(settings); log.info("LyricSync v0.3 initialized. Processing remains local on this device."); render();
+$("waveform").addEventListener("pointerdown", (event) => {
+  waveformDragging = true;
+  $("waveform").setPointerCapture(event.pointerId);
+  seekFromWaveform(event);
+});
+$("waveform").addEventListener("pointermove", (event) => {
+  seekFromWaveform(event, waveformDragging);
+});
+$("waveform").addEventListener("pointerup", (event) => {
+  waveformDragging = false;
+  $("waveform").releasePointerCapture(event.pointerId);
+  $("waveform-tooltip").classList.remove("visible");
+});
+$("waveform").addEventListener("pointerleave", () => {
+  if (!waveformDragging) $("waveform-tooltip").classList.remove("visible");
+});
+$("waveform").addEventListener("keydown", (event) => {
+  if (!audio.duration) return;
+  const step = event.shiftKey ? 0.1 : 1;
+  if (event.key === "ArrowLeft") seekToTime(audio.currentTime - step);
+  else if (event.key === "ArrowRight") seekToTime(audio.currentTime + step);
+  else if (event.key === "Home") seekToTime(0);
+  else if (event.key === "End") seekToTime(audio.duration);
+  else if (event.key === " " || event.key === "Enter") togglePlayback();
+  else return;
+  event.preventDefault();
+  event.stopPropagation();
+});
+$("new-project").addEventListener("click", () => {
+  if (confirm("Start a new project? Unsaved changes will be lost.")) {
+    if (alignmentWorker) cancelReferenceAlignment();
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    audioUrl = null;
+    audioFile = null;
+    audio.pause();
+    audio.removeAttribute("src");
+    audio.load();
+    project = createProject();
+    selectedId = null;
+    peaks = [];
+    energyProfile = [];
+    spectralFluxProfile = [];
+    voicednessProfile = [];
+    referenceAudio = null;
+    referenceLyrics = null;
+    $("audio-file").value = "";
+    $("lyrics-file").value = "";
+    $("reference-audio-file").value = "";
+    $("reference-lyrics-file").value = "";
+    log.info("New project created.");
+    render();
+  }
+});
+$("save-project").addEventListener("click", async () => {
+  updateMetadata();
+  const result = await saveText(
+    serializeProject(project),
+    `${safeName(project.metadata.title)}.lyricsync.json`,
+    "application/json",
+    [{ name: "LyricSync project", extensions: ["json"] }],
+  );
+  if (!result.canceled) log.info(result.path ? `Project saved: ${result.path}` : "Project file downloaded.");
+});
+$("export-lrc").addEventListener("click", async () => {
+  updateMetadata();
+  const count = timelineLines().filter((line) => Number.isFinite(line.startTime)).length;
+  if (!count) {
+    log.warning("No timestamps to export.");
+    return;
+  }
+  const result = await saveText(
+    exportLrc(project),
+    `${safeName(project.metadata.title)}.lrc`,
+    "text/plain;charset=utf-8",
+    [{ name: "LRC lyrics", extensions: ["lrc"] }],
+  );
+  if (!result.canceled)
+    log.info(result.path ? `LRC exported: ${result.path}` : `Exported ${count} timestamped line(s) as LRC.`);
+});
+$("open-project").addEventListener("click", async () => {
+  const desktopFile = await openText([{ name: "LyricSync project", extensions: ["json"] }]);
+  if (!desktopFile) {
+    if (!window.lyricSyncDesktop) $("project-file").click();
+    return;
+  }
+  try {
+    project = deserializeProject(desktopFile.content);
+    selectedId = project.timeline.lines[0]?.id || null;
+    peaks = [];
+    energyProfile = [];
+    spectralFluxProfile = [];
+    voicednessProfile = [];
+    log.info(`Opened project: ${desktopFile.path}. Re-select the audio file to play it.`);
+    render();
+  } catch (error) {
+    log.error(error.message);
+    alert(error.message);
+  }
+});
+$("project-file").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  try {
+    project = deserializeProject(await file.text());
+    selectedId = project.timeline.lines[0]?.id || null;
+    peaks = [];
+    energyProfile = [];
+    spectralFluxProfile = [];
+    voicednessProfile = [];
+    log.info(`Opened project: ${file.name}. Re-select the audio file to play it.`);
+    render();
+  } catch (error) {
+    log.error(error.message);
+    alert(error.message);
+  }
+});
+$("download-log").addEventListener("click", () =>
+  downloadText(log.text(), "lyricsync.log", "text/plain;charset=utf-8"),
+);
+function setShortcutInput(id, value) {
+  $(id).dataset.shortcut = value;
+  $(id).value = shortcutLabel(value);
+}
+function populateShortcutInputs() {
+  setShortcutInput("shortcut-play", settings.shortcuts.playToggle);
+  setShortcutInput("shortcut-stamp", settings.shortcuts.stamp);
+  setShortcutInput("shortcut-earlier", settings.shortcuts.playbackEarlier);
+  setShortcutInput("shortcut-later", settings.shortcuts.playbackLater);
+}
+$("open-settings").addEventListener("click", () => {
+  $("theme-setting").value = settings.theme;
+  $("waveform-color-setting").value = settings.waveformColor;
+  $("text-scale-setting").value = settings.textScale;
+  $("reduce-motion-setting").checked = settings.reduceMotion === true;
+  $("online-search-setting").checked = settings.onlineSearchEnabled === true;
+  $("source-lrclib").checked = settings.onlineSources.lrclib !== false;
+  $("source-lyrics-ovh").checked = settings.onlineSources["lyrics-ovh"] !== false;
+  $("source-web-search").checked = settings.onlineSources["web-search"] !== false;
+  populateShortcutInputs();
+  $("settings-dialog").showModal();
+});
+$("save-settings").addEventListener("click", (event) => {
+  const readShortcut = (id) => $(id).dataset.shortcut || normalizedShortcut($(id).value);
+  const shortcuts = {
+    playToggle: readShortcut("shortcut-play"),
+    stamp: readShortcut("shortcut-stamp"),
+    playbackEarlier: readShortcut("shortcut-earlier"),
+    playbackLater: readShortcut("shortcut-later"),
+  };
+  if (new Set(Object.values(shortcuts)).size !== Object.values(shortcuts).length) {
+    event.preventDefault();
+    showToast("Each keyboard shortcut must be different.", "warning");
+    return;
+  }
+  settings = {
+    theme: $("theme-setting").value,
+    waveformColor: $("waveform-color-setting").value,
+    textScale: $("text-scale-setting").value,
+    reduceMotion: $("reduce-motion-setting").checked,
+    onlineSearchEnabled: $("online-search-setting").checked,
+    onlineSources: {
+      lrclib: $("source-lrclib").checked,
+      "lyrics-ovh": $("source-lyrics-ovh").checked,
+      "web-search": $("source-web-search").checked,
+    },
+    shortcuts,
+  };
+  saveSettings(settings);
+  applySettings(settings);
+  renderWaveform();
+  renderOnlineSearch();
+  log.info("General settings and shortcuts saved locally.");
+});
+$("reset-settings").addEventListener("click", () => {
+  settings = {
+    ...DEFAULT_SETTINGS,
+    onlineSources: { ...DEFAULT_SETTINGS.onlineSources },
+    shortcuts: { ...DEFAULT_SETTINGS.shortcuts },
+  };
+  $("theme-setting").value = settings.theme;
+  $("waveform-color-setting").value = settings.waveformColor;
+  $("text-scale-setting").value = settings.textScale;
+  $("reduce-motion-setting").checked = false;
+  $("online-search-setting").checked = false;
+  $("source-lrclib").checked = true;
+  $("source-lyrics-ovh").checked = true;
+  $("source-web-search").checked = true;
+  populateShortcutInputs();
+  applySettings(settings);
+  renderWaveform();
+  renderOnlineSearch();
+});
+[
+  ["shortcut-play", "playToggle"],
+  ["shortcut-stamp", "stamp"],
+  ["shortcut-earlier", "playbackEarlier"],
+  ["shortcut-later", "playbackLater"],
+].forEach(([id]) =>
+  $(id).addEventListener("keydown", (event) => {
+    if (["Tab", "Shift", "Control", "Alt", "Meta"].includes(event.key)) return;
+    event.preventDefault();
+    const value = normalizedShortcut(event.key);
+    setShortcutInput(id, value);
+  }),
+);
+audio.addEventListener("loadedmetadata", () => {
+  project.audio.duration = audio.duration;
+  $("seek").max = audio.duration;
+  log.info(`Audio duration: ${audio.duration.toFixed(3)} seconds.`);
+  render();
+});
+audio.addEventListener("timeupdate", () => {
+  updatePositionDisplays();
+  renderWaveform();
+});
+audio.addEventListener("play", () => setPlayButton(true));
+audio.addEventListener("pause", () => setPlayButton(false));
+audio.addEventListener("ended", () => {
+  audio.currentTime = 0;
+});
+window.addEventListener("online", renderOnlineSearch);
+window.addEventListener("offline", renderOnlineSearch);
+window.addEventListener("keydown", (event) => {
+  if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName) || $("settings-dialog").open) return;
+  const key = normalizedShortcut(event.key);
+  if (key === settings.shortcuts.playToggle) {
+    event.preventDefault();
+    togglePlayback();
+  } else if (key === settings.shortcuts.stamp) {
+    event.preventDefault();
+    stamp();
+  } else if (key === settings.shortcuts.playbackEarlier) {
+    event.preventDefault();
+    seekToTime((audio.currentTime || 0) - adjustmentSeconds());
+  } else if (key === settings.shortcuts.playbackLater) {
+    event.preventDefault();
+    seekToTime((audio.currentTime || 0) + adjustmentSeconds());
+  }
+});
+applySettings(settings);
+log.info("LyricSync v0.3 initialized. Processing remains local on this device.");
+render();

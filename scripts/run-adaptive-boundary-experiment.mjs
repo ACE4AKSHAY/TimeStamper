@@ -14,13 +14,36 @@ const reference = [];
 const cases = [];
 
 for (const item of dataset.cases) {
-  if (!item.profiles?.energy || !Number.isFinite(item.duration)) throw new Error("Run experiment-robustness first so profiles and durations are available.");
-  const lines = item.reference.map((_, order) => ({ id: `${item.id}-${order}`, originalText: `line-${order + 1}`, order }));
+  if (!item.profiles?.energy || !Number.isFinite(item.duration))
+    throw new Error("Run experiment-robustness first so profiles and durations are available.");
+  const lines = item.reference.map((_, order) => ({
+    id: `${item.id}-${order}`,
+    originalText: `line-${order + 1}`,
+    order,
+  }));
   const baseParameters = { profile: item.profiles.energy };
   const results = {
-    boundaryDp: synchronize({ lyrics: lines, engine: "boundary-dp", energyProfile: item.profiles.energy, duration: item.duration, parameters: baseParameters }),
-    introAwareBoundaryDp: synchronize({ lyrics: lines, engine: "intro-aware-boundary-dp", energyProfile: item.profiles.energy, duration: item.duration, parameters: baseParameters }),
-    adaptiveBoundaryDp: synchronize({ lyrics: lines, engine: "adaptive-boundary-dp", energyProfile: item.profiles.energy, duration: item.duration, parameters: { ...baseParameters, minimumIntroFrames: 3 } }),
+    boundaryDp: synchronize({
+      lyrics: lines,
+      engine: "boundary-dp",
+      energyProfile: item.profiles.energy,
+      duration: item.duration,
+      parameters: baseParameters,
+    }),
+    introAwareBoundaryDp: synchronize({
+      lyrics: lines,
+      engine: "intro-aware-boundary-dp",
+      energyProfile: item.profiles.energy,
+      duration: item.duration,
+      parameters: baseParameters,
+    }),
+    adaptiveBoundaryDp: synchronize({
+      lyrics: lines,
+      engine: "adaptive-boundary-dp",
+      energyProfile: item.profiles.energy,
+      duration: item.duration,
+      parameters: { ...baseParameters, minimumIntroFrames: 3 },
+    }),
   };
   const casePredictions = {};
   for (const name of methods) {
@@ -28,11 +51,37 @@ for (const item of dataset.cases) {
     predictions[name].push(...casePredictions[name]);
   }
   reference.push(...item.reference);
-  cases.push({ id: item.id, reference: item.reference, introFrame: results.introAwareBoundaryDp.alignment.introFrame, selectedEngine: results.adaptiveBoundaryDp.alignment.selectedEngine, predictions: casePredictions });
+  cases.push({
+    id: item.id,
+    reference: item.reference,
+    introFrame: results.introAwareBoundaryDp.alignment.introFrame,
+    selectedEngine: results.adaptiveBoundaryDp.alignment.selectedEngine,
+    predictions: casePredictions,
+  });
 }
 
 const metrics = Object.fromEntries(methods.map((name) => [name, scoreTimestamps(predictions[name], reference)]));
-const output = { datasetVersion: "adaptive-boundary-synthetic-v1", input: inputPath, description: "Comparison of Boundary-DP, intro-aware Boundary-DP, and a thresholded adaptive selector.", caseCount: cases.length, methods, metrics, cases, runtimeMs: performance.now() - started, generatedAt: new Date().toISOString() };
+const output = {
+  datasetVersion: "adaptive-boundary-synthetic-v1",
+  input: inputPath,
+  description: "Comparison of Boundary-DP, intro-aware Boundary-DP, and a thresholded adaptive selector.",
+  caseCount: cases.length,
+  methods,
+  metrics,
+  cases,
+  runtimeMs: performance.now() - started,
+  generatedAt: new Date().toISOString(),
+};
 await mkdir(dirname(resolve(outputPath)), { recursive: true });
 await writeFile(resolve(outputPath), JSON.stringify(output, null, 2) + "\n", "utf8");
-console.log(JSON.stringify({ output: outputPath, metrics, selections: cases.map(({ id, introFrame, selectedEngine }) => ({ id, introFrame, selectedEngine })) }, null, 2));
+console.log(
+  JSON.stringify(
+    {
+      output: outputPath,
+      metrics,
+      selections: cases.map(({ id, introFrame, selectedEngine }) => ({ id, introFrame, selectedEngine })),
+    },
+    null,
+    2,
+  ),
+);

@@ -27,10 +27,25 @@ for (const item of cases) {
       predictions[name] = null;
     }
   }
-  caseReports.push({ id: item.id, lineCount: item.lyrics.length, frameCount: item.frameCount, duration: item.duration, introFrames: item.introFrames, noiseAmplitude: item.noiseAmplitude, onsetShift: item.onsetShift, reference: item.reference, predictions });
+  caseReports.push({
+    id: item.id,
+    lineCount: item.lyrics.length,
+    frameCount: item.frameCount,
+    duration: item.duration,
+    introFrames: item.introFrames,
+    noiseAmplitude: item.noiseAmplitude,
+    onsetShift: item.onsetShift,
+    reference: item.reference,
+    predictions,
+  });
 }
 
-const metrics = Object.fromEntries(methodNames.map((name) => [name, aggregate[name].predicted.length ? scoreTimestamps(aggregate[name].predicted, aggregate[name].reference) : null]));
+const metrics = Object.fromEntries(
+  methodNames.map((name) => [
+    name,
+    aggregate[name].predicted.length ? scoreTimestamps(aggregate[name].predicted, aggregate[name].reference) : null,
+  ]),
+);
 const output = {
   datasetVersion: "generalization-synthetic-v1",
   description: "Seeded randomized line-boundary corpus; no copyrighted audio.",
@@ -46,13 +61,39 @@ const output = {
 
 await mkdir(dirname(resolve(outputPath)), { recursive: true });
 await writeFile(resolve(outputPath), JSON.stringify(output, null, 2) + "\n", "utf8");
-console.log(JSON.stringify({ output: outputPath, caseCount: output.caseCount, totalLineStarts: output.totalLineStarts, metrics, failures }, null, 2));
+console.log(
+  JSON.stringify(
+    { output: outputPath, caseCount: output.caseCount, totalLineStarts: output.totalLineStarts, metrics, failures },
+    null,
+    2,
+  ),
+);
 
 function runMethod(name, item, lines) {
-  if (name === "energyBaseline") return synchronize({ lyrics: lines, energyProfile: item.profiles.energy, duration: item.duration });
-  if (name === "combinedProfile") return synchronize({ lyrics: lines, engine: "combined-profile", energyProfile: item.profiles.energy, duration: item.duration, parameters: { profiles: item.profiles, weights: { energy: 0.65, spectralFlux: 0.35 } } });
-  if (name === "boundaryDp") return synchronize({ lyrics: lines, engine: "boundary-dp", energyProfile: item.profiles.energy, duration: item.duration, parameters: { profile: item.profiles.energy } });
-  return synchronize({ lyrics: lines, engine: "multi-profile-boundary-dp", duration: item.duration, parameters: { profiles: item.profiles, weights: { energy: 0.5, spectralFlux: 0.3, voicedness: 0.2 } } });
+  if (name === "energyBaseline")
+    return synchronize({ lyrics: lines, energyProfile: item.profiles.energy, duration: item.duration });
+  if (name === "combinedProfile")
+    return synchronize({
+      lyrics: lines,
+      engine: "combined-profile",
+      energyProfile: item.profiles.energy,
+      duration: item.duration,
+      parameters: { profiles: item.profiles, weights: { energy: 0.65, spectralFlux: 0.35 } },
+    });
+  if (name === "boundaryDp")
+    return synchronize({
+      lyrics: lines,
+      engine: "boundary-dp",
+      energyProfile: item.profiles.energy,
+      duration: item.duration,
+      parameters: { profile: item.profiles.energy },
+    });
+  return synchronize({
+    lyrics: lines,
+    engine: "multi-profile-boundary-dp",
+    duration: item.duration,
+    parameters: { profiles: item.profiles, weights: { energy: 0.5, spectralFlux: 0.3, voicedness: 0.2 } },
+  });
 }
 
 function createCase(index, random) {
@@ -63,7 +104,8 @@ function createCase(index, random) {
   const available = frameCount - introFrames;
   const minimum = 5;
   const lengths = Array.from({ length: lineCount }, () => minimum);
-  for (let remaining = available - minimum * lineCount; remaining > 0; remaining--) lengths[Math.floor(random() * lineCount)] += 1;
+  for (let remaining = available - minimum * lineCount; remaining > 0; remaining--)
+    lengths[Math.floor(random() * lineCount)] += 1;
   const referenceFrames = [];
   let cursor = introFrames;
   for (const length of lengths) {
@@ -85,14 +127,17 @@ function createCase(index, random) {
     noiseAmplitude,
     onsetShift,
     lyrics: Array.from({ length: lineCount }, (_, line) => `line-${line + 1}`),
-    reference: referenceFrames.map((frame) => frame / frameCount * duration),
+    reference: referenceFrames.map((frame) => (frame / frameCount) * duration),
     profiles,
   };
 }
 
 function makeProfile(frameCount, boundaries, random, noiseAmplitude, onsetShift, peakScale) {
   return Array.from({ length: frameCount }, (_, frame) => {
-    const distance = boundaries.reduce((best, boundary) => Math.min(best, Math.abs(frame - boundary - onsetShift)), Infinity);
+    const distance = boundaries.reduce(
+      (best, boundary) => Math.min(best, Math.abs(frame - boundary - onsetShift)),
+      Infinity,
+    );
     const shape = distance === 0 ? 1 : distance === 1 ? 0.42 : distance === 2 ? 0.18 : 0.05;
     const noise = (random() - 0.5) * noiseAmplitude;
     return Math.max(0, 0.1 + shape * peakScale + noise);

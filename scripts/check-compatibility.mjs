@@ -4,17 +4,53 @@ import { pathToFileURL } from "node:url";
 
 const packageJson = JSON.parse(await readFile(resolve("package.json"), "utf8"));
 const portableModules = [
-  "domain.js", "lyrics.js", "lrc.js", "energy-aligner.js", "features.js", "dtw.js",
-  "mfcc-dtw.js", "dtw-banded.js", "template-aligner.js", "template-builder.js", "template-boundary-refiner.js", "template-diagnostics.js", "feature-normalizer.js", "reference-template-aligner.js", "reference-template-ensemble.js", "reference-target-validation.js", "mfcc-feature-cache.mjs", "vocal-separator.js", "profile-fusion.js",
-  "audio-profiles.js", "pitch-profile.js", "run-config.mjs", "combined-aligner.js", "boundary-dp-aligner.js",
-  "intro-aware-aligner.js", "adaptive-boundary-aligner.js", "text-weighted-aligner.js", "boundary-refiner.js", "ensemble-aligner.js", "vocal-gated-aligner.js", "adaptive-vocal-aligner.js", "silence-aware-aligner.js", "evaluation.js", "multi-profile-aligner.js", "consensus-aligner.js",
-  "engine.js", "metrics.js", "automatic-aligner.js", "index.js",
-  "online/online-provider.js", "alignment-worker.js",
+  "domain.js",
+  "lyrics.js",
+  "lrc.js",
+  "energy-aligner.js",
+  "features.js",
+  "dtw.js",
+  "mfcc-dtw.js",
+  "dtw-banded.js",
+  "template-aligner.js",
+  "template-builder.js",
+  "template-boundary-refiner.js",
+  "template-diagnostics.js",
+  "feature-normalizer.js",
+  "reference-template-aligner.js",
+  "reference-template-ensemble.js",
+  "reference-target-validation.js",
+  "mfcc-feature-cache.mjs",
+  "vocal-separator.js",
+  "profile-fusion.js",
+  "audio-profiles.js",
+  "pitch-profile.js",
+  "run-config.mjs",
+  "combined-aligner.js",
+  "boundary-dp-aligner.js",
+  "intro-aware-aligner.js",
+  "adaptive-boundary-aligner.js",
+  "text-weighted-aligner.js",
+  "boundary-refiner.js",
+  "ensemble-aligner.js",
+  "vocal-gated-aligner.js",
+  "adaptive-vocal-aligner.js",
+  "silence-aware-aligner.js",
+  "evaluation.js",
+  "multi-profile-aligner.js",
+  "consensus-aligner.js",
+  "engine.js",
+  "metrics.js",
+  "automatic-aligner.js",
+  "index.js",
+  "online/online-provider.js",
+  "alignment-worker.js",
 ];
 const forbiddenImport = /(?:from\s+["']node:|import\s*\(["']node:|require\s*\(["']node:)/u;
 
 if (packageJson.type !== "module") throw new Error("package.json must keep type=module for the reusable ES modules.");
-if (!/^>=18(?:\.0\.0)?$/.test(packageJson.engines?.node || "")) throw new Error("package.json must declare Node >=18 compatibility.");
+if (!/^>=18(?:\.0\.0)?$/.test(packageJson.engines?.node || ""))
+  throw new Error("package.json must declare Node >=18 compatibility.");
 
 for (const file of portableModules) {
   const source = await readFile(resolve("src", file), "utf8");
@@ -23,8 +59,28 @@ for (const file of portableModules) {
 }
 
 const { synchronize } = await import(pathToFileURL(resolve("src/engine.js")).href);
-const lines = ["తెలుగు", "हिन्दी", "English"].map((originalText, order) => ({ id: `compat-${order}`, originalText, order }));
+const lines = ["తెలుగు", "हिन्दी", "English"].map((originalText, order) => ({
+  id: `compat-${order}`,
+  originalText,
+  order,
+}));
 const profile = Array.from({ length: 1200 }, (_, index) => 0.1 + (index % 37) / 100);
 const result = synchronize({ lyrics: lines, energyProfile: profile, duration: 120 });
-if (result.lines.length !== lines.length || result.lines.some((line, index) => index && line.startTime < result.lines[index - 1].startTime)) throw new Error("Compatibility smoke alignment was not monotonic.");
-console.log(JSON.stringify({ node: process.version, moduleCount: portableModules.length, engine: result.engine, unicodeLines: result.lines.length, status: "compatible" }, null, 2));
+if (
+  result.lines.length !== lines.length ||
+  result.lines.some((line, index) => index && line.startTime < result.lines[index - 1].startTime)
+)
+  throw new Error("Compatibility smoke alignment was not monotonic.");
+console.log(
+  JSON.stringify(
+    {
+      node: process.version,
+      moduleCount: portableModules.length,
+      engine: result.engine,
+      unicodeLines: result.lines.length,
+      status: "compatible",
+    },
+    null,
+    2,
+  ),
+);

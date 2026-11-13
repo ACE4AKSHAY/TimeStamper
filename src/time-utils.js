@@ -1,6 +1,9 @@
 /** Parse the strict time formats accepted by the editor. */
 export function parseEditorTime(value) {
-  const text = String(value ?? "").trim().replace(/^\[/u, "").replace(/\]$/u, "");
+  const text = String(value ?? "")
+    .trim()
+    .replace(/^\[/u, "")
+    .replace(/\]$/u, "");
   if (!text) return null;
   let match = text.match(/^(\d+):([0-5]\d):([0-5]\d)[.:](\d{1,3})$/u);
   if (match) return withMilliseconds(Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3]), match[4]);

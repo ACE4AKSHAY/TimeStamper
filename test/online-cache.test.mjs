@@ -4,7 +4,11 @@ import { OnlineLyricsCache } from "../src/online/online-cache.js";
 
 function memoryStorage() {
   const values = new Map();
-  return { getItem: (key) => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: (key) => values.delete(key) };
+  return {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, value),
+    removeItem: (key) => values.delete(key),
+  };
 }
 
 test("online cache round-trips provider results and keeps providers isolated", () => {

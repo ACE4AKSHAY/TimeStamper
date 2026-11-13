@@ -6,10 +6,13 @@ import { euclideanDistance } from "./dtw.js";
  * Tie-breaking matches constrainedDtw: diagonal, then up, then left.
  */
 export function constrainedDtwBanded(sequenceA, sequenceB, options = {}) {
-  if (!Array.isArray(sequenceA) || !Array.isArray(sequenceB) || !sequenceA.length || !sequenceB.length) throw new Error("DTW requires two non-empty feature sequences.");
+  if (!Array.isArray(sequenceA) || !Array.isArray(sequenceB) || !sequenceA.length || !sequenceB.length)
+    throw new Error("DTW requires two non-empty feature sequences.");
   const rows = sequenceA.length;
   const columns = sequenceB.length;
-  const window = Number.isFinite(options.window) ? Math.max(Math.abs(rows - columns), Math.floor(options.window)) : Math.max(rows, columns);
+  const window = Number.isFinite(options.window)
+    ? Math.max(Math.abs(rows - columns), Math.floor(options.window))
+    : Math.max(rows, columns);
   const distance = options.distance || euclideanDistance;
   let previous = new Float64Array(columns + 1).fill(Infinity);
   let current = new Float64Array(columns + 1).fill(Infinity);
@@ -22,8 +25,14 @@ export function constrainedDtwBanded(sequenceA, sequenceB, options = {}) {
     for (let column = firstColumn; column <= lastColumn; column++) {
       let best = previous[column - 1];
       let direction = 1;
-      if (previous[column] < best) { best = previous[column]; direction = 2; }
-      if (current[column - 1] < best) { best = current[column - 1]; direction = 3; }
+      if (previous[column] < best) {
+        best = previous[column];
+        direction = 2;
+      }
+      if (current[column - 1] < best) {
+        best = current[column - 1];
+        direction = 3;
+      }
       if (!Number.isFinite(best)) continue;
       current[column] = distance(sequenceA[row - 1], sequenceB[column - 1]) + best;
       parents[row][column] = direction;
@@ -40,8 +49,10 @@ export function constrainedDtwBanded(sequenceA, sequenceB, options = {}) {
   while (row || column) {
     path.push([row - 1, column - 1]);
     const parent = parents[row][column];
-    if (parent === 1) { row--; column--; }
-    else if (parent === 2) row--;
+    if (parent === 1) {
+      row--;
+      column--;
+    } else if (parent === 2) row--;
     else if (parent === 3) column--;
     else throw new Error("DTW path reconstruction failed.");
   }

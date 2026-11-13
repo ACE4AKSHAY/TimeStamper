@@ -7,7 +7,13 @@ import { normalizeProfile, resampleProfile } from "./profile-fusion.js";
  * low, while retaining a configurable floor for breathy or difficult vocals.
  */
 export function buildVocalGatedProfile(energyProfile, voicednessProfile, options = {}) {
-  if (!Array.isArray(energyProfile) || !energyProfile.length || !Array.isArray(voicednessProfile) || !voicednessProfile.length) throw new Error("Vocal gating requires non-empty energy and voicedness profiles.");
+  if (
+    !Array.isArray(energyProfile) ||
+    !energyProfile.length ||
+    !Array.isArray(voicednessProfile) ||
+    !voicednessProfile.length
+  )
+    throw new Error("Vocal gating requires non-empty energy and voicedness profiles.");
   const length = Math.max(energyProfile.length, voicednessProfile.length);
   const energy = normalizeProfile(resampleProfile(energyProfile, length));
   const voicedness = normalizeProfile(resampleProfile(voicednessProfile, length));

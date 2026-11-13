@@ -11,7 +11,19 @@ export function alignByAdaptiveBoundaryDp(lines, profile, duration, options = {}
   const minimumIntroFrames = Math.max(0, Math.floor(options.minimumIntroFrames ?? 3));
   if (introCandidate.introFrame < minimumIntroFrames) {
     const baseline = alignByBoundaryDp(lines, profile, duration, options);
-    return { ...baseline, selectedEngine: "boundary-dp", introFrame: introCandidate.introFrame, introTime: introCandidate.introTime, minimumIntroFrames, method: "adaptive_boundary_dynamic_programming" };
+    return {
+      ...baseline,
+      selectedEngine: "boundary-dp",
+      introFrame: introCandidate.introFrame,
+      introTime: introCandidate.introTime,
+      minimumIntroFrames,
+      method: "adaptive_boundary_dynamic_programming",
+    };
   }
-  return { ...introCandidate, selectedEngine: "intro-aware-boundary-dp", minimumIntroFrames, method: "adaptive_boundary_dynamic_programming" };
+  return {
+    ...introCandidate,
+    selectedEngine: "intro-aware-boundary-dp",
+    minimumIntroFrames,
+    method: "adaptive_boundary_dynamic_programming",
+  };
 }

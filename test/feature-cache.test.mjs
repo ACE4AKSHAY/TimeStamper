@@ -40,7 +40,11 @@ test("audio feature extraction reuses a cached profile and supports opt-out", as
   const audioPath = join(root, "fixture.wav");
   await writeFile(audioPath, "fixture");
   const cache = new FeatureCache(join(root, "cache"));
-  const decoded = { samples: Float64Array.from({ length: 4096 }, (_, index) => Math.sin(index / 11)), sampleRate: 8000, duration: 4096 / 8000 };
+  const decoded = {
+    samples: Float64Array.from({ length: 4096 }, (_, index) => Math.sin(index / 11)),
+    sampleRate: 8000,
+    duration: 4096 / 8000,
+  };
   const first = await loadOrExtractAudioFeatures({ audioPath, decoded, cache });
   const second = await loadOrExtractAudioFeatures({ audioPath, decoded, cache });
   const uncached = await loadOrExtractAudioFeatures({ audioPath, decoded, cache, enabled: false });
@@ -58,9 +62,23 @@ test("MFCC cache reuses whole-recording frames with extraction identity", async 
   const audioPath = join(root, "fixture.wav");
   await writeFile(audioPath, "fixture");
   const cache = new FeatureCache(join(root, "cache"));
-  const decoded = { samples: Float64Array.from({ length: 4096 }, (_, index) => Math.sin(index / 13)), sampleRate: 8000, duration: 4096 / 8000 };
-  const first = await loadOrExtractMfcc({ audioPath, decoded, cache, options: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 } });
-  const second = await loadOrExtractMfcc({ audioPath, decoded, cache, options: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 } });
+  const decoded = {
+    samples: Float64Array.from({ length: 4096 }, (_, index) => Math.sin(index / 13)),
+    sampleRate: 8000,
+    duration: 4096 / 8000,
+  };
+  const first = await loadOrExtractMfcc({
+    audioPath,
+    decoded,
+    cache,
+    options: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 },
+  });
+  const second = await loadOrExtractMfcc({
+    audioPath,
+    decoded,
+    cache,
+    options: { frameSize: 128, hopSize: 64, melBands: 12, coefficients: 6 },
+  });
   assert.equal(first.cache.hit, false);
   assert.equal(second.cache.hit, true);
   assert.deepEqual(second.frames, first.frames);

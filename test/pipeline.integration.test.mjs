@@ -8,13 +8,24 @@ import { synchronize } from "../src/engine.js";
 
 test("audio-to-lyrics-to-timeline-to-LRC pipeline preserves Unicode", () => {
   const sampleRate = 8000;
-  const samples = Float32Array.from({ length: sampleRate }, (_, index) => 0.5 * Math.sin(2 * Math.PI * (index < sampleRate / 2 ? 220 : 440) * index / sampleRate));
+  const samples = Float32Array.from(
+    { length: sampleRate },
+    (_, index) => 0.5 * Math.sin((2 * Math.PI * (index < sampleRate / 2 ? 220 : 440) * index) / sampleRate),
+  );
   const wav = makePcm16Wav(samples, sampleRate);
   const decoded = decodeWav(wav);
   const parsed = parseLyrics("[00:00.00]తెలుగు పంక్తి\n[00:00.50]हिन्दी पंक्ति", "integration.lrc");
   const profiles = extractExplainableProfiles(decoded.samples, { bins: 40 });
-  const aligned = synchronize({ lyrics: parsed.lines, duration: decoded.duration, energyProfile: profiles.energy, engine: "energy-baseline" });
-  const project = { metadata: { title: "Integration", artist: "", album: "", language: "multi" }, timeline: { lines: aligned.lines } };
+  const aligned = synchronize({
+    lyrics: parsed.lines,
+    duration: decoded.duration,
+    energyProfile: profiles.energy,
+    engine: "energy-baseline",
+  });
+  const project = {
+    metadata: { title: "Integration", artist: "", album: "", language: "multi" },
+    timeline: { lines: aligned.lines },
+  };
   const output = exportLrc(project);
   assert.equal(decoded.format, "wav");
   assert.equal(decoded.samples.length, samples.length);
@@ -26,11 +37,22 @@ test("audio-to-lyrics-to-timeline-to-LRC pipeline preserves Unicode", () => {
 
 function makePcm16Wav(samples, sampleRate) {
   const data = Buffer.alloc(samples.length * 2);
-  samples.forEach((sample, index) => data.writeInt16LE(Math.max(-32768, Math.min(32767, Math.round(sample * 32767))), index * 2));
+  samples.forEach((sample, index) =>
+    data.writeInt16LE(Math.max(-32768, Math.min(32767, Math.round(sample * 32767))), index * 2),
+  );
   const header = Buffer.alloc(44);
-  header.write("RIFF", 0); header.writeUInt32LE(36 + data.length, 4); header.write("WAVE", 8);
-  header.write("fmt ", 12); header.writeUInt32LE(16, 16); header.writeUInt16LE(1, 20); header.writeUInt16LE(1, 22);
-  header.writeUInt32LE(sampleRate, 24); header.writeUInt32LE(sampleRate * 2, 28); header.writeUInt16LE(2, 32); header.writeUInt16LE(16, 34);
-  header.write("data", 36); header.writeUInt32LE(data.length, 40);
+  header.write("RIFF", 0);
+  header.writeUInt32LE(36 + data.length, 4);
+  header.write("WAVE", 8);
+  header.write("fmt ", 12);
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20);
+  header.writeUInt16LE(1, 22);
+  header.writeUInt32LE(sampleRate, 24);
+  header.writeUInt32LE(sampleRate * 2, 28);
+  header.writeUInt16LE(2, 32);
+  header.writeUInt16LE(16, 34);
+  header.write("data", 36);
+  header.writeUInt32LE(data.length, 40);
   return Buffer.concat([header, data]);
 }

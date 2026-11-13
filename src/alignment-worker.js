@@ -13,7 +13,11 @@ if (typeof self !== "undefined") {
     const requestId = message.requestId;
     const controller = new AbortController();
     jobs.set(requestId, controller);
-    try { runReferenceAlignment(requestId, message.payload, controller); } finally { jobs.delete(requestId); }
+    try {
+      runReferenceAlignment(requestId, message.payload, controller);
+    } finally {
+      jobs.delete(requestId);
+    }
   };
 }
 
@@ -39,6 +43,10 @@ function runReferenceAlignment(requestId, payload, controller) {
     });
     self.postMessage({ type: "complete", requestId, result });
   } catch (error) {
-    self.postMessage({ type: "error", requestId, error: { name: error?.name || "Error", message: error?.message || String(error) } });
+    self.postMessage({
+      type: "error",
+      requestId,
+      error: { name: error?.name || "Error", message: error?.message || String(error) },
+    });
   }
 }

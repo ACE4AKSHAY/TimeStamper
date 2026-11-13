@@ -87,22 +87,45 @@ export class LyricsOvhProvider extends OnlineLyricsProvider {
     const request = createRequestSignal(this.timeoutMs, signal);
     let response;
     try {
-      response = await this.fetchImpl(`${this.baseUrl}/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`, { headers: { Accept: "application/json" }, signal: request.signal });
+      response = await this.fetchImpl(`${this.baseUrl}/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`, {
+        headers: { Accept: "application/json" },
+        signal: request.signal,
+      });
     } finally {
       request.cleanup();
     }
     if (!response?.ok) return [];
     const data = await response.json();
     const lyrics = typeof data?.lyrics === "string" ? data.lyrics.trim() : "";
-    return lyrics ? [{ id: `${artist}-${title}`, title, artist, album: "", duration: null, plainLyrics: lyrics, syncedLyrics: "", sourceUrl: "https://lyrics.ovh/", providerId: this.id, providerName: this.displayName, resultKind: "plain" }] : [];
+    return lyrics
+      ? [
+          {
+            id: `${artist}-${title}`,
+            title,
+            artist,
+            album: "",
+            duration: null,
+            plainLyrics: lyrics,
+            syncedLyrics: "",
+            sourceUrl: "https://lyrics.ovh/",
+            providerId: this.id,
+            providerName: this.displayName,
+            resultKind: "plain",
+          },
+        ]
+      : [];
   }
 
-  async fetchLyrics(result) { return normalizeResult(result); }
+  async fetchLyrics(result) {
+    return normalizeResult(result);
+  }
 }
 
 /** Search-link provider: opens sources that do not offer a safe public lyrics API. */
 export class WebLyricsSearchProvider extends OnlineLyricsProvider {
-  constructor() { super({ id: "web-search", displayName: "Web lyric sources" }); }
+  constructor() {
+    super({ id: "web-search", displayName: "Web lyric sources" });
+  }
 
   async search(query) {
     const text = String(query || "").trim();
@@ -115,16 +138,39 @@ export class WebLyricsSearchProvider extends OnlineLyricsProvider {
       ["Better Lyrics", `https://better-lyrics.com/search?query=${encoded}`],
       ["Apple Music", `https://music.apple.com/us/search?term=${encoded}`],
       ["YouTube captions", `https://www.youtube.com/results?search_query=${encoded}`],
-    ].map(([name, sourceUrl]) => ({ id: `${this.id}-${name.toLowerCase().replace(/\s+/gu, "-")}`, title: `Search ${name}`, artist: text, album: "", duration: null, plainLyrics: "", syncedLyrics: "", sourceUrl, providerId: this.id, providerName: name, resultKind: "link" }));
+    ].map(([name, sourceUrl]) => ({
+      id: `${this.id}-${name.toLowerCase().replace(/\s+/gu, "-")}`,
+      title: `Search ${name}`,
+      artist: text,
+      album: "",
+      duration: null,
+      plainLyrics: "",
+      syncedLyrics: "",
+      sourceUrl,
+      providerId: this.id,
+      providerName: name,
+      resultKind: "link",
+    }));
   }
 
-  async fetchLyrics(result) { return normalizeResult(result); }
+  async fetchLyrics(result) {
+    return normalizeResult(result);
+  }
 }
 
 export function normalizeResult(result = {}) {
-  const syncedLyrics = typeof result.syncedLyrics === "string" ? result.syncedLyrics : typeof result.lrc === "string" ? result.lrc : "";
-  const plainLyrics = typeof result.plainLyrics === "string" ? result.plainLyrics : typeof result.lyrics === "string" ? result.lyrics : "";
-  const parsedTiming = result.timedLines || result.timedWords ? { timedLines: result.timedLines || [], timedWords: result.timedWords || [] } : parseTimedLyrics(syncedLyrics);
+  const syncedLyrics =
+    typeof result.syncedLyrics === "string" ? result.syncedLyrics : typeof result.lrc === "string" ? result.lrc : "";
+  const plainLyrics =
+    typeof result.plainLyrics === "string"
+      ? result.plainLyrics
+      : typeof result.lyrics === "string"
+        ? result.lyrics
+        : "";
+  const parsedTiming =
+    result.timedLines || result.timedWords
+      ? { timedLines: result.timedLines || [], timedWords: result.timedWords || [] }
+      : parseTimedLyrics(syncedLyrics);
   return {
     id: result.id ?? null,
     title: String(result.trackName ?? result.title ?? "").trim(),
@@ -135,10 +181,19 @@ export function normalizeResult(result = {}) {
     syncedLyrics,
     timedLines: parsedTiming.timedLines,
     timedWords: parsedTiming.timedWords,
-    sourceUrl: typeof result.url === "string" ? result.url : typeof result.sourceUrl === "string" ? result.sourceUrl : "",
+    sourceUrl:
+      typeof result.url === "string" ? result.url : typeof result.sourceUrl === "string" ? result.sourceUrl : "",
     providerId: result.providerId || "lrclib",
     providerName: result.providerName || "LRCLIB",
-    timingLevel: result.timingLevel || timingLevel({ ...result, syncedLyrics, plainLyrics, timedLines: parsedTiming.timedLines, timedWords: parsedTiming.timedWords }),
+    timingLevel:
+      result.timingLevel ||
+      timingLevel({
+        ...result,
+        syncedLyrics,
+        plainLyrics,
+        timedLines: parsedTiming.timedLines,
+        timedWords: parsedTiming.timedWords,
+      }),
     resultKind: result.resultKind || (syncedLyrics ? "timed" : plainLyrics ? "plain" : "unknown"),
   };
 }
@@ -149,7 +204,11 @@ export function createDefaultOnlineProvider(options) {
 
 export function createOnlineProviders(options = {}) {
   const { lrcLib, lyricsOvh, ...shared } = options;
-  return [new LrcLibProvider({ ...shared, ...(lrcLib || {}) }), new LyricsOvhProvider({ ...shared, ...(lyricsOvh || {}) }), new WebLyricsSearchProvider()];
+  return [
+    new LrcLibProvider({ ...shared, ...(lrcLib || {}) }),
+    new LyricsOvhProvider({ ...shared, ...(lyricsOvh || {}) }),
+    new WebLyricsSearchProvider(),
+  ];
 }
 
 export function selectOnlineProviders(providers, enabledSources = {}) {
@@ -160,7 +219,10 @@ export function parseArtistTitle(query, context = {}) {
   const artist = String(context.artist || "").trim();
   const title = String(context.title || "").trim();
   if (artist && title) return { artist, title };
-  const parts = String(query || "").split(/\s+[-|]\s+/u).map((part) => part.trim()).filter(Boolean);
+  const parts = String(query || "")
+    .split(/\s+[-|]\s+/u)
+    .map((part) => part.trim())
+    .filter(Boolean);
   return parts.length >= 2 ? { artist: parts[0], title: parts.slice(1).join(" - ") } : { artist: "", title: "" };
 }
 
@@ -173,7 +235,10 @@ function createRequestSignal(timeoutMs, parentSignal) {
   const onParentAbort = () => controller.abort(parentSignal.reason || abortError("Online search cancelled."));
   if (parentSignal?.aborted) onParentAbort();
   else parentSignal?.addEventListener("abort", onParentAbort, { once: true });
-  const timer = setTimeout(() => controller.abort(abortError(`Online search timed out after ${timeoutMs} ms.`, "TimeoutError")), timeoutMs);
+  const timer = setTimeout(
+    () => controller.abort(abortError(`Online search timed out after ${timeoutMs} ms.`, "TimeoutError")),
+    timeoutMs,
+  );
   return {
     signal: controller.signal,
     cleanup() {

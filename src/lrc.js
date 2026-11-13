@@ -1,4 +1,6 @@
-function pad(value) { return String(value).padStart(2, "0"); }
+function pad(value) {
+  return String(value).padStart(2, "0");
+}
 
 export function secondsToLrc(seconds) {
   if (!Number.isFinite(seconds) || seconds < 0) throw new TypeError("Timestamp must be a non-negative number");

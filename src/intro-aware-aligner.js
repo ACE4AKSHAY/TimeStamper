@@ -8,7 +8,8 @@ import { normalizeProfile } from "./profile-fusion.js";
  * then delegates the actual segmentation to the existing Boundary-DP solver.
  */
 export function alignByIntroAwareBoundaryDp(lines, profile, duration, options = {}) {
-  if (!Array.isArray(profile) || !profile.length) throw new Error("Intro-aware boundary DP requires a non-empty profile.");
+  if (!Array.isArray(profile) || !profile.length)
+    throw new Error("Intro-aware boundary DP requires a non-empty profile.");
   const activity = normalizeProfile(profile);
   const threshold = Number.isFinite(options.introThreshold) ? Math.min(1, Math.max(0, options.introThreshold)) : 0.35;
   const sustainFrames = Math.max(1, Math.floor(options.introSustainFrames || 1));
@@ -20,14 +21,14 @@ export function alignByIntroAwareBoundaryDp(lines, profile, duration, options = 
     ...segment,
     startFrame: segment.startFrame + introFrame,
     endFrame: segment.endFrame + introFrame,
-    startTime: (segment.startFrame + introFrame) / frameCount * duration,
-    endTime: (segment.endFrame + introFrame) / frameCount * duration,
+    startTime: ((segment.startFrame + introFrame) / frameCount) * duration,
+    endTime: ((segment.endFrame + introFrame) / frameCount) * duration,
   }));
   return {
     ...local,
     segments,
     introFrame,
-    introTime: introFrame / frameCount * duration,
+    introTime: (introFrame / frameCount) * duration,
     threshold,
     sustainFrames,
     frameRate: frameCount / duration,
