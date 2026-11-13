@@ -9,3 +9,4 @@ export { exportLrc, lrcToSeconds, secondsToLrc } from "./lrc.js";
 export { alignAutomatically, selectAutomaticRoute } from "./automatic-aligner.js";
 export { validateAlignmentRequest, validateAlignmentResult, validateFormDescriptor } from "./contracts/index.js";
 export { detectForm, detectLineScript } from "./forms/index.js";
+export { retimeLrc, RETIME_LRC_VERSION } from "./retime-lrc.js";

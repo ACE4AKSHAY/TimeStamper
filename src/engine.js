@@ -14,6 +14,7 @@ import { alignBySilenceAwareBoundaryDp } from "./silence-aware-aligner.js";
 import { alignWithReferenceTemplates } from "./reference-template-aligner.js";
 import { alignWithReferenceTemplateEnsemble } from "./reference-template-ensemble.js";
 import { alignAutomatically } from "./automatic-aligner.js";
+import { retimeLrc } from "./retime-lrc.js";
 
 export const ENGINE_VERSION = "0.3.0";
 
@@ -56,6 +57,22 @@ function synchronizeLegacy({ lyrics, duration, energyProfile, engine = "energy-b
       parameters: { ...parameters, profiles: undefined },
       lines: alignment.lines,
       alignment,
+      generatedAt: new Date().toISOString(),
+    };
+  }
+  if (engine === "retime-lrc") {
+    const alignment = retimeLrc({
+      lines,
+      duration,
+      profiles: parameters.profiles || { energy: energyProfile || [] },
+      timedLyrics: parameters.timedLyrics,
+      options: { ...parameters, signal: parameters.signal, onProgress: parameters.onProgress },
+    });
+    return {
+      ...alignment,
+      engine,
+      engineVersion: ENGINE_VERSION,
+      parameters: { ...alignment.parameters, profiles: undefined, timedLyrics: undefined },
       generatedAt: new Date().toISOString(),
     };
   }
@@ -344,6 +361,7 @@ const ENGINE_DEFINITIONS = [
   ["energy-baseline", "recommended", ["duration", "energyProfile"], "low"],
   ["combined-profile", "recommended", ["duration", "profiles"], "low"],
   ["automatic", "recommended", ["duration", "profiles"], "medium"],
+  ["retime-lrc", "recommended", ["timedLyrics", "profiles"], "medium"],
   ["boundary-dp", "recommended", ["duration", "profile"], "low"],
   ["intro-aware-boundary-dp", "experimental", ["duration", "profile"], "medium"],
   ["adaptive-boundary-dp", "recommended", ["duration", "profile"], "medium"],
