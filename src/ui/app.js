@@ -9,8 +9,15 @@ import { parseEditorTime } from "../time-utils.js";
 import { canUseOnlineSearch, createOnlineProviders, selectOnlineProviders } from "../online/online-provider.js";
 import { OnlineLyricsCache } from "../online/online-cache.js";
 import { searchOnlineLyrics as searchOnlineSources } from "../online/online-search.js";
-import { alignAutomatically } from "../automatic-aligner.js";
+import { synchronize } from "../engine.js";
 import { extractSpectralFluxProfile, extractVoicednessProfile } from "../audio-profiles.js";
+import {
+  createHistory,
+  filterTimelineLines,
+  formatConfidence,
+  summarizeAlignmentResult,
+  TIMELINE_FILTERS,
+} from "./alignment-panel.js";
 
 const $ = (id) => document.getElementById(id);
 let project = createProject();
@@ -33,6 +40,9 @@ let referenceAudio = null;
 let referenceLyrics = null;
 let alignmentWorker = null;
 let alignmentRequestId = null;
+let alignmentResult = null;
+let timelineFilter = TIMELINE_FILTERS.all;
+let history = createHistory(project);
 const log = new ProjectLogger(renderLog);
 const audio = $("audio");
 const onlineProviders = createOnlineProviders();
@@ -74,6 +84,51 @@ function showToast(message, level = "info") {
   toastTimer = setTimeout(() => {
     toast.className = "toast";
   }, 2600);
+}
+function commitHistory() {
+  history.commit(project);
+  updateHistoryControls();
+}
+function resetHistory() {
+  history = createHistory(project);
+  updateHistoryControls();
+}
+function updateHistoryControls() {
+  $("undo-edit").disabled = !history.canUndo();
+  $("redo-edit").disabled = !history.canRedo();
+}
+function renderAlignmentSummary() {
+  const summary = summarizeAlignmentResult(alignmentResult);
+  const panel = $("alignment-summary");
+  panel.dataset.status = summary.status;
+  panel.replaceChildren();
+  const message = document.createElement("span");
+  message.textContent = summary.message;
+  panel.append(message);
+  if (summary.total) {
+    const detail = document.createElement("small");
+    detail.textContent = `Engine: ${summary.engine} · ${summary.reviewed}/${summary.total} flagged`;
+    panel.append(detail);
+  }
+  if (summary.reasons.length) {
+    const reason = document.createElement("small");
+    reason.textContent = `Why: ${summary.reasons.slice(0, 2).join("; ")}`;
+    panel.append(reason);
+  }
+}
+function restoreHistoryState(snapshot) {
+  if (!snapshot) return false;
+  project = snapshot;
+  selectedId = project.timeline.lines[0]?.id || null;
+  alignmentResult = null;
+  render();
+  return true;
+}
+function undoEdit() {
+  if (!restoreHistoryState(history.undo(project))) showToast("Nothing to undo.", "warning");
+}
+function redoEdit() {
+  if (!restoreHistoryState(history.redo(project))) showToast("Nothing to redo.", "warning");
 }
 function normalizedShortcut(key) {
   if (key === " ") return "Space";
@@ -147,6 +202,9 @@ function render() {
   });
   $("auto-timestamp").disabled = !enabled || !timelineLines().length || !energyProfile.length;
   $("automatic-timestamp").disabled = !enabled || !timelineLines().length || !energyProfile.length;
+  $("timeline-filter").value = timelineFilter;
+  renderAlignmentSummary();
+  updateHistoryControls();
   renderTimeline();
   renderWaveform();
   updatePositionDisplays();
@@ -537,11 +595,16 @@ function onlineSourceUrl(providerId) {
 }
 
 function renderTimeline() {
+  const visibleLines = filterTimelineLines(timelineLines(), timelineFilter);
   $("timeline").replaceChildren(
-    ...timelineLines().map((line, index) => {
+    ...visibleLines.map((line) => {
+      const index = timelineLines().indexOf(line);
       const tr = document.createElement("tr");
       tr.className = line.id === selectedId ? "selected" : "";
-      tr.innerHTML = `<td>${index + 1}</td><td><input class="time-input" aria-label="Timestamp for line ${index + 1}" value="${Number.isFinite(effectiveLineTime(line)) ? formatClock(effectiveLineTime(line)) : ""}" placeholder="mm:ss.mmm" title="mm:ss.mmm or mm:ss:mmm" inputmode="numeric"></td><td class="line-text"></td><td class="row-actions"><button data-action="stamp" aria-label="Stamp chosen time" title="Stamp chosen time">⏱</button> <button data-action="clear" aria-label="Clear timestamp" title="Clear timestamp">⌫</button> <button data-action="insert" aria-label="Insert empty line after" title="Insert empty line after">＋</button> <button data-action="duplicate" aria-label="Duplicate line" title="Duplicate line">⧉</button> <button data-action="delete" aria-label="Delete lyric line" title="Delete lyric line">✕</button></td>`;
+      const confidence = formatConfidence(line.confidence);
+      const confidenceClass =
+        confidence === "—" ? "confidence-none" : Number(line.confidence) >= 0.75 ? "confidence-high" : "confidence-low";
+      tr.innerHTML = `<td>${index + 1}</td><td><input class="time-input" aria-label="Timestamp for line ${index + 1}" value="${Number.isFinite(effectiveLineTime(line)) ? formatClock(effectiveLineTime(line)) : ""}" placeholder="mm:ss.mmm" title="mm:ss.mmm or mm:ss:mmm" inputmode="numeric"></td><td class="${confidenceClass}" title="${line.reviewRequired ? (line.reasons || []).join("; ") || "Review this line" : "No review flag"}">${confidence}${line.reviewRequired ? " · review" : ""}</td><td class="line-text"></td><td class="row-actions"><button data-action="stamp" aria-label="Stamp chosen time" title="Stamp chosen time">⏱</button> <button data-action="clear" aria-label="Clear timestamp" title="Clear timestamp">⌫</button> <button data-action="insert" aria-label="Insert empty line after" title="Insert empty line after">＋</button> <button data-action="duplicate" aria-label="Duplicate line" title="Duplicate line">⧉</button> <button data-action="delete" aria-label="Delete lyric line" title="Delete lyric line">✕</button></td>`;
       tr.querySelector(".line-text").textContent = line.originalText;
       tr.addEventListener("click", (event) => {
         if (!event.target.matches("input,button")) selectLine(line);
@@ -556,6 +619,7 @@ function renderTimeline() {
       tr.querySelector('[data-action="clear"]').addEventListener("click", () => {
         line.startTime = null;
         line.manuallyCorrected = true;
+        commitHistory();
         log.info(`Cleared timestamp for line ${index + 1}`);
         showToast(`Cleared timestamp for line ${index + 1}.`);
         render();
@@ -581,6 +645,7 @@ function deleteLine(index) {
   selectedId = lines[index]?.id || lines[index - 1]?.id || null;
   log.info(`Deleted lyric line ${index + 1}: ${removed?.originalText || "(empty)"}`);
   showToast(`Deleted lyric line ${index + 1}.`);
+  commitHistory();
   render();
 }
 
@@ -596,6 +661,7 @@ function insertLineAfter(index, text, startTime = null) {
   project.lyrics.lines = timelineLines();
   selectedId = line.id;
   log.info(text ? `Duplicated line ${index + 1}.` : `Inserted empty line after line ${index + 1}.`);
+  commitHistory();
   render();
 }
 
@@ -621,6 +687,7 @@ function setTimestamp(line, value) {
   }
   line.startTime = seconds - lyricOffsetSeconds();
   line.manuallyCorrected = true;
+  commitHistory();
   selectedId = line.id;
   log.info(`Set timestamp for line ${line.order + 1} to ${formatClock(seconds)}`);
   render();
@@ -643,6 +710,7 @@ function stamp(line = timelineLines().find((item) => item.id === selectedId)) {
   if (!acceptsTimestamp(line, boundedTime)) return;
   line.startTime = boundedTime - lyricOffsetSeconds();
   line.manuallyCorrected = true;
+  commitHistory();
   selectedId = timelineLines()[currentIndex + 1]?.id || line.id;
   log.info(
     `Stamped line ${line.order + 1} at ${formatClock(boundedTime)}${selectedId !== line.id ? "; selected the next line." : ""}`,
@@ -661,6 +729,7 @@ function shiftSelected(direction) {
   if (!acceptsTimestamp(line, nextTime)) return;
   line.startTime = nextTime - lyricOffsetSeconds();
   line.manuallyCorrected = true;
+  commitHistory();
   log.info(`Adjusted line ${line.order + 1} by ${Math.round(delta * 1000)} ms`);
   render();
 }
@@ -672,6 +741,8 @@ function createInitialTiming() {
   }
   project.timeline.lines = createEnergyInitialTimeline(timelineLines(), energyProfile, audio.duration);
   project.lyrics.lines = project.timeline.lines;
+  alignmentResult = null;
+  commitHistory();
   selectedId = timelineLines()[0]?.id || null;
   log.info("Generated editable energy-based initial timestamps. Review every line before export.");
   render();
@@ -683,19 +754,35 @@ function createAutomaticTiming() {
     return;
   }
   try {
-    const result = alignAutomatically(
-      timelineLines(),
-      { energy: energyProfile, spectralFlux: spectralFluxProfile, voicedness: voicednessProfile },
-      audio.duration,
-      {},
-    );
-    project.timeline.lines = result.lines;
-    project.lyrics.lines = result.lines;
+    const sourceLines = timelineLines().map((line) => ({ ...line, text: line.originalText }));
+    const timedLines = sourceLines.filter((line) => Number.isFinite(line.startTime));
+    const result = synchronize({
+      engine: "auto-form",
+      lyrics: sourceLines,
+      duration: audio.duration,
+      parameters: {
+        profiles: { energy: energyProfile, spectralFlux: spectralFluxProfile, voicedness: voicednessProfile },
+        timedLyrics: timedLines.length ? { timedLines, timedWords: [] } : undefined,
+        structureAware: true,
+      },
+    });
+    alignmentResult = result;
+    project.timeline.lines = result.lines.map((line, index) => ({
+      ...timelineLines()[index],
+      startTime: line.startTime,
+      endTime: line.endTime,
+      confidence: line.confidence,
+      reviewRequired: line.reviewRequired,
+      reasons: line.reasons,
+      alignmentMethod: line.alignmentMethod,
+    }));
+    project.lyrics.lines = project.timeline.lines;
+    commitHistory();
     selectedId = result.lines[0]?.id || null;
     log.info(
-      `Automatic timing selected ${result.selectedEngine} (${result.selection.reason}). Review every line before export.`,
+      `Automatic timing selected ${result.engine} with ${result.diagnostics?.fusion?.candidateCount || 0} candidate engine(s). Review flagged lines before export.`,
     );
-    showToast(`Automatic timing used ${result.selectedEngine}. Review before export.`);
+    showToast(`Automatic timing used ${result.engine}. Review flagged lines before export.`);
     render();
   } catch (error) {
     log.warning(`Automatic timing failed: ${error.message}`);
@@ -736,6 +823,7 @@ function removeAudio() {
   spectralFluxProfile = [];
   voicednessProfile = [];
   $("audio-file").value = "";
+  commitHistory();
   log.info("Audio removed from the project.");
   showToast("Audio removed.");
   render();
@@ -747,6 +835,7 @@ function removeLyrics() {
   selectedId = null;
   $("lyrics-file").value = "";
   $("lyrics-text").value = "";
+  commitHistory();
   log.info("Lyrics removed from the project.");
   showToast("Lyrics removed.");
   render();
@@ -761,6 +850,8 @@ function loadLyrics(text, source = "pasted", provenance = null) {
   project.metadata.album ||= parsed.metadata.al || "";
   project.metadata.language ||= parsed.metadata.la || "";
   selectedId = parsed.lines[0]?.id || null;
+  alignmentResult = null;
+  commitHistory();
   log.info(`Loaded ${parsed.lines.length} lyric line(s) from ${source}.`);
   render();
 }
@@ -773,6 +864,7 @@ function updateLyricOffset() {
     return;
   }
   project.lyrics.offsetMs = Math.round(value);
+  commitHistory();
   log.info(`Set lyric preview/export offset to ${project.lyrics.offsetMs} ms.`);
   renderTimeline();
 }
@@ -966,8 +1058,16 @@ $("clear-timestamps").addEventListener("click", () => {
   timelineLines().forEach((line) => {
     line.startTime = null;
   });
+  alignmentResult = null;
+  commitHistory();
   log.info("Cleared all timestamps.");
   render();
+});
+$("undo-edit").addEventListener("click", undoEdit);
+$("redo-edit").addEventListener("click", redoEdit);
+$("timeline-filter").addEventListener("change", (event) => {
+  timelineFilter = event.target.value;
+  renderTimeline();
 });
 $("play-toggle").addEventListener("click", togglePlayback);
 $("seek").addEventListener("input", (event) => {
@@ -1048,6 +1148,9 @@ $("new-project").addEventListener("click", () => {
     audio.removeAttribute("src");
     audio.load();
     project = createProject();
+    alignmentResult = null;
+    timelineFilter = TIMELINE_FILTERS.all;
+    resetHistory();
     selectedId = null;
     peaks = [];
     energyProfile = [];
@@ -1097,6 +1200,9 @@ $("open-project").addEventListener("click", async () => {
   }
   try {
     project = deserializeProject(desktopFile.content);
+    alignmentResult = null;
+    timelineFilter = TIMELINE_FILTERS.all;
+    resetHistory();
     selectedId = project.timeline.lines[0]?.id || null;
     peaks = [];
     energyProfile = [];
@@ -1114,6 +1220,9 @@ $("project-file").addEventListener("change", async (event) => {
   if (!file) return;
   try {
     project = deserializeProject(await file.text());
+    alignmentResult = null;
+    timelineFilter = TIMELINE_FILTERS.all;
+    resetHistory();
     selectedId = project.timeline.lines[0]?.id || null;
     peaks = [];
     energyProfile = [];
@@ -1234,6 +1343,17 @@ window.addEventListener("online", renderOnlineSearch);
 window.addEventListener("offline", renderOnlineSearch);
 window.addEventListener("keydown", (event) => {
   if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName) || $("settings-dialog").open) return;
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
+    event.preventDefault();
+    if (event.shiftKey) redoEdit();
+    else undoEdit();
+    return;
+  }
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "y") {
+    event.preventDefault();
+    redoEdit();
+    return;
+  }
   const key = normalizedShortcut(event.key);
   if (key === settings.shortcuts.playToggle) {
     event.preventDefault();
