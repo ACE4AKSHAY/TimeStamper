@@ -24,8 +24,7 @@ Does combining three independent, explainable signals—RMS energy, spectral flu
 Run:
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe' scripts/run-multi-profile-experiment.mjs
+node scripts/run-multi-profile-experiment.mjs
 ```
 
 The current synthetic fixture reports 0.400 seconds MAE across five starts, with 60% within 0.25 seconds and 100% within 1 second. This is a wiring fixture, not a claim that three features improve real recordings; its value is preserving a reproducible combination for later analysis.

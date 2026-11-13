@@ -51,7 +51,6 @@ remain gated on manually verified private recordings.
 ## Reproduce
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
 npm run experiment-robustness
 ```
 

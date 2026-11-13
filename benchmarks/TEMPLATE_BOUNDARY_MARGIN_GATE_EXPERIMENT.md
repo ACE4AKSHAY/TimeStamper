@@ -37,8 +37,8 @@ outcomes, so both radius and gate remain experimental.
 $env:LYRICSYNC_DTW_IMPLEMENTATION = "banded"
 $env:LYRICSYNC_TEMPLATE_BOUNDARY_RADIUS = "1"
 $env:LYRICSYNC_TEMPLATE_BOUNDARY_MIN_IMPROVEMENT_RATIO = "0.05"
-& "C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe" scripts/evaluate-reference-template-cases.mjs `
-  "C:\Users\aksha\Desktop\TimeStamper_Manual_Review_2026-08-29" `
+& "node" scripts/evaluate-reference-template-cases.mjs `
+  "$env:LYRICSYNC_REVIEW_DIR" `
   "benchmarks/private/reference-template-margin-r005-5.json" 5
 ```
 

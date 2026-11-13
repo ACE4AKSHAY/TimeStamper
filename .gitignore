@@ -7,6 +7,8 @@ temp/
 datasets/audio/
 *.lrc
 node_modules/
+dist/
+release/
 benchmarks/results/
 benchmarks/private/
 

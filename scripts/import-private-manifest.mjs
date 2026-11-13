@@ -2,7 +2,7 @@ import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { parseCsv, createResearchCandidates } from "../src/private-manifest.js";
 
-const root = resolve(process.argv[2] || "C:/Users/aksha/Desktop/manus lyric-sync/dataset_private");
+const root = resolve(process.argv[2] || process.env.LYRICSYNC_DATA_DIR || "datasets/private");
 const output = resolve(process.argv[3] || "benchmarks/private/private-research-candidates.json");
 const rows = parseCsv(await readFile(join(root, "private_match_inventory.csv"), "utf8"));
 const [audioNames, lyricNames] = await Promise.all([readdir(join(root, "audio")), readdir(join(root, "lyrics"))]);

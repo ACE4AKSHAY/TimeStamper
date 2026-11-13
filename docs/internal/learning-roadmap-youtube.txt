@@ -3,7 +3,7 @@ TIMESTAMPER / LYRIC-SYNC LEARNING ROADMAP
 
 Purpose
 -------
-This is a beginner-first map of the concepts used by the TimeStamper project.
+This is a beginner-first map of the concepts used by the LyricSync project.
 It is ordered from essential foundations to optional advanced subjects. You do
 not need to reproduce the code while watching. Focus on understanding the
 inputs, outputs, and reason each stage exists.
@@ -297,7 +297,7 @@ PART 8 - ELECTRON, NODE, NPM, AND NVM (P0/P1)
     https://www.youtube.com/results?search_query=NVM+Windows+Node+Version+Manager+tutorial
     Learn: keeping multiple Node versions and explicitly selecting the runtime.
     Project mapping: project commands use
-    C:\\Users\\aksha\\AppData\\Local\\nvm\\v22.23.2.
+    Use the Node 22 version selected by your local NVM installation.
 
 31. Electron main, renderer, and preload
     Video: Electron JS Tutorial For Beginners - From Scratch To Advanced

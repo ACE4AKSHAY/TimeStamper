@@ -415,14 +415,13 @@ private_match_inventory.csv -> scripts/prepare-local-evaluation.mjs
 Use NVM Node 22 explicitly:
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' run test
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' run desktop
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' run audit-library -- 'C:\Users\aksha\Music'
+npm run test
+npm run desktop
+npm run audit-library -- $env:LYRICSYNC_DATA_DIR
 ```
 
 The audit manifest and benchmark results are ignored by Git. That is intentional: private file paths, personal lyrics, audio, generated caches and experimental outputs do not belong in the public repository.
 
 ## 10. GitHub history
 
-The canonical repository is [ACE4AKSHAY/TimeStamper](https://github.com/ACE4AKSHAY/TimeStamper). The current local `main` branch tracks `origin/main`, and each milestone above has been pushed in order. This preserves the reasoning trail: a reviewer can start at the foundation commit and inspect one research decision at a time.
+The canonical repository is [ACE4AKSHAY/TimeStamper](https://github.com/ACE4AKSHAY/TimeStamper). The application name is LyricSync; the repository name is retained for continuity. The current local `main` branch tracks `origin/main`, and each milestone above has been pushed in order.

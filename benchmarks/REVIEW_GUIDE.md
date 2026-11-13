@@ -5,8 +5,7 @@ You told me that none of the songs and lyrics have been manually checked yet. Th
 ## Generate a private review queue
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe' scripts/create-review-queue.mjs
+node scripts/create-review-queue.mjs
 ```
 
 The output is `benchmarks/private/review-queue.json`, which is ignored by Git. It contains up to 20 exact filename candidates that are not flagged as likely instrumental. You can generate a different size by adding a third argument, such as `10`.
@@ -36,8 +35,7 @@ Do not upload or commit your audio, lyrics, private manifest, or review queue. T
 After editing the Boolean decisions in the queue, run:
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe' scripts/validate-review-queue.mjs
+node scripts/validate-review-queue.mjs
 ```
 
 The validator separates `approved`, `pending`, and `rejected` items. An approved item is marked `benchmarkReady` only when its manually verified `reference` timestamp array has also been added. Approval is never inferred from a downloaded LRC file.
@@ -47,8 +45,7 @@ The validator separates `approved`, `pending`, and `rejected` items. An approved
 If you have a prepared `dataset_private` folder with `private_match_inventory.csv`, import its metadata into an ignored local candidate file:
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe' scripts/import-private-manifest.mjs 'C:\Users\aksha\Desktop\manus lyric-sync\dataset_private'
+node scripts/import-private-manifest.mjs '$env:LYRICSYNC_DATA_DIR'
 ```
 
 This does not copy or read the audio. It carries forward timestamp status, match score and special-version flags, and marks every item `benchmarkReady: false` until a human adds verified reference timestamps.

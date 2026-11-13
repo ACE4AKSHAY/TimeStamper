@@ -24,7 +24,6 @@ decoder metadata, and failure reasons. Audio bytes and lyric text never enter
 the output or Git.
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
 npm run evaluate-real -- 'C:\path\to\verified-cases'
 ```
 

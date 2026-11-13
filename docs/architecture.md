@@ -59,7 +59,7 @@ The UI and online files are grouped because they are product infrastructure,
 not separate alignment hypotheses.
 
 Implementation status and the ordered next steps are maintained in
-[`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md). In particular, the core
+[`roadmap.md`](roadmap.md). In particular, the core
 engine is implemented, while desktop extraction of spectral flux and voicedness
 is the next code integration step.
 
@@ -84,7 +84,7 @@ const lrc = exportLrc({
 ```
 
 For desktop development, use the NVM runtime documented in
-[`OFFLINE_SETUP.md`](OFFLINE_SETUP.md), then run `npm run desktop`. For engine
+[`offline-setup.md`](offline-setup.md), then run `npm run desktop`. For engine
 verification, run `npm test`, `npm run smoke-test`, and
 `npm run check-compatibility`.
 

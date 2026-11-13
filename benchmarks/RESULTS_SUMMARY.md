@@ -168,7 +168,6 @@ JSON remain outside Git.
 Use the requested NVM Node 22 runtime:
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
 npm run compare-engines
 npm run experiment-template-dtw
 npm run experiment-boundary-dp

@@ -25,7 +25,6 @@ treated as a final default without real evidence.
 ## Reproduce
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
 npm run experiment-generalization
 ```
 

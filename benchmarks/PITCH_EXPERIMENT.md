@@ -21,8 +21,7 @@ Can a bounded, explainable autocorrelation estimator identify voiced fundamental
 Run:
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe' scripts/run-pitch-experiment.mjs
+node scripts/run-pitch-experiment.mjs
 ```
 
 The current fixture reports 0 Hz mean frequency error across 48 voiced frames and a 0% false-voiced rate for silence. This is a controlled signal check, not evidence that singing pitch will be estimated equally well.

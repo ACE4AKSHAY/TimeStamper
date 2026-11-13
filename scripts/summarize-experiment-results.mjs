@@ -75,7 +75,7 @@ const report = [
   "## Reproduce",
   "",
   "```powershell",
-  "$env:Path = 'C:\\Users\\aksha\\AppData\\Local\\nvm\\v22.23.2;' + $env:Path",
+  "# Activate Node 22 with your local NVM command first, if needed",
   "npm run compare-engines",
   "npm run experiment-template-dtw",
   "npm run experiment-boundary-dp",

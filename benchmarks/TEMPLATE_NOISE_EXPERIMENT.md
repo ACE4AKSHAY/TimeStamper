@@ -22,7 +22,6 @@ DTW sensitivity only and cannot establish real-song accuracy.
 ## Reproduce
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
 npm run experiment-template-noise
 ```
 

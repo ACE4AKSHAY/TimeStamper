@@ -33,8 +33,7 @@ The algorithm does **not** turn text into audio and does not perform speech reco
 Run:
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe' scripts/run-template-dtw-experiment.mjs
+node scripts/run-template-dtw-experiment.mjs
 ```
 
 The current synthetic fixture reports zero timestamp error because it deliberately contains matching templates and target frames. That validates implementation wiring only; it is not evidence of real-song accuracy.

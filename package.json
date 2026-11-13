@@ -51,11 +51,16 @@
     "check-compatibility": "node scripts/check-compatibility.mjs",
     "benchmark-performance": "node scripts/run-performance-benchmark.mjs",
     "summarize-experiments": "node scripts/summarize-experiment-results.mjs",
-    "test": "node --test"
+    "test": "node --test",
+    "lint": "eslint .",
+    "format": "prettier --write \"src/**/*.{js,mjs}\" \"scripts/**/*.mjs\" \"desktop/**/*.cjs\" \"test/**/*.mjs\"",
+    "format:check": "prettier --check \"src/**/*.{js,mjs}\" \"scripts/**/*.mjs\" \"desktop/**/*.cjs\" \"test/**/*.mjs\""
   },
   "main": "desktop/main.cjs",
   "devDependencies": {
-    "electron": "^44.4.4"
+    "electron": "^44.4.4",
+    "eslint": "^10.14.0",
+    "prettier": "^3.10.1"
   },
   "engines": {
     "node": ">=18"

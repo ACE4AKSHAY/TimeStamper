@@ -22,8 +22,7 @@ Can a deterministic optimizer choose lyric boundaries that balance expected line
 Run:
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe' scripts/run-boundary-dp-experiment.mjs
+node scripts/run-boundary-dp-experiment.mjs
 ```
 
 The current synthetic fixture reports zero error because its profile peaks are intentionally placed at the reference boundaries. This verifies path constraints and output wiring, not real-song accuracy.

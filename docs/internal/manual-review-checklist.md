@@ -9,17 +9,15 @@ once.
 Open PowerShell and run:
 
 ```powershell
-Set-Location 'C:\Users\aksha\Documents\ChatGPT\TimeStamper'
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' run desktop
+Set-Location '<path-to-your-LyricSync-checkout>'
+npm run desktop
 ```
 
 If Electron does not open, use the browser fallback in a second PowerShell:
 
 ```powershell
-Set-Location 'C:\Users\aksha\Documents\ChatGPT\TimeStamper'
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' start
+Set-Location '<path-to-your-LyricSync-checkout>'
+npm start
 ```
 
 Then open `http://localhost:4173`.

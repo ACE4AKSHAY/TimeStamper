@@ -11,7 +11,6 @@ Node heap value. Results vary by machine and are not committed as raw JSON.
 ## Reproduce
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
 npm run benchmark-performance
 ```
 

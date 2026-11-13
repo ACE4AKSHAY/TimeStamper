@@ -18,8 +18,7 @@ Every method receives the same lyric lines, duration, profiles, and reference ti
 ## Run it
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe' scripts/run-ablation-study.mjs
+node scripts/run-ablation-study.mjs
 ```
 
 Results are written to ignored `benchmarks/results/ablation-study.json`.

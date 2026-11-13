@@ -12,7 +12,6 @@ its timestamp metrics are only a pipeline smoke signal, not an accuracy claim.
 ## Reproduce
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
 npm run smoke-offline-pipeline
 ```
 

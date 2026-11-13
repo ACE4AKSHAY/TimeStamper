@@ -20,7 +20,6 @@ accuracy claim.
 ## Run
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
 npm run experiment-full-engine
 ```
 

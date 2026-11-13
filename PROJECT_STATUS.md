@@ -10,14 +10,14 @@ The UI has exact seek/stamp time entry, click-and-drag waveform seeking, rewind/
 
 ## How to use the repository
 
-The active Node runtime is managed by NVM. In PowerShell, run:
+Use Node 22 for development. If NVM is installed, activate Node 22 with your
+own local NVM command before running the repository scripts:
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' run desktop
+npm run desktop
 ```
 
-Run tests with the same prefix and `npm.cmd run test`.
+Run tests with `npm test`.
 
 ## Status legend
 
@@ -34,7 +34,7 @@ Run tests with the same prefix and `npm.cmd run test`.
 | Stage | Required resources | What is and is not required |
 | --- | --- | --- |
 | Use the current desktop app | A Windows/macOS/Linux computer, local audio files, TXT/LRC lyrics, and NVM Node 22 for development | No internet, GPU, cloud account, paid API, or dataset is required for manual editing and LRC export. |
-| Develop/run the desktop shell | Electron 37 installed through `package.json`; NVM-managed Node/npm | Internet is needed only to install development dependencies. The running app reads local files and works offline. |
+| Develop/run the desktop shell | Electron 44 installed through `package.json`; NVM-managed Node/npm | Internet is needed only to install development dependencies. The running app reads local files and works offline. |
 | Support more audio formats | FFmpeg and a local audio-normalization adapter | This is a future packaging/runtime dependency; it is not needed for the current browser-codec-supported inputs. |
 | Build synchronization research | Rights-cleared audio, correct UTF-8 lyrics, manually verified line timestamps, metadata, and repeatable machine measurements | A dataset is needed for scientific claims, regression tests, and comparing algorithms—not for ordinary app use. |
 | Add vocal separation | A pluggable local separator such as Demucs, model storage, CPU/RAM/disk budget, and test tracks | GPU should remain optional; model downloads are setup-time and the offline app must continue to work without the separator. |
@@ -238,8 +238,9 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 188 | Automatic engine routing | 🟡 | Added a reusable non-ML `automatic` route that selects vocal-gated, combined-profile, or adaptive Boundary-DP from available explainable profiles and records its reason; underlying engines remain isolated. |
 | 189 | Automated algorithm benchmark refresh | 🟡 | Re-ran the seeded 60-case comparison across 10 deterministic engines: vocal-gated Boundary-DP ranked first at 0.745 s MAE, followed by combined profile at 0.792 s; all 10 completed without failures. This remains synthetic evidence only. |
 | 190 | Lightweight accessibility and engine access | 🟡 | Added a desktop Automatic timing action, keyboard waveform seeking with ARIA position updates, skip navigation, reduced-motion/automatic-scroll preference, and preserved the original Initial timing baseline separately. |
-| 191 | Project structure guide | 🟡 | Grouped UI modules under `src/ui/`, online modules under `src/online/`, added the stable `src/index.js` API facade, and documented the actual engine/data flow in `ARCHITECTURE.md`; algorithm candidates remain separate for reproducible comparison. |
-| 192 | Implementation roadmap | 🟡 | Added `IMPLEMENTATION_PLAN.md` with the current engine status, exact recreation path, ordered next implementation step, acceptance checks, and evidence gates for real recordings. |
+| 191 | Project structure guide | 🟡 | Grouped UI modules under `src/ui/`, online modules under `src/online/`, added the stable `src/index.js` API facade, and documented the actual engine/data flow in `docs/architecture.md`; algorithm candidates remain separate for reproducible comparison. |
+| 192 | Implementation roadmap | 🟡 | Added `docs/roadmap.md` with the current engine status, exact recreation path, ordered next implementation step, acceptance checks, and evidence gates for real recordings. |
+| 193 | Repository portability and contributor tooling | 🟡 | Personal machine paths were removed from active scripts/docs, long references were moved under `docs/`, and CI/lint/format scaffolding was added. A license choice and maintainer review remain. |
 
 ## Recommended next steps
 

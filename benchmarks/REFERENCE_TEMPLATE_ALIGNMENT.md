@@ -59,8 +59,7 @@ baseline.
 ## Usage
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe' scripts/run-reference-template-alignment.mjs `
+node scripts/run-reference-template-alignment.mjs `
   'C:\path\to\target.mp3' `
   'C:\path\to\verified-reference.mp3' `
   'C:\path\to\reference.json' `
@@ -80,9 +79,8 @@ sanity check—not evidence that the method generalizes to another singer or
 recording.
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' run evaluate-reference-template -- `
-  'C:\path\to\TimeStamper_Manual_Review_2026-08-29' `
+npm run evaluate-reference-template -- `
+  'C:\path\to\manual-review-2026-08-29' `
   'benchmarks/private/reference-template-self-evaluation.json' 3
 ```
 

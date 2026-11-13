@@ -5,7 +5,7 @@ import { parseLyrics } from "../src/lyrics.js";
 
 // This command creates metadata-only evaluation stubs. It never copies audio or
 // lyric files into the repository; the generated JSON is ignored by Git.
-const root = resolve(process.argv[2] || "C:/Users/aksha/Desktop/manus lyric-sync/dataset_private");
+const root = resolve(process.argv[2] || process.env.LYRICSYNC_DATA_DIR || "datasets/private");
 const output = resolve(process.argv[3] || "benchmarks/private/local-evaluation.json");
 const limit = Math.max(1, Number(process.argv[4] || 10));
 

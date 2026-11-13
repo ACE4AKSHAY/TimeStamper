@@ -9,7 +9,7 @@ memory-saving banded DTW implementation handle the private review set?
 ## Inputs and privacy
 
 - Input root: the user-supplied local review folder ending in
-  `TimeStamper_Manual_Review_2026-08-29`.
+  `manual-review-2026-08-29`.
 - 20 case folders, 20 MP3 files, 1,114 lyric lines in total.
 - Each case contains a `reference.json` marked as manually verified.
 - The generated report contains only local paths, configuration, timestamps,
@@ -68,11 +68,10 @@ background-vocal variation.
 ## Reproduction
 
 ```powershell
-Set-Location 'C:\Users\aksha\Documents\ChatGPT\TimeStamper'
-$ffDir = 'C:\Users\aksha\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg.Shared_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.1-full_build-shared\bin'
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $ffDir + ';' + $env:Path
+Set-Location '$env:LYRICSYNC_REPO_DIR'
+$ffDir = 'ffmpeg-on-PATH'
 $env:LYRICSYNC_DTW_IMPLEMENTATION = 'banded'
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe' scripts/evaluate-reference-template-cases.mjs `
-  'C:\Users\aksha\Desktop\TimeStamper_Manual_Review_2026-08-29' `
+node scripts/evaluate-reference-template-cases.mjs `
+  '$env:LYRICSYNC_REVIEW_DIR' `
   'benchmarks/private/reference-template-self-evaluation-banded.json'
 ```

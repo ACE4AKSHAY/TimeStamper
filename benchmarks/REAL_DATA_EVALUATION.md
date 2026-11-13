@@ -27,14 +27,13 @@ M4A, FLAC and similar formats use an optional local FFmpeg executable.
 ## Run it with the requested NVM Node
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' run prepare-local-evaluation
+npm run prepare-local-evaluation
 ```
 
 To use a different private copy, pass its root and an optional output/count:
 
 ```powershell
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe' scripts/prepare-local-evaluation.mjs 'C:\path\to\dataset_private' 'benchmarks/private/local-evaluation.json' 10
+node scripts/prepare-local-evaluation.mjs 'C:\path\to\dataset_private' 'benchmarks/private/local-evaluation.json' 10
 ```
 
 ## Exact manual gate for trustworthy measurements
@@ -67,7 +66,7 @@ Once a decoder is available, the same platform-neutral engines can be invoked
 from the command line. The result is written to the ignored private directory:
 
 ```powershell
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe' scripts/run-local-alignment.mjs `
+node scripts/run-local-alignment.mjs `
   'C:\path\to\song.wav' `
   'C:\path\to\song.lrc' `
   multi-profile-boundary-dp `
@@ -134,8 +133,7 @@ The metadata-only report is written to the ignored path
 `benchmarks/private/real-case-evaluation.json` by:
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' run evaluate-real -- 'C:\path\to\TimeStamper_Manual_Review_2026-08-29'
+npm run evaluate-real -- 'C:\path\to\manual-review-2026-08-29'
 ```
 
 Why both kinds of testing matter: the user’s listening review establishes the

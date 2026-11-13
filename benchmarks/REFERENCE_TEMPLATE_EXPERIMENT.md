@@ -29,7 +29,7 @@ audio and no model is trained.
 ## CLI runner
 
 ```powershell
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe' scripts/run-reference-template-alignment.mjs `
+node scripts/run-reference-template-alignment.mjs `
   'C:\path\target.wav' `
   'C:\path\verified-reference.wav' `
   'C:\path\reference.json' `

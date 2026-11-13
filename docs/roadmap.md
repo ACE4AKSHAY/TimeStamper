@@ -140,4 +140,4 @@ const output = exportLrc({
 ```
 
 The complete data-flow diagram and module map are in
-[`ARCHITECTURE.md`](ARCHITECTURE.md).
+[`architecture.md`](architecture.md).

@@ -43,7 +43,7 @@
 - [`ALIGNMENT_PROGRESS.md`](./ALIGNMENT_PROGRESS.md) — optional transport-neutral progress callbacks for long runs.
 - [`ONLINE_SEARCH.md`](./ONLINE_SEARCH.md) — explicit opt-in LRCLIB lookup and privacy boundary.
 - [`REFERENCE_TEMPLATE_UI.md`](./REFERENCE_TEMPLATE_UI.md) — desktop reference-assisted MFCC/DTW workflow.
-- [`../OFFLINE_SETUP.md`](../OFFLINE_SETUP.md) — one-time runtime and offline reinstall instructions.
+- [`../docs/offline-setup.md`](../docs/offline-setup.md) — one-time runtime and offline reinstall instructions.
 - [`REFERENCE_TARGET_PREFLIGHT.md`](./REFERENCE_TARGET_PREFLIGHT.md) — cheap structural checks before expensive pair alignment.
 - [`REFERENCE_PAIR_LAYOUT.md`](./REFERENCE_PAIR_LAYOUT.md) — private folder layout for alternate-recording evaluation.
 - [`TEMPLATE_BOUNDARY_REFINEMENT_EXPERIMENT.md`](./TEMPLATE_BOUNDARY_REFINEMENT_EXPERIMENT.md) — opt-in local MFCC boundary refinement.
@@ -83,15 +83,13 @@ absolute local paths, metadata and empty review fields.
 Run the synthetic smoke benchmark with:
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe' scripts/run-benchmark.mjs benchmarks/example.synthetic.json
+node scripts/run-benchmark.mjs benchmarks/example.synthetic.json
 ```
 
 Compare the deterministic energy baseline with the explainable weighted profile engine:
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe' scripts/run-engine-comparison.mjs benchmarks/example.synthetic.json
+node scripts/run-engine-comparison.mjs benchmarks/example.synthetic.json
 ```
 
 The comparison consumes explicit `energy` and `spectralFlux` arrays, normalizes each to 0..1, fuses them using documented weights, and reports the same timestamp metrics for both methods. Results are generated under `benchmarks/results/`, which is ignored by Git. Synthetic results validate wiring only; real accuracy requires rights-cleared audio and manually checked line starts.

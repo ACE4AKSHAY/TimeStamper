@@ -9,7 +9,7 @@ self-reference result?
 ## Method
 
 - Dataset: the 20 local reviewed case folders under
-  `C:\Users\aksha\Desktop\TimeStamper_Manual_Review_2026-08-29`.
+  `$env:LYRICSYNC_REVIEW_DIR`.
 - Reference and target are intentionally the same recording. This is an
   implementation sanity check, not alternate-recording generalization.
 - Banded constrained DTW, cached whole-recording MFCC frames, and verified
@@ -51,8 +51,8 @@ alternate mix) before production promotion.
 ```powershell
 $env:LYRICSYNC_DTW_IMPLEMENTATION = "banded"
 $env:LYRICSYNC_TEMPLATE_BOUNDARY_RADIUS = "1"
-& "C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe" scripts/evaluate-reference-template-cases.mjs `
-  "C:\Users\aksha\Desktop\TimeStamper_Manual_Review_2026-08-29" `
+& "node" scripts/evaluate-reference-template-cases.mjs `
+  "$env:LYRICSYNC_REVIEW_DIR" `
   "benchmarks/private/reference-template-self-evaluation-refine-r1.json"
 ```
 

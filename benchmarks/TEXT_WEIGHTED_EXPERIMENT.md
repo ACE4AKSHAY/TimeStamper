@@ -33,7 +33,6 @@ as an isolated selectable engine and is not promoted to the default.
 Run it with the NVM Node runtime:
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
 npm run experiment-text-weighted
 ```
 

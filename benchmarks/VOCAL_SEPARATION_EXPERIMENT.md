@@ -42,8 +42,7 @@ Node, Electron, network, or machine-learning dependency.
 ## Comparison command
 
 ```powershell
-$env:Path = 'C:\Users\aksha\AppData\Local\nvm\v22.23.2;' + $env:Path
-& 'C:\Users\aksha\AppData\Local\nvm\v22.23.2\npm.cmd' run compare-vocal-separation -- `
+npm run compare-vocal-separation -- `
   'C:\path\to\full-mix.mp3' `
   'C:\path\to\vocals.wav' `
   'C:\path\to\lyrics.lrc' `

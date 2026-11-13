@@ -33,7 +33,7 @@ $env:LYRICSYNC_TEMPLATE_BOUNDARY_RADIUS = "1"
 $env:LYRICSYNC_TEMPLATE_BOUNDARY_MIN_IMPROVEMENT_RATIO = "0.05"
 $env:LYRICSYNC_TEMPLATE_ENSEMBLE = "1"
 $env:LYRICSYNC_ENSEMBLE_CLUSTER_TOLERANCE = "0.25"
-& "C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe" scripts/evaluate-reference-template-pairs.mjs `
+& "node" scripts/evaluate-reference-template-pairs.mjs `
   "benchmarks/private/reference-template-pairs" `
   "benchmarks/private/reference-template-pairs-refined.json"
 ```

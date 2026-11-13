@@ -40,8 +40,8 @@ preserves the implementation for future independent-pair testing.
 ```powershell
 $env:LYRICSYNC_DTW_IMPLEMENTATION = "banded"
 $env:LYRICSYNC_FEATURE_NORMALIZATION = "global-zscore"
-& "C:\Users\aksha\AppData\Local\nvm\v22.23.2\node.exe" scripts/evaluate-reference-template-cases.mjs `
-  "C:\Users\aksha\Desktop\TimeStamper_Manual_Review_2026-08-29" `
+& "node" scripts/evaluate-reference-template-cases.mjs `
+  "$env:LYRICSYNC_REVIEW_DIR" `
   "benchmarks/private/reference-template-normalized-5.json" 5
 ```
 
