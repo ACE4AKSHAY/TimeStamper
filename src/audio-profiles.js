@@ -1,5 +1,5 @@
 import { fftMagnitudes } from "./features.js";
-import { resampleProfile } from "./profile-fusion.js";
+import { normalizeProfile, resampleProfile } from "./profile-fusion.js";
 
 function frameSignal(samples, frameSize, hopSize, callback) {
   const signal = Array.from(samples || [], Number).map((value) => Number.isFinite(value) ? value : 0);
@@ -30,6 +30,27 @@ export function extractSpectralFluxProfile(samples, options = {}) {
   return resampleProfile(flux, options.bins || 700);
 }
 
+/**
+ * Cheap, language-neutral vocalness proxy for interactive desktop routing.
+ * It is intentionally not a voice recognizer: low-band concentration and a
+ * bounded zero-crossing penalty only help suppress obvious percussive/noisy
+ * peaks before the user reviews the editable result.
+ */
+export function extractVoicednessProfile(samples, options = {}) {
+  const frameSize = options.frameSize || 1024, hopSize = options.hopSize || 512;
+  const proxy = frameSignal(samples, frameSize, hopSize, (frame) => {
+    let crossings = 0;
+    for (let index = 1; index < frame.length; index++) if ((frame[index - 1] < 0) !== (frame[index] < 0)) crossings++;
+    const spectrum = fftMagnitudes(frame).map((value) => Math.sqrt(value));
+    const split = Math.max(1, Math.floor(spectrum.length * 0.25));
+    const low = spectrum.slice(0, split).reduce((sum, value) => sum + value, 0);
+    const total = spectrum.reduce((sum, value) => sum + value, 0) || 1;
+    const crossingPenalty = Math.max(0, 1 - (crossings / Math.max(1, frame.length)) * 4);
+    return (low / total) * crossingPenalty;
+  });
+  return normalizeProfile(resampleProfile(proxy, options.bins || 700));
+}
+
 export function extractExplainableProfiles(samples, options = {}) {
-  return { energy: extractRmsProfile(samples, options), spectralFlux: extractSpectralFluxProfile(samples, options) };
+  return { energy: extractRmsProfile(samples, options), spectralFlux: extractSpectralFluxProfile(samples, options), voicedness: extractVoicednessProfile(samples, options) };
 }

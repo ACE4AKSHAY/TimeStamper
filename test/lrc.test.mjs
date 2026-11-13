@@ -17,7 +17,7 @@ import { constrainedDtw } from "../src/dtw.js";
 import { alignMfccSequences } from "../src/mfcc-dtw.js";
 import { alignLineTemplates } from "../src/template-aligner.js";
 import { fuseProfiles, normalizeProfile, resampleProfile } from "../src/profile-fusion.js";
-import { extractExplainableProfiles, extractRmsProfile, extractSpectralFluxProfile } from "../src/audio-profiles.js";
+import { extractExplainableProfiles, extractRmsProfile, extractSpectralFluxProfile, extractVoicednessProfile } from "../src/audio-profiles.js";
 import { alignByBoundaryDp } from "../src/boundary-dp-aligner.js";
 import { extractPitchProfile, pitchVoicednessProfile } from "../src/pitch-profile.js";
 import { alignMultiProfile } from "../src/multi-profile-aligner.js";
@@ -96,6 +96,17 @@ test("energy baseline creates ordered editable initial timestamps", () => {
   assert.ok(output[0].startTime <= output[1].startTime);
   assert.ok(output[1].startTime <= output[2].startTime);
   assert.equal(output[0].alignmentMethod, "energy_baseline");
+});
+
+test("explainable desktop profiles include bounded spectral and vocalness signals", () => {
+  const samples = Float64Array.from({ length: 4096 }, (_, index) => Math.sin(index / 12) * 0.5);
+  const options = { frameSize: 256, hopSize: 128, bins: 32 };
+  const profiles = extractExplainableProfiles(samples, options);
+  assert.equal(profiles.energy.length, 32);
+  assert.equal(profiles.spectralFlux.length, 32);
+  assert.equal(profiles.voicedness.length, 32);
+  assert.ok(profiles.voicedness.every((value) => value >= 0 && value <= 1));
+  assert.deepEqual(extractVoicednessProfile(samples, options), profiles.voicedness);
 });
 
 test("platform-neutral engine returns reproducible structured alignment", () => {
@@ -222,7 +233,7 @@ test("explainable audio profiles extract finite energy and spectral change", () 
   assert.equal(energy.length, 20);
   assert.equal(flux.length, 20);
   assert.ok([...energy, ...flux].every(Number.isFinite));
-  assert.deepEqual(Object.keys(extractExplainableProfiles(samples, { frameSize: 128, hopSize: 64, bins: 8 })), ["energy", "spectralFlux"]);
+  assert.deepEqual(Object.keys(extractExplainableProfiles(samples, { frameSize: 128, hopSize: 64, bins: 8 })), ["energy", "spectralFlux", "voicedness"]);
 });
 
 test("boundary dynamic programming returns monotonic constrained segments", () => {

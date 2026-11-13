@@ -25,11 +25,11 @@ index.html
      -> src/lrc.js -> exported LRC
 ```
 
-The current desktop waveform extraction supplies RMS energy, so **Automatic
-timing** currently selects its transparent energy fallback. The reusable API
-can select the vocal-gated or combined-profile route when voicedness and
-spectral-flux profiles are supplied. This is deterministic signal processing,
-not AI, speech recognition, or language recognition.
+The desktop waveform scan extracts RMS energy, spectral flux and a bounded
+heuristic vocalness profile. **Automatic timing** can therefore choose the
+combined-profile or adaptive vocal Boundary-DP route locally; all generated
+timestamps remain editable and should be reviewed. This is deterministic
+signal processing, not AI, speech recognition, or language recognition.
 
 ## Source layout
 

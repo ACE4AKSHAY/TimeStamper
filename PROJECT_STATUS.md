@@ -242,6 +242,7 @@ You do **not** need a dataset to use LyricSync or to manually create an LRC. You
 | 192 | Implementation roadmap | 🟡 | Added `docs/roadmap.md` with the current engine status, exact recreation path, ordered next implementation step, acceptance checks, and evidence gates for real recordings. |
 | 193 | Repository portability and contributor tooling | 🟡 | Personal machine paths were removed from active scripts/docs, long references were moved under `docs/`, and CI/lint/format scaffolding was added. The repository remains intentionally unlicensed. |
 | 194 | Multi-source lyric discovery | 🟡 | Added concurrent provider fan-out, normalized line/word timing, metadata/version-aware ranking, expanded safe manual links, and a non-destructive per-track offset. More permitted API adapters and word-level UI remain future work. |
+| 195 | Desktop profile routing | 🟡 | The waveform scan now extracts RMS, spectral flux, and a bounded heuristic vocalness profile for Automatic timing. This improves routing, not recognition; real-song validation is still required. |
 
 ## Recommended next steps
 
