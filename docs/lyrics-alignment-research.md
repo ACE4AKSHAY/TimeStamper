@@ -285,6 +285,38 @@ Recommended evaluation hierarchy:
 documents common absolute-error and percentage-based metrics. Use the same
 tolerance definitions when comparing results.
 
+## 12. Verified research package
+
+The detailed, phase-gated artifacts are kept separate so each decision can be
+reviewed and reverted independently:
+
+- [Literature matrix](../research/literature-matrix.md): one row per work,
+  evidence status, metrics and comparability notes.
+- [Tools matrix](../research/tools-matrix.md): candidate tools, licenses,
+  models, runtime and Electron integration risks.
+- [Candidate engines](../research/candidate-engines.md): replacement pipelines
+  with published expectation and an intentionally empty measured column.
+- [Dataset review](../research/datasets.md): size, languages, annotation
+  granularity, access terms and private-data boundary.
+- [Evaluation protocol](../research/evaluation-protocol.md): formulas,
+  tolerances, abstention, runtime, statistics and split rules.
+- [Annotation guide](../research/annotation-guide.md): line-start policy,
+  difficult cases and the double-annotation human noise floor.
+- [Failure taxonomy](../research/failure-taxonomy.md): mathematical cause,
+  detector and repair/flag/abstain behavior.
+- [Experiment plan](../research/experiment-plan.md): E-1 through E9,
+  pre-registered thresholds and replacement rule.
+- [Decision memo](alignment-decision-memo.md): concise recommendation and open
+  questions.
+- [Link audit](../research/link-audit.md) and [corrections log](../research/corrections.md):
+  Phase 1 source verification.
+- [Dependency-free link checker](../research/scripts/link-checker.mjs) and
+  [verified-case schema](../research/schemas/verified-case.schema.json):
+  optional Phase 7 research tooling.
+
+No document above contains a measured real-song result yet. Published evidence,
+engineering inference and future own measurements must remain clearly separated.
+
 ## 5. Divide-and-conquer problem map
 
 Each row should be a separately testable module and experiment. Do not make one
