@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ACE4AKSHAY/TimeStamper/schemas/verified-case.schema.json",
+  "title": "LyricSync verified case",
+  "description": "Metadata and timestamps for a privately verified alignment case. Audio and lyric files stay outside the repository.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "caseId", "audio", "lyrics", "annotatorId", "strata", "split"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "caseId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "audio": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sha256", "durationMs"],
+      "properties": {
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{64}$"
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sampleRate": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "channels": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "versionLabel": {
+          "type": "string",
+          "maxLength": 200
+        }
+      }
+    },
+    "lyrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sha256", "language", "lines"],
+      "properties": {
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{64}$"
+        },
+        "language": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "script": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "lines": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/line"
+          }
+        }
+      }
+    },
+    "annotatorId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "strata": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "ordinary-vocal",
+          "language-script",
+          "long-intro",
+          "instrumental-heavy",
+          "cover-live-alternate",
+          "slowed-remix",
+          "repeated-chorus",
+          "rap-spoken",
+          "dense-backing-vocals",
+          "quiet-vocal",
+          "text-mismatch"
+        ]
+      }
+    },
+    "split": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "groupKey"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": ["train", "validation", "test", "private-test"]
+        },
+        "groupKey": {
+          "type": "string",
+          "description": "Stable opaque artist/album/song grouping key; do not store the private name."
+        }
+      }
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 2000
+    }
+  },
+  "$defs": {
+    "line": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "text", "startMs", "status", "confidence"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^line-[0-9]{1,6}(?:-occ-[0-9]{1,4})?$"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "startMs": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "status": {
+          "type": "string",
+          "enum": ["sung", "not-sung", "skipped", "extra", "uncertain"]
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "low"]
+        },
+        "labels": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["breath-before", "pickup", "backing", "melisma", "instrumental-gap", "text-mismatch", "quiet-vocal", "ad-lib"]
+          }
+        },
+        "annotatorNote": {
+          "type": "string",
+          "maxLength": 500
+        }
+      }
+    }
+  }
+}
