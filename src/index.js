@@ -14,3 +14,12 @@ export { buildEnginePlan, runAutoForm } from "./router/index.js";
 export { addWordTimings, interpolateWordTimings, tokenizeWords } from "./word-timing.js";
 export { exportEnhancedLrc } from "./enhanced-lrc.js";
 export { applyStructureAwareChecks } from "./structure-check.js";
+export {
+  alignCtcEmissions,
+  createSeparatorFromPlugin,
+  describePlugin,
+  discoverPlugins,
+  runPlugin,
+  validatePlugin,
+  verifyManifest,
+} from "./plugins/index.js";
