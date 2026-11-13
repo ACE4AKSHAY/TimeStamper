@@ -82,7 +82,14 @@ function toLegacyRequest(request, engine) {
 function fuseCandidates(lines, candidates, duration, options) {
   const successful = candidates.filter((candidate) => candidate.result);
   const fusedLines = lines.map((line, index) => {
-    const starts = successful.map((candidate) => candidate.result.lines[index]?.startTime).filter(Number.isFinite);
+    const starts = successful
+      .map((candidate) => {
+        const start = candidate.result.lines[index]?.startTime;
+        if (!Number.isFinite(start)) return null;
+        const offset = Number(options.learningHints?.engineOffsets?.[candidate.entry.engine]) || 0;
+        return start + offset;
+      })
+      .filter(Number.isFinite);
     const summary = summarizeConsensus(starts, { confidenceScale: options.confidenceScale || 0.5 });
     const sourceReviews = successful.flatMap((candidate) =>
       candidate.result.lines[index]?.reviewRequired ? [candidate.entry.engine] : [],
@@ -110,6 +117,16 @@ function fuseCandidates(lines, candidates, duration, options) {
     };
   });
   fusedLines.forEach((line, index) => {
+    if (
+      index > 0 &&
+      Number.isFinite(line.startTime) &&
+      Number.isFinite(fusedLines[index - 1].startTime) &&
+      line.startTime < fusedLines[index - 1].startTime
+    ) {
+      line.startTime = fusedLines[index - 1].startTime;
+      line.reviewRequired = true;
+      line.reasons.push("learning hint required monotonic clamp");
+    }
     line.endTime = fusedLines[index + 1]?.startTime ?? duration;
   });
   return {
@@ -118,6 +135,10 @@ function fuseCandidates(lines, candidates, duration, options) {
       candidateCount: successful.length,
       disagreementThreshold: options.maxDisagreementSeconds || 0.5,
       reviewedLineCount: fusedLines.filter((line) => line.reviewRequired).length,
+      learning: {
+        enabled: Boolean(options.learningHints?.enabled),
+        appliedEngines: Object.keys(options.learningHints?.engineOffsets || {}),
+      },
     },
   };
 }

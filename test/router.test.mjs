@@ -84,3 +84,24 @@ test("auto-form refusal keeps timestamps unset for instrumental input", () => {
   assert.equal(result.diagnostics.refused, true);
   assert.ok(result.lines.every((line) => line.startTime === null && line.confidence === 0));
 });
+
+test("auto-form applies explicit local learning hints and keeps output monotonic", () => {
+  const result = synchronize({
+    engine: "auto-form",
+    lyrics: lines,
+    duration: 30,
+    parameters: {
+      profiles: {
+        energy: [0.1, 0.8, 0.2, 0.9, 0.2, 0.7, 0.1],
+        voicedness: [0.1, 0.9, 0.2, 0.8, 0.2, 0.9, 0.1],
+      },
+      timedLyrics: {
+        timedLines: lines.map((line, index) => ({ text: line.text, startTime: index * 5, endTime: null, words: [] })),
+        timedWords: [],
+      },
+      learningHints: { enabled: true, engineOffsets: { "retime-lrc": 0.1 } },
+    },
+  });
+  assert.deepEqual(result.diagnostics.fusion.learning, { enabled: true, appliedEngines: ["retime-lrc"] });
+  assert.ok(result.lines.every((line, index) => index === 0 || line.startTime >= result.lines[index - 1].startTime));
+});

@@ -53,10 +53,13 @@ audio + lyrics → local feature extraction → editable line timeline → LRC
 - TXT/LRC import with Unicode and native-script preservation.
 - Manual timestamping, ordering validation, insert/duplicate/delete controls.
 - Explainable energy, spectral, voicedness, Boundary-DP and MFCC/DTW engines.
+- Form-aware automatic routing with confidence, review reasons and filters.
 - Reference-assisted alignment for covers, live versions and alternate mixes.
 - Optional online lyric providers with source controls, timeout, cache and provenance.
 - Accessible keyboard waveform controls, shortcuts, themes and reduced motion.
 - Human-readable project files and LRC export.
+- Bounded local undo/redo and an optional numeric correction journal; no audio
+  or lyric text is uploaded or used as a hidden dataset.
 
 ## Documentation
 
@@ -68,6 +71,8 @@ audio + lyrics → local feature extraction → editable line timeline → LRC
 - [Online search behavior](benchmarks/ONLINE_SEARCH.md)
 - [Real-data evaluation](benchmarks/REAL_DATA_EVALUATION.md)
 - [Project status and requirements traceability](PROJECT_STATUS.md)
+- [Phase-by-phase implementation and file map](docs/phases.md)
+- [Local correction calibration](docs/correction-learning.md)
 - [Internal learning and manual-review notes](docs/internal/)
 
 ## Development principles

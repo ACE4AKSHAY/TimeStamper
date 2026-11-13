@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Added form-aware automatic timing in the desktop UI, confidence/review
+  triage, missing-line filters, bounded undo/redo, and keyboard undo shortcuts.
+- Added a privacy-preserving local correction journal with explicit bounded
+  learning hints for router calibration; no audio, lyrics, model or network
+  dependency is introduced.
 - Added provider-neutral timed/word-timed result normalization, concurrent
   source search, metadata/version-aware ranking, expanded manual search links,
   and a non-destructive per-track lyric offset.

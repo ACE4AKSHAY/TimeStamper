@@ -23,3 +23,13 @@ export {
   validatePlugin,
   verifyManifest,
 } from "./plugins/index.js";
+export {
+  CORRECTION_SCHEMA_VERSION,
+  createCorrectionJournal,
+  createCorrectionRecord,
+  deriveLearningHints,
+  deserializeCorrections,
+  serializeCorrections,
+  summarizeCorrections,
+  validateCorrectionRecord,
+} from "./learning/correction-store.js";

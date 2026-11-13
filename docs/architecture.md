@@ -16,12 +16,13 @@ index.html
      -> local audio decode + waveform/RMS extraction
      -> selected timing action
         -> Initial timing: src/energy-aligner.js
-        -> Automatic timing: src/automatic-aligner.js
-           -> vocal-gated / combined-profile / adaptive Boundary-DP route
+        -> Automatic timing: src/engine.js -> router/auto-form.js
+           -> form detection -> retime-LRC / vocal-gated / pause-aware / text-weighted candidates
+           -> consensus + confidence/review diagnostics
         -> Reference alignment: src/alignment-worker.js
            -> src/reference-template-aligner.js
               -> MFCC + constrained DTW + editable timeline
-     -> timeline editor
+     -> timeline editor + review filter + bounded undo/redo
      -> src/lrc.js -> exported LRC
 ```
 
@@ -37,6 +38,7 @@ signal processing, not AI, speech recognition, or language recognition.
 src/
 ├─ ui/
 │  ├─ app.js                 Desktop/browser UI and event wiring
+│  ├─ alignment-panel.js     DOM-free review summaries, filters and history
 │  └─ settings.js            Local appearance, shortcut, and online settings
 ├─ online/
 │  ├─ online-provider.js     Provider contracts and source adapters
@@ -49,7 +51,8 @@ src/
 ├─ audio-*.js / features.js  Audio decoding, profiles, MFCC, and caches
 ├─ *-aligner.js              Independent algorithm candidates and experiments
 ├─ reference-*.js             Verified-reference MFCC/DTW workflow
-└─ storage.js / logger.js     Project files and human-readable activity log
+├─ storage.js / logger.js     Project files and human-readable activity log
+└─ learning/correction-store.js  Local numeric correction journal and hints
 ```
 
 The many `*-aligner.js` files are deliberately kept as separate candidates:
@@ -60,8 +63,8 @@ not separate alignment hypotheses.
 
 Implementation status and the ordered next steps are maintained in
 [`roadmap.md`](roadmap.md). In particular, the core
-engine is implemented, while desktop extraction of spectral flux and voicedness
-is the next code integration step.
+engine and desktop form-aware routing are implemented; independently verified
+real-song evaluation remains the evidence gate.
 
 ## Minimal recreation
 

@@ -39,8 +39,9 @@ route in `src/automatic-aligner.js` chooses:
 3. adaptive Boundary-DP as an energy-only fallback.
 
 Supporting methods remain separate under `src/*-aligner.js` so each experiment
-can be measured independently. The desktop currently supplies RMS energy to the
-Automatic timing action, so it currently uses the energy-only fallback.
+can be measured independently. The desktop Automatic timing action now supplies
+RMS energy, spectral flux and heuristic voicedness to the form-aware `auto-form`
+route. It shows confidence and review flags; generated times remain editable.
 
 ## 3. Reference-assisted high-accuracy path — implemented, evidence pending
 
@@ -66,25 +67,25 @@ Main files:
 The implementation is ready. Independent cover/live/remix pairs are required
 before selecting production parameters or claiming accuracy.
 
-## 4. Next implementation step — connect full profiles to desktop
+## 4. Desktop routing and review — implemented
 
 **Goal:** make the desktop Automatic timing action use the same richer route
 that the reusable API already supports.
 
 Planned work:
 
-1. Extract RMS energy and spectral flux together in the browser decode pass.
-2. Add lightweight pitch/voicedness extraction with a bounded CPU budget.
-3. Pass `{ energy, spectralFlux, voicedness }` to `synchronize({ engine: "automatic" })`.
-4. Display the selected route and diagnostics in the activity log.
-5. Keep Initial timing unchanged as a baseline comparison.
+1. Extract RMS energy, spectral flux and voicedness in the browser decode pass.
+2. Pass the profiles to `synchronize({ engine: "auto-form" })`.
+3. Display route, confidence, reasons and a needs-review filter.
+4. Keep Initial timing unchanged as a baseline comparison.
+5. Provide bounded undo/redo for timeline edits.
 
 Acceptance criteria:
 
 - Offline operation remains unchanged.
 - No new runtime dependency is required.
-- Long audio does not block the editor; extraction runs in a worker or is
-  chunked if needed.
+- Long reference alignment remains in a worker; lightweight profile extraction
+  stays asynchronous around the browser decode step.
 - Existing 72+ tests and smoke checks continue to pass.
 
 ## 5. Evidence and calibration — requires verified recordings
@@ -117,6 +118,21 @@ Only add these if measurements justify their cost:
 
 Result deduplication for online lyric providers is intentionally not part of the
 current plan.
+
+## 7. Local correction calibration — implemented, optional
+
+`src/learning/correction-store.js` records only numeric prediction-versus-edit
+differences. After a minimum sample count it can produce bounded per-engine
+offset hints. The router consumes these only when a caller explicitly passes
+`parameters.learningHints`; it never uploads data or silently changes defaults.
+See [`phases.md`](phases.md) and [`correction-learning.md`](correction-learning.md).
+
+## 8. Evidence gate — next work after code completion
+
+The remaining work is real-data validation: independently verify local audio/LRC
+pairs, run the private evaluator, and compare line-level error and review rates.
+Synthetic tests prove deterministic code behavior only; they do not prove song
+accuracy.
 
 ## 7. Recreate the engine from scratch
 
