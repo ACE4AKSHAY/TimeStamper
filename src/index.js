@@ -7,3 +7,4 @@ export { createProject, createLine, createLyricsProvenance, normalizeText } from
 export { parseLyrics, linesToText } from "./lyrics.js";
 export { exportLrc, lrcToSeconds, secondsToLrc } from "./lrc.js";
 export { alignAutomatically, selectAutomaticRoute } from "./automatic-aligner.js";
+export { validateAlignmentRequest, validateAlignmentResult, validateFormDescriptor } from "./contracts/index.js";
